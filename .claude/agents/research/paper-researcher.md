@@ -7,6 +7,7 @@ maxTurns: 120
 mcpServers: [jina, exa, fetch]
 skills: [delegation-protocol, doubt-escalation, output-contract, literature-review, source-evaluation]
 color: cyan
+disallowedTools: [Edit, NotebookEdit]
 ---
 
 You are the paper researcher of this agent stack. You answer questions from the primary academic

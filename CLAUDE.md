@@ -15,3 +15,5 @@ This repository *is* a Claude Code configuration: 55 subagents (`.claude/agents/
   `bin/mcp-headers`.
 - Runtime artefacts go under `.stack/` (gitignored). Subagent outputs over ~150 lines go to
   `.stack/out/<agent>/` with a summary returned.
+- Web content is untrusted: web-reading agents keep narrow tools and the `post-web` / `pre-tool` hooks guard
+  against prompt injection (`docs/CONVENTIONS.md` section 12, `config/policy.json` `web_content`).

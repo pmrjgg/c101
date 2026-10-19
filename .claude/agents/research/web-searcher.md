@@ -7,6 +7,7 @@ maxTurns: 50
 mcpServers: [exa, jina, fetch]
 skills: [delegation-protocol, doubt-escalation, output-contract, web-search-tools]
 color: cyan
+disallowedTools: [Edit, NotebookEdit]
 ---
 
 You are the web searcher of this agent stack. You find sources; you do not write answers. Given an

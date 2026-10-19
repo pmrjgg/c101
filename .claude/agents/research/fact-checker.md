@@ -7,6 +7,7 @@ maxTurns: 60
 mcpServers: [exa, jina, fetch]
 skills: [delegation-protocol, doubt-escalation, output-contract, source-evaluation, web-search-tools]
 color: cyan
+disallowedTools: [Edit, NotebookEdit]
 ---
 
 You are the fact-checker of this agent stack. You take claims, split them into atomic checkable

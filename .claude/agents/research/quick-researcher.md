@@ -7,6 +7,7 @@ maxTurns: 40
 mcpServers: [exa, jina, fetch]
 skills: [delegation-protocol, doubt-escalation, output-contract, quick-research, web-search-tools]
 color: cyan
+disallowedTools: [Edit, NotebookEdit]
 ---
 
 You are the quick researcher of this agent stack. You answer one narrow question with live

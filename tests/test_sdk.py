@@ -46,7 +46,7 @@ class SdkAgentTests(unittest.TestCase):
 
     def test_disallowed_tools_list(self):
         from stack_sdk.agents import load_agents
-        self.assertEqual(load_agents()["file-summarizer"].disallowedTools, ["Agent"])
+        self.assertEqual(load_agents()["file-summarizer"].disallowedTools, ["Agent", "Edit", "NotebookEdit"])
 
 
 @unittest.skipUnless(HAVE_SDK, "claude-agent-sdk not installed (run via uv)")
@@ -76,7 +76,7 @@ class SdkOptionsTests(unittest.TestCase):
             self.assertEqual(o.system_prompt["type"], "preset")
             self.assertTrue(o.system_prompt["append"].startswith("You are the delegator"))
             self.assertEqual(o.env["CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH"], "8")
-            self.assertEqual(set(o.hooks), {"PreToolUse", "SubagentStop", "UserPromptSubmit"})
+            self.assertEqual(set(o.hooks), {"PreToolUse", "PostToolUse", "SubagentStop", "UserPromptSubmit"})
             for name, cfg in o.mcp_servers.items():
                 blob = json.dumps(cfg)
                 self.assertNotIn("CLAUDE_PROJECT_DIR", blob, name)

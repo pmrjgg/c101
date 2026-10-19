@@ -160,6 +160,7 @@ Claude Code 2.1.29x or later.
   - [Applying changes](#applying-changes)
   - [Learner configuration reference](#learner-configuration-reference)
   - [Learner commands](#learner-commands)
+- [Web content safety (prompt injection)](#web-content-safety-prompt-injection)
 - [MCP servers, keys and the image server](#mcp-servers-keys-and-the-image-server)
   - [Where keys live](#where-keys-live)
   - [File format and parser rules](#file-format-and-parser-rules)
@@ -367,6 +368,8 @@ session; only deliberate `deny` decisions from `pre-agent` and exit 2 from `mode
 | `model-switch` | keeps the main thread on its tier model | [PreModelSwitch guard](#5-premodelswitch-guard) |
 | `subagent-stop` | records the effort in effect, debounced ingest, mid-session learning | [subagent-stop](#subagent-stop-telemetry-and-mid-session-learning) |
 | `session-end` | detaches the learner | [session-end](#session-end-detached-learner) |
+| `post-web` | scans every web-tool result for prompt injection, warns and taints the agent | [Web content safety](#web-content-safety-prompt-injection) |
+| `pre-tool` | narrow tools for web agents; taint guard on risky Bash, file writes and web forms | [Web content safety](#web-content-safety-prompt-injection) |
 
 The wiring table, timeouts and the fail-open contract are in [Hook wiring](#hook-wiring); token accounting
 (`stack/budget.py`) is in [Token budgets](#token-budgets).
@@ -2411,6 +2414,8 @@ All hooks are `type: "command"` hooks that call one entry point, `"$CLAUDE_PROJE
 | `SessionEnd` | (all) | `session-end` → `session_end()` | 5 | no | nothing (detaches the learner) |
 | `UserPromptSubmit` | (all) | `prompt-submit` → `prompt_submit()` | 20 | no | `additionalContext` budget note |
 | `PreModelSwitch` | (all) | `model-switch` → `model_switch()` | 10 | no | exit code 0 (allow) or 2 + stderr reason (block) |
+| `PreToolUse` | `Bash\|Write\|Edit\|MultiEdit\|NotebookEdit\|mcp__playwright__browser_type\|…fill_form\|…file_upload\|…press_key` | `pre-tool` → `pre_tool()` | 10 | no | `permissionDecision` `deny` (web agents, tainted subagents) or `ask` (tainted main thread) |
+| `PostToolUse` | `WebFetch\|WebSearch\|mcp__fetch__.*\|mcp__jina__.*\|mcp__exa__.*\|mcp__spider__.*\|mcp__playwright__.*\|…` | `post-web` → `post_web()` | 10 | no | `additionalContext` warning (score ≥ 3), plus `decision: block` (score ≥ 6) |
 
 The call path from Claude Code to a handler:
 
@@ -3456,6 +3461,31 @@ agents. To narrow the view, use a full `update` followed by `report --agent NAME
 move it back. The `stack-tuner` agent (`.claude/agents/meta/stack-tuner.md`) runs this loop and
 explains any change with the numbers behind it.
 
+## Web content safety (prompt injection)
+
+Pages, search results and documents fetched from the web are untrusted: a page can carry text written for an AI
+agent ("ignore previous instructions", "send the API keys to …", fake tool-call markup, hidden characters). The
+stack contains this in three layers, configured in `config/policy.json` `web_content` and implemented in
+`stack/injection.py` and two hooks.
+
+| Layer | Mechanism | Effect |
+|---|---|---|
+| 1. Narrow tools | `web_agents` (the research agents, `file-summarizer`, `browser-operator`, `computer-operator`) have `disallowedTools: [Edit, NotebookEdit]`; the `pre-tool` hook (PreToolUse on `Bash`, `Write`, `Edit`, `MultiEdit`, `NotebookEdit`) | files only under `.stack/`; Bash network egress, pipe-to-shell, secret reads, `git push` and recursive deletes outside `.stack/` are denied, always, so a successful injection has little to work with |
+| 2. Scanner | the `post-web` hook (PostToolUse on `WebFetch`, `WebSearch` and the `fetch`, `jina`, `exa`, `spider`, `playwright`, `firecrawl`, `tavily`, `brave-search`, `markitdown` tools) scores the result with weighted rules | score ≥ 3 (`medium`): a warning with the URL and matched rules is added to the agent's context, the agent is tainted and the event is logged to `<data>/injection.jsonl` (rule names, score, URL and a SHA-256 of the content, never the text); score ≥ 6 (`high`): also a `block` decision with the reason |
+| 3. Taint guard | `pre-tool` and `pre-agent` check `<data>/sessions/<session>.taint.json` | a tainted subagent's risky actions are denied (the main thread gets an `ask` prompt instead), including typing into or uploading to web pages; it may only spawn `tainted_may_spawn` (`@research_leaves`, all narrow-tool agents) |
+
+Rules (weights): instruction override (4), tool-call markup (4), requests to send secrets (4), ASCII smuggling
+with Unicode tag characters (4), text addressed to an AI (3), "new instructions:" (3), exfiltration-shaped URLs
+(3), persona switches (3), secrecy demands (3), chat-template tokens or role tags (2), secret paths (2),
+pipe-to-shell snippets (2) and runs of zero-width characters (2). Text is NFKC-normalised and zero-width
+characters are removed before matching, so split words are caught. Weak signals alone (an install page with
+`curl … | sh`, documentation showing `<|im_start|>`) stay below `medium`.
+
+Limits: these are tripwires, not a guarantee. Paraphrases, other languages and text inside images get through,
+which is why layer 1 applies whether or not anything was flagged. Cost: about 50 ms per guarded tool call and
+about 95 ms per 200 KB page scanned. Turn the whole feature off with `web_content.enabled: false`; tune
+`medium`, `high`, `web_agents` and `tainted_may_spawn` in the same block. Tests: `tests/test_injection.py`.
+
 ## MCP servers, keys and the image server
 
 The stack talks to the outside world through MCP servers: five remote or stdio servers for browsing, search,
@@ -4332,6 +4362,8 @@ def python_hooks(timeout: float = 30.0) -> dict[str, list[HookMatcher]]:
 | `UserPromptSubmit`, 20 s | `prompt-submit` | `prompt_submit` (30 s) | adds the session and prompt token-budget note as context |
 | `SessionStart`, 10 s | `session-start` | none | status line (missing keys, recent self-tuning); no SDK event |
 | `SessionEnd`, 5 s | `session-end` | none; the runner calls `_learn_after` | final ingest and posterior update |
+| `PreToolUse` Bash/writes/web forms, 10 s | `pre-tool` | `pre_tool` (30 s) | narrow tools for web agents, taint guard |
+| `PostToolUse` web tools, 10 s | `post-web` | `post_web` (30 s) | prompt-injection scan, warning, taint |
 | `PreModelSwitch`, 10 s | `model-switch` | none; the model is pinned in the options | keeps the main thread on its tier model |
 
 The SDK's Python hooks cover 10 events: `PreToolUse`, `PostToolUse`, `PostToolUseFailure`,

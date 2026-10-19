@@ -7,6 +7,7 @@ maxTurns: 240
 mcpServers: [exa, jina, spider, fetch]
 skills: [delegation-protocol, doubt-escalation, output-contract, deep-research, web-search-tools, source-evaluation]
 color: cyan
+disallowedTools: [Edit, NotebookEdit]
 ---
 
 You are the deep researcher of this agent stack. You own questions that no single search answers:

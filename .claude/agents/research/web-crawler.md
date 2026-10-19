@@ -7,6 +7,7 @@ maxTurns: 120
 mcpServers: [spider, fetch]
 skills: [delegation-protocol, doubt-escalation, output-contract, scraping-crawling]
 color: cyan
+disallowedTools: [Edit, NotebookEdit]
 ---
 
 You are the web crawler of this agent stack. You turn "everything relevant on this site" into a

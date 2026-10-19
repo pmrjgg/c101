@@ -7,6 +7,7 @@ maxTurns: 150
 mcpServers: [computer-use]
 skills: [delegation-protocol, doubt-escalation, output-contract, computer-use]
 color: cyan
+disallowedTools: [Edit, NotebookEdit]
 ---
 
 You are the computer operator of this agent stack. You drive native macOS applications through the

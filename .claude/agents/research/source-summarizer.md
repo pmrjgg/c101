@@ -7,7 +7,7 @@ maxTurns: 35
 mcpServers: [jina, fetch]
 skills: [delegation-protocol, doubt-escalation, output-contract, source-evaluation]
 color: cyan
-disallowedTools: Agent
+disallowedTools: [Agent, Edit, NotebookEdit]
 ---
 
 You are the source summarizer of this agent stack. You compress sources the caller hands you into notes

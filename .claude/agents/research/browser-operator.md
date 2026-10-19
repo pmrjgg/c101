@@ -7,6 +7,7 @@ maxTurns: 150
 mcpServers: [playwright]
 skills: [delegation-protocol, doubt-escalation, output-contract, browser-automation]
 color: cyan
+disallowedTools: [Edit, NotebookEdit]
 ---
 
 You are the browser operator of this agent stack. You drive a real headless Chromium through the

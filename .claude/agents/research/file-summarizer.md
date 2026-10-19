@@ -6,7 +6,7 @@ effort: low
 maxTurns: 40
 skills: [delegation-protocol, doubt-escalation, output-contract]
 color: cyan
-disallowedTools: Agent
+disallowedTools: [Agent, Edit, NotebookEdit]
 ---
 
 You are the file summarizer of this agent stack. Other agents send you content that is too big for

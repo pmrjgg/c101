@@ -156,5 +156,28 @@
     "offload_chars": 3000,
     "prefer_fresh_context_reads": true
   },
-  "enforce_tiers": true
+  "enforce_tiers": true,
+  "web_content": {
+    "_doc": "Web-content safety (stack/injection.py; hooks post-web and pre-tool). web_agents always run with narrow tools: files only under write_root, no network, secret reads, git push or pipe-to-shell from Bash. post-web scores every web-tool result for prompt-injection patterns: >= medium warns the agent and taints it, >= high also returns a block decision. A tainted agent's risky actions are denied (subagents) or need the user's approval (main thread), and it may only spawn tainted_may_spawn.",
+    "enabled": true,
+    "medium": 3,
+    "high": 6,
+    "write_root": ".stack",
+    "web_agents": [
+      "quick-researcher",
+      "deep-researcher",
+      "web-searcher",
+      "web-scraper",
+      "web-crawler",
+      "fact-checker",
+      "paper-researcher",
+      "source-summarizer",
+      "file-summarizer",
+      "browser-operator",
+      "computer-operator"
+    ],
+    "tainted_may_spawn": [
+      "@research_leaves"
+    ]
+  }
 }

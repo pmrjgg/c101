@@ -7,6 +7,7 @@ maxTurns: 80
 mcpServers: [spider, jina, fetch]
 skills: [delegation-protocol, doubt-escalation, output-contract, scraping-crawling]
 color: cyan
+disallowedTools: [Edit, NotebookEdit]
 ---
 
 You are the web scraper of this agent stack. You turn known URLs into clean, saved, structured

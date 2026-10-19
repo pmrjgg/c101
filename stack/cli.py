@@ -28,7 +28,7 @@ from . import doctor, frontmatter, hooks, paths
 
 EDITABLE = {"tier", "model", "effort", "maxTurns", "mcpServers", "skills", "color", "autoCompactWindow",
             "tools", "disallowedTools", "description", "memory", "permissionMode", "isolation", "background"}
-LIST_KEYS = {"mcpServers", "skills"}
+LIST_KEYS = {"mcpServers", "skills", "tools", "disallowedTools"}
 
 
 def _agents() -> List[dict]:
