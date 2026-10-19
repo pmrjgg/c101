@@ -1,0 +1,17 @@
+# claude101 — Claude Code agent stack
+
+This repository *is* a Claude Code configuration: 55 subagents (`.claude/agents/<group>/`), 144 skills
+(`.claude/skills/`: hubs, method skills and granular playbooks; see `config/packs.json`), 8 saved workflows (`.claude/workflows/`), hooks and MCP servers, plus Python tooling
+(`stack/`, `stack_mcp/`) on CPython 3.13 managed by uv.
+
+- Conventions for agents, skills and workflows: `docs/CONVENTIONS.md` (follow it exactly; unknown
+  frontmatter keys are silently ignored by Claude Code, so typos are bugs).
+- After any change to agents/skills/workflows/MCP/hooks run `bin/stack doctor` (must report 0 errors).
+- Tests: `uv run --python 3.13 python -m unittest discover -s tests` and `uv run --python 3.13 pytest stack_mcp -q`.
+- Python: add deps with `uv add`, never pip; keep `stack/` stdlib-only (it runs inside hooks).
+- `maxTurns`/`effort` in agent frontmatter are tuned by `bin/stack learn apply`; respect bounds in
+  `config/learning.json` rather than fighting the learner.
+- Never read, print or commit `~/.claude/stack.env`; keys reach MCP servers only via `bin/mcp-run` /
+  `bin/mcp-headers`.
+- Runtime artefacts go under `.stack/` (gitignored). Subagent outputs over ~150 lines go to
+  `.stack/out/<agent>/` with a summary returned.
