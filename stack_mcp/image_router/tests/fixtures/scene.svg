@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" width="200" height="120" viewBox="0 0 200 120">
+  <title>Scene</title>
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4a90d9"/>
+      <stop offset="1" stop-color="#cfe8ff"/>
+    </linearGradient>
+    <circle id="dot" r="6"/>
+  </defs>
+  <g id="layer-background" inkscape:groupmode="layer" inkscape:label="Background">
+    <rect width="200" height="120" fill="url(#sky)"/>
+    <path d="M0 90 Q50 70 100 90 T200 90 V120 H0 Z" fill="#3a7d44"/>
+  </g>
+  <g id="layer-shapes" inkscape:groupmode="layer" inkscape:label="Shapes">
+    <g transform="translate(60 40) rotate(20)">
+      <rect x="-15" y="-15" width="30" height="30" fill="#e63946"/>
+    </g>
+    <use xlink:href="#dot" x="120" y="50" fill="#f4a261"/>
+  </g>
+  <g id="layer-text" inkscape:groupmode="layer" inkscape:label="Text" style="display:none">
+    <text x="10" y="20" font-family="Helvetica, Arial, sans-serif" font-size="14" fill="#1d3557">Hello</text>
+  </g>
+</svg>

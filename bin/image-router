@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Launch the 'image' MCP server (stdio) under the repo's uv environment.
+#   bin/image-router            (--mode is accepted and ignored; --check prints op status)
+# Per-operation endpoints (IMAGE_<OP>_URL/_KEY/_MODEL) are read from
+# ~/.claude/stack.env at call time; start it through bin/mcp-run as .mcp.json does.
+# Working directory is left untouched so relative output dirs resolve against the
+# project Claude Code runs in.
+set -euo pipefail
+. "$(dirname "${BASH_SOURCE[0]}")/_pyenv.sh"
+PYTHONPATH="$REPO${PYTHONPATH:+:$PYTHONPATH}" exec "${PY[@]}" -m stack_mcp.image_router "$@"

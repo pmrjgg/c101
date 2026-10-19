@@ -1,0 +1,316 @@
+{
+  "_doc": "Operation table for the 'image' MCP server (stack_mcp/image_router, launched by bin/image-router via bin/mcp-run). Documentation only: no secrets and no model choices - the user's ~/.claude/stack.env decides. Each operation uses exactly IMAGE_<OP>_URL + IMAGE_<OP>_KEY + IMAGE_<OP>_MODEL (read at call time; no fallbacks; an operation's tool is listed only once it is configured; image_ops_status names the env vars a missing one needs). Optional IMAGE_<OP>_API forces the adapter (default: detected from the URL host - openrouter.ai -> openrouter, opper.ai -> opper, fal.run / fal.ai -> fal, anything else -> openai-compatible); optional IMAGE_<OP>_PARAMS is a JSON object deep-merged into every request for that operation, except the router directives 'strategy' and 'mask_convention', which are never sent. API facts verified 2026-10-19.",
+  "version": 2,
+  "env_file": "~/.claude/stack.env (override the path with CLAUDE_STACK_ENV); template: config/stack.env.example",
+  "default_output_dir": ".stack/images/<YYYYMMDD>/ under CLAUDE_PROJECT_DIR (or the cwd); every output gets a <file>.json sidecar with op, adapter, URL host, model tag, prompt/instruction, params (no keys, no base64)",
+  "env_pattern": {
+    "url": "IMAGE_<OP>_URL",
+    "key": "IMAGE_<OP>_KEY",
+    "model": "IMAGE_<OP>_MODEL",
+    "api": "IMAGE_<OP>_API",
+    "params": "IMAGE_<OP>_PARAMS"
+  },
+  "adapters": {
+    "openrouter": {
+      "url_example": "https://openrouter.ai/api/v1",
+      "auth": "Authorization: Bearer <key>; HTTP-Referer / X-OpenRouter-Title (+ X-Title) attribution headers (OPENROUTER_APP_URL / OPENROUTER_APP_TITLE override them)",
+      "images": "POST {URL}/images (JSON) {model, prompt, n, aspect_ratio, size|resolution, quality, background, output_format (png|jpeg|webp|svg), seed, input_references: [{type: image_url, image_url: {url: https|data URL}}], provider: {...}} -> data[].b64_json + media_type. There is no /images/edits.",
+      "chat": "POST {URL}/chat/completions (svg_transform, strategy 'chat', MASK strategy 'detect')",
+      "ops": [
+        "BG_REMOVAL",
+        "EDIT",
+        "GEN",
+        "REF",
+        "SEGMENT",
+        "TRACE",
+        "TRANSPARENT",
+        "UPSCALE",
+        "VECTOR",
+        "VECTOR_MANIPULATION"
+      ],
+      "caveats": "No mask parameter, no matting, segmentation, tracing or upscale models: EDIT masks are sent as a second input reference with an instruction, RGBA cut-outs / UPSCALE / TRACE are regenerations, MASK is rendered by the image model (or boxes via 'detect'). The router's local fidelity post-processing restores what can be restored and reports drift.",
+      "catalog": "GET {URL}/images/models (public, cached 1 h): supported_parameters per model. Used to split n into single-image requests for models that declare n 1..1 (or no n), to snap aspect_ratio to the model's values, to keep the source framing for edit-type tasks (edit, remove_background, upscale, mask, trace: aspect_ratio nearest the source, or 'auto'), to pick a listed resolution for upscales, and to refuse background=transparent before paying when the model cannot return alpha."
+    },
+    "opper": {
+      "url_example": "https://api.opper.ai",
+      "auth": "Authorization: Bearer <runtime key op-...>",
+      "images": "POST {URL}/v3/images (JSON) {model, prompt, n (<=4), size (WxH) | aspect_ratio, resolution, quality, response_format: b64_json, image, mask, reference_images: [url|data URI|file_<id>], parameters: {provider pass-through, e.g. background, output_format, seed}} -> {data: [{b64_json, mime_type}]}. async: true -> 202 {id, status_url}; poll GET {URL}/v3/artifacts/{id}/status, download url (no auth sent to the storage host).",
+      "catalog": "GET {URL}/v3/images/models (public, cached 1 h) - every request is validated against the model's params.image before paying: sizes (presets; size_constraints such as GPT Image's multiple_of/min_pixels/max_pixels: legal WxH kept, others snapped keeping the ratio, aspect ratios turned into exact WxH), aspect ratios, resolution tiers (1K/2K/4K -> resolution only when listed, Gemini '4k' -> quality, else a size by long edge, else dropped), qualities (dropped when the model lists none or not that one), passthrough parameters (seed / output_format / style sent only when declared), background=transparent (refused when the model declares no background option or its enum lacks 'transparent'), source framing for edit-type tasks. Values are sent unvalidated only when the catalog is unavailable (noted).",
+      "chat": "POST {URL}/v3/compat/chat/completions (svg_transform, strategy 'chat', MASK strategy 'detect')",
+      "ops": [
+        "BG_REMOVAL",
+        "EDIT",
+        "GEN",
+        "REF",
+        "SEGMENT",
+        "TRACE",
+        "TRANSPARENT",
+        "UPSCALE",
+        "VECTOR",
+        "VECTOR_MANIPULATION"
+      ],
+      "caveats": "Sync deadline 3 minutes (504): set IMAGE_<OP>_PARAMS={\"async\": true} for slow models. Mask convention chosen from the model tag (GPT Image: alpha-transparent; Ideogram: black-edit; else white-edit), override with {\"mask_convention\": ...}. No matting, upscale, segmentation or tracing models; Opper SVG output is model-specific (TRACE defaults to the 'chat' strategy)."
+    },
+    "openai": {
+      "url_example": "https://api.openai.com/v1 or any OpenAI-compatible base URL",
+      "auth": "Authorization: Bearer <key> (optional for loopback URLs)",
+      "images": "POST {URL}/images/generations (JSON) {model, prompt, n, size, quality, background, output_format}; POST {URL}/images/edits (multipart) image[] (repeated), mask, prompt, model, background, output_format, size, n -> data[].b64_json | data[].url",
+      "chat": "POST {URL}/chat/completions",
+      "ops": [
+        "BG_REMOVAL",
+        "EDIT",
+        "GEN",
+        "REF",
+        "SEGMENT",
+        "TRACE",
+        "TRANSPARENT",
+        "UPSCALE",
+        "VECTOR",
+        "VECTOR_MANIPULATION"
+      ],
+      "caveats": "Masks are RGBA PNGs the size of the image, transparent = edit; the first image is re-encoded as PNG to match. Sizes: gpt-image-1.x / dall-e get their fixed sizes (nearest by ratio); computed sizes for other models meet the GPT Image 2 limits (multiple of 16, 655,360-8,294,400 px, edge <= 3840, ratio <= 3). VECTOR and TRACE default to the 'chat' strategy (the Images API has no SVG output)."
+    },
+    "local": {
+      "env": "IMAGE_TRACE_API=local and/or IMAGE_UPSCALE_API=local (explicit opt-in; never chosen automatically; no URL/KEY/MODEL needed)",
+      "ops": [
+        "TRACE",
+        "UPSCALE"
+      ],
+      "notes": "TRACE: vtracer (MIT); IMAGE_TRACE_PARAMS takes vtracer settings (colormode, hierarchical, mode, filter_speckle, color_precision, layer_difference, corner_threshold, length_threshold, max_iterations, splice_threshold, path_precision); layered=true uses hierarchical=cutout. UPSCALE: Pillow Lanczos to exactly scale x the source."
+    },
+    "fal": {
+      "url_example": "https://queue.fal.run",
+      "auth": "Authorization: Key <fal key>",
+      "detect": "URL host fal.run, queue.fal.run, *.fal.run or *.fal.ai (or IMAGE_<OP>_API=fal)",
+      "images": "POST {URL}/{MODEL = fal endpoint id} (JSON input) -> {request_id, status_url, response_url}; poll status_url (IN_QUEUE / IN_PROGRESS -> COMPLETED, backoff 1 s x1.5 up to 8 s, timeout IMAGE_ROUTER_FAL_TIMEOUT s, default 900; cancel on timeout); GET response_url; every {url} in the result is downloaded (no auth to the CDN)",
+      "schema": "input names come from the endpoint's OpenAPI (https://fal.ai/api/openapi/queue/openapi.json?endpoint_id=<id>, cached 7 days in .stack/cache/fal-schemas): prompt, image_url(s), mask_url, image_size, num_images, background, upscale_factor; canonical inputs with no field are reported in notes, a missing source image, mask or prompt fails the call",
+      "masks": "sent white = edit; IMAGE_<OP>_PARAMS={\"mask_convention\": \"black-edit\"} for endpoints that edit black",
+      "ops": [
+        "BG_REMOVAL",
+        "EDIT",
+        "GEN",
+        "REF",
+        "SEGMENT",
+        "TRACE",
+        "TRANSPARENT",
+        "UPSCALE",
+        "VECTOR"
+      ]
+    }
+  },
+  "ops": {
+    "GEN": {
+      "tools": [
+        "image_generate"
+      ],
+      "purpose": "text -> image",
+      "env": [
+        "IMAGE_GEN_URL",
+        "IMAGE_GEN_KEY",
+        "IMAGE_GEN_MODEL",
+        "IMAGE_GEN_API",
+        "IMAGE_GEN_PARAMS"
+      ],
+      "default_output": "the model's raster format (png/jpeg/webp); output_format selects",
+      "mapping": {
+        "openrouter": "POST /images {model, prompt, n, aspect_ratio, size (tier or WxH; explicit WxH drops aspect_ratio), quality, seed, output_format}",
+        "opper": "POST /v3/images {model, prompt, n, size|aspect_ratio|resolution (normalised against the catalog), quality, response_format: b64_json, parameters: {seed, output_format}}",
+        "openai": "POST /images/generations {model, prompt, n, size (from tier/aspect), quality, output_format}"
+      }
+    },
+    "REF": {
+      "tools": [
+        "image_generate_with_references"
+      ],
+      "purpose": "generation guided by 1..N reference images",
+      "env": [
+        "IMAGE_REF_URL",
+        "IMAGE_REF_KEY",
+        "IMAGE_REF_MODEL",
+        "IMAGE_REF_API",
+        "IMAGE_REF_PARAMS"
+      ],
+      "default_output": "raster (png/jpeg/webp)",
+      "mapping": {
+        "openrouter": "input_references: [{type: image_url, image_url: {url: data URL | public URL}}] (per-model maximum, e.g. 16 GPT Image, 14 Gemini)",
+        "opper": "reference_images: [data URI | public URL]",
+        "openai": "POST /images/edits with image[] = references"
+      }
+    },
+    "EDIT": {
+      "tools": [
+        "image_edit"
+      ],
+      "purpose": "instruction edit; masked inpaint when mask is given",
+      "env": [
+        "IMAGE_EDIT_URL",
+        "IMAGE_EDIT_KEY",
+        "IMAGE_EDIT_MODEL",
+        "IMAGE_EDIT_API",
+        "IMAGE_EDIT_PARAMS"
+      ],
+      "default_output": "png when a mask is composited, else the model's format",
+      "mapping": {
+        "openrouter": "input_references: [source, mask (white = edit, as an image) + 'edit only the white region' instruction, extra references]",
+        "opper": "image + mask (convention per model) + reference_images",
+        "openai": "POST /images/edits multipart: image[] (source as PNG first), mask (RGBA, transparent = edit)"
+      },
+      "fidelity": "preserve_unmasked (default true): result fitted to the source and composited through the mask, feathered inwards (1-2 px), so pixels outside the mask are unchanged. A result of another aspect ratio is scaled to cover the source and centre-cropped (never stretched) and a warning names both sizes."
+    },
+    "TRANSPARENT": {
+      "tools": [
+        "image_generate_transparent"
+      ],
+      "purpose": "transparent (RGBA) generation",
+      "env": [
+        "IMAGE_TRANSPARENT_URL",
+        "IMAGE_TRANSPARENT_KEY",
+        "IMAGE_TRANSPARENT_MODEL",
+        "IMAGE_TRANSPARENT_API",
+        "IMAGE_TRANSPARENT_PARAMS"
+      ],
+      "default_output": "png (RGBA)",
+      "mapping": {
+        "openrouter": "background: transparent, output_format: png",
+        "opper": "parameters: {background: transparent, output_format: png}",
+        "openai": "background: transparent, output_format: png (/images/edits with the source for cut-outs)",
+        "fal": "fal: background: transparent (+ output_format png) when the endpoint's schema has it, else refused"
+      },
+      "deprecated_alias": "IMAGE_RGBA_*"
+    },
+    "SEGMENT": {
+      "tools": [
+        "image_segment"
+      ],
+      "purpose": "segmentation: prompt -> white-on-black mask PNG of the source size",
+      "env": [
+        "IMAGE_SEGMENT_URL",
+        "IMAGE_SEGMENT_KEY",
+        "IMAGE_SEGMENT_MODEL",
+        "IMAGE_SEGMENT_API",
+        "IMAGE_SEGMENT_PARAMS"
+      ],
+      "default_output": "png (L, white = object)",
+      "strategies": {
+        "render": "default: the image model paints the object white on black; normalised locally (bilinear resize to the source, threshold 128)",
+        "detect": "IMAGE_SEGMENT_PARAMS={\"strategy\": \"detect\"}: a vision chat model returns boxes (moondream '/detect {\"object\": ...}' or a JSON prompt that states the image size), rasterised locally; replies in 0-1, pixels, per-mille or Gemini box_2d are normalised and the interpretation is reported, with a warning when the boxes cover none or all of the image"
+      },
+      "mapping": {
+        "fal": "fal: image_url + prompt to a segmentation endpoint (e.g. fal-ai/sam-3/image); the returned mask is normalised locally"
+      },
+      "deprecated_alias": "IMAGE_MASK_*"
+    },
+    "BG_REMOVAL": {
+      "tools": [
+        "image_remove_background"
+      ],
+      "purpose": "background removal -> RGBA cutout (alpha transferred onto the original pixels)",
+      "env": [
+        "IMAGE_BG_REMOVAL_URL",
+        "IMAGE_BG_REMOVAL_KEY",
+        "IMAGE_BG_REMOVAL_MODEL",
+        "IMAGE_BG_REMOVAL_API",
+        "IMAGE_BG_REMOVAL_PARAMS"
+      ],
+      "default_output": "png (RGBA)",
+      "mapping": {
+        "openrouter": "input_references: [source] + background: transparent, output_format: png (approximation by regeneration)",
+        "opper": "image + parameters: {background: transparent, output_format: png} (approximation by regeneration)",
+        "openai": "/images/edits with the source, background: transparent, output_format: png",
+        "fal": "fal: image_url to a background-removal endpoint (e.g. fal-ai/bria/background/remove); alpha transferred onto the original"
+      },
+      "fidelity": "image_remove_background preserve_pixels (default true): the model's alpha is applied to the ORIGINAL pixels; RGB drift inside the alpha is measured and warned about when high",
+      "deprecated_alias": "IMAGE_RGBA_*"
+    },
+    "UPSCALE": {
+      "tools": [
+        "image_upscale"
+      ],
+      "purpose": "faithful upscaling",
+      "env": [
+        "IMAGE_UPSCALE_URL",
+        "IMAGE_UPSCALE_KEY",
+        "IMAGE_UPSCALE_MODEL",
+        "IMAGE_UPSCALE_API",
+        "IMAGE_UPSCALE_PARAMS"
+      ],
+      "default_output": "png at exactly scale x the source size",
+      "mapping": {
+        "local": "Pillow Lanczos (IMAGE_UPSCALE_API=local)",
+        "openrouter": "regeneration: input_references: [source] + resolution tier; result resized to the exact target, drift reported",
+        "opper": "regeneration: image = source (model-specific size/quality via IMAGE_UPSCALE_PARAMS)",
+        "openai": "regeneration via /images/edits"
+      }
+    },
+    "VECTOR": {
+      "tools": [
+        "vector_generate"
+      ],
+      "purpose": "native SVG generation (layered=true -> top-level layers by group)",
+      "env": [
+        "IMAGE_VECTOR_URL",
+        "IMAGE_VECTOR_KEY",
+        "IMAGE_VECTOR_MODEL",
+        "IMAGE_VECTOR_API",
+        "IMAGE_VECTOR_PARAMS"
+      ],
+      "default_output": "svg (validated as well-formed)",
+      "strategies": {
+        "image": "default for openrouter/opper: the image endpoint must return image/svg+xml (OpenRouter: output_format=svg, e.g. recraft *-vector models; Opper: models declaring a 'style' parameter (Recraft) get parameters.style=vector_illustration[/substyle])",
+        "chat": "default for openai-compatible: an LLM writes the SVG via chat completions"
+      }
+    },
+    "TRACE": {
+      "tools": [
+        "image_vectorize"
+      ],
+      "purpose": "raster -> SVG tracing (layered=true -> one layer per colour)",
+      "env": [
+        "IMAGE_TRACE_URL",
+        "IMAGE_TRACE_KEY",
+        "IMAGE_TRACE_MODEL",
+        "IMAGE_TRACE_API",
+        "IMAGE_TRACE_PARAMS"
+      ],
+      "default_output": "svg (validated as well-formed)",
+      "strategies": {
+        "local": "IMAGE_TRACE_API=local: vtracer (faithful)",
+        "image": "default for openrouter: an SVG model redraws the reference image (approximation)",
+        "chat": "default for opper/openai-compatible: a vision LLM recreates the image as SVG (approximation)"
+      }
+    },
+    "VECTOR_MANIPULATION": {
+      "tools": [
+        "svg_transform"
+      ],
+      "purpose": "SVG edits by an external model; default IMAGE_VECTOR_MANIPULATION_MODEL=claude means the agent edits the SVG text itself and svg_transform is not listed",
+      "env": [
+        "IMAGE_VECTOR_MANIPULATION_URL",
+        "IMAGE_VECTOR_MANIPULATION_KEY",
+        "IMAGE_VECTOR_MANIPULATION_MODEL",
+        "IMAGE_VECTOR_MANIPULATION_API",
+        "IMAGE_VECTOR_MANIPULATION_PARAMS"
+      ],
+      "default_output": "svg (validated as well-formed; the input file is never modified)",
+      "mapping": {
+        "all": "chat completions: {model, messages: [system: reply with one SVG, user: instruction + SVG text]}"
+      }
+    }
+  },
+  "local_tools": {
+    "image_ops_status": "per op: configured, adapter, URL host, model tag, missing env names (never keys)",
+    "image_info": "size, mode, alpha (present / used), format, file size",
+    "mask_convert": "white-edit | black-edit | alpha-transparent, invert, match_image size",
+    "svg_optimize": "rounding (coordinates at precision; transform coefficients keep 5 significant digits; opacities/offsets at least 2 decimals), cleanup, viewBox; keeps inkscape layer markers",
+    "svg_inspect": "well-formedness, size/viewBox, counts, palette, layers, text, rasters, complexity, problems",
+    "svg_render": "PNG preview via resvg (text, gradients, transforms; mm/cm/in/pt at 96 dpi); without width at most 4096 px on the longest side, at most 64 MP in all",
+    "svg_layers": "top-level layers: id, label, visibility, element count, palette",
+    "svg_layerize": "by color | group | mapping into <g inkscape:groupmode=layer> layers, preserving defs, z-order and appearance (verified by re-rendering). Colours resolve inline style > <style> rules > attributes > inheritance; userSpaceOnUse clip-paths distribute (Figma frames are layerized); groups selected by #id CSS rules stay whole",
+    "layers_compose": "SVG + raster sources -> one layered SVG (rasters as <image> data URIs, EXIF-upright; SVG sources clipped to their box unless overflow=visible; their linked local images embedded)",
+    "export_pdf": "vector PDF; layered: one Optional Content Group per top-level layer (svglib + reportlab + pikepdf). Layer opacity kept (transparency group), shape opacity folded into fill/stroke opacity, linked images embedded; masks, filters, patterns, nested group opacity and glyphs missing from the PDF fonts are reported as warnings"
+  },
+  "inputs": "local path, file:// URL, http(s) URL or data URI. Raster-op inputs are normalised once: EXIF orientation applied (processed and sent upright, as displayed), formats the routers do not accept (TIFF, BMP, AVIF, HEIC, ...) re-encoded as PNG, 16/32-bit greyscale scaled (not clipped) in the local fidelity steps, SVG rendered to PNG (at most 4096 px on the longest side by default). params may not set model, prompt, messages or input images (reserved).",
+  "sidecars": "never contain key values, key-like fields, base64/data-URI payloads, or the query, fragment or user info of any URL (a public input URL a provider fetches itself is recorded as scheme://host/path?<redacted>).",
+  "tool_list": "An operation's tool is listed only while the operation is configured (IMAGE_<OP>_URL + _KEY + _MODEL, or IMAGE_<OP>_API=local for TRACE / UPSCALE); svg_transform only while IMAGE_VECTOR_MANIPULATION_* is configured with a model other than 'claude'. image_ops_status and the local tools are always listed. The server advertises tools.listChanged and sends notifications/tools/list_changed when the set changes (env file watched every IMAGE_ROUTER_WATCH_INTERVAL s, default 2, and re-checked on each tool call); clients that ignore it need /mcp reconnect. Lines deleted from or blanked in the env file stop applying without a restart, even though bin/mcp-run exported them at launch.",
+  "local_tool_outputs": "local tools never overwrite an existing file through a default name (logo.pdf exists -> logo-2.pdf, with a note); only an explicit output_path replaces a file (these tools are annotated destructiveHint)"
+}

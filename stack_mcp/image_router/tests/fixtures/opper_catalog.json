@@ -1,0 +1,619 @@
+{
+ "_source": "GET https://api.opper.ai/v3/images/models?limit=500 (public), 2026-10-19; trimmed to id/type/name/capabilities/params",
+ "models": [
+  {
+   "id": "bytedance:ap/seedream-5",
+   "type": "image",
+   "name": "Seedream 5.0",
+   "capabilities": [
+    "image_generation",
+    "image_edit"
+   ],
+   "params": {
+    "image": {
+     "sizes": [
+      "2048x2048",
+      "2560x1440",
+      "1440x2560",
+      "2304x1728",
+      "1728x2304",
+      "2496x1664",
+      "1664x2496",
+      "3024x1296"
+     ],
+     "default": "2048x2048"
+    }
+   }
+  },
+  {
+   "id": "fal/flux-2-pro",
+   "type": "image",
+   "name": "FLUX.2 [pro]",
+   "capabilities": [
+    "image_generation"
+   ],
+   "params": {
+    "image": {
+     "sizes": [
+      "1024x1024",
+      "1280x720",
+      "720x1280",
+      "1024x768",
+      "768x1024",
+      "1536x1024",
+      "1024x1536",
+      "2048x2048"
+     ],
+     "default": "1024x1024",
+     "parameters": [
+      {
+       "name": "seed",
+       "type": "integer",
+       "description": "Seed for reproducible generation."
+      },
+      {
+       "name": "safety_tolerance",
+       "type": "string",
+       "description": "Safety tolerance 1 (strict) to 5 (permissive); default 2."
+      },
+      {
+       "name": "output_format",
+       "type": "string",
+       "description": "jpeg (default) or png."
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "fal/flux-kontext-pro",
+   "type": "image",
+   "name": "FLUX.1 Kontext [pro]",
+   "capabilities": [
+    "image_generation",
+    "image_edit"
+   ],
+   "params": {
+    "image": {
+     "sizes": [
+      "1024x1024",
+      "1280x720",
+      "720x1280",
+      "1024x768",
+      "768x1024",
+      "1536x1024",
+      "1024x1536",
+      "2048x2048"
+     ],
+     "parameters": [
+      {
+       "name": "guidance_scale",
+       "type": "number",
+       "description": "Edit adherence."
+      },
+      {
+       "name": "safety_tolerance",
+       "type": "string",
+       "description": "Safety tolerance 1 (strict) to 5 (permissive); default 2."
+      },
+      {
+       "name": "seed",
+       "type": "integer",
+       "description": "Seed for reproducible generation."
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "fal/ideogram-v4.5-edit",
+   "type": "image",
+   "name": "Ideogram 4.5 Edit",
+   "capabilities": [
+    "image_generation",
+    "image_edit"
+   ],
+   "params": {
+    "image": {
+     "sizes": [
+      "auto"
+     ],
+     "qualities": [
+      "low",
+      "medium",
+      "high"
+     ],
+     "default": "auto",
+     "parameters": [
+      {
+       "name": "seed",
+       "type": "integer",
+       "description": "Seed for reproducible generation."
+      },
+      {
+       "name": "edit_precision",
+       "type": "string",
+       "description": "regular (default) or high, which restores unchanged pixels exactly."
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "fal/recraft-v3",
+   "type": "image",
+   "name": "Recraft V3",
+   "capabilities": [
+    "image_generation"
+   ],
+   "params": {
+    "image": {
+     "sizes": [
+      "1024x1024",
+      "1280x720",
+      "720x1280",
+      "1024x768",
+      "768x1024",
+      "1536x1024",
+      "1024x1536",
+      "2048x2048"
+     ],
+     "default": "1024x1024",
+     "parameters": [
+      {
+       "name": "style",
+       "type": "string",
+       "description": "Style family/substyle, e.g. realistic_image (default), digital_illustration, vector_illustration (vector_* bills $0.08)."
+      },
+      {
+       "name": "colors",
+       "type": "array",
+       "description": "Palette control \u2014 list of {r,g,b} objects."
+      },
+      {
+       "name": "style_id",
+       "type": "string",
+       "description": "Custom style reference id."
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "openai/gpt-image-1.5",
+   "type": "image",
+   "name": "GPT Image 1.5",
+   "capabilities": [
+    "image_generation",
+    "image_edit"
+   ],
+   "params": {
+    "image": {
+     "sizes": [
+      "1024x1024",
+      "1536x1024",
+      "1024x1536",
+      "auto"
+     ],
+     "qualities": [
+      "low",
+      "medium",
+      "high"
+     ],
+     "default": "1024x1024",
+     "parameters": [
+      {
+       "name": "output_format",
+       "type": "string",
+       "description": "Encoding of the returned image \u2014 png (default), jpeg, or webp.",
+       "enum": [
+        "png",
+        "jpeg",
+        "webp"
+       ]
+      },
+      {
+       "name": "output_compression",
+       "type": "integer",
+       "description": "Compression level 0-100 for jpeg/webp output; ignored for png."
+      },
+      {
+       "name": "moderation",
+       "type": "string",
+       "description": "Content-filter strictness \u2014 auto (default) or low.",
+       "enum": [
+        "auto",
+        "low"
+       ]
+      },
+      {
+       "name": "background",
+       "type": "string",
+       "description": "Background treatment \u2014 transparent, opaque, or auto.",
+       "enum": [
+        "transparent",
+        "opaque",
+        "auto"
+       ]
+      },
+      {
+       "name": "input_fidelity",
+       "type": "string",
+       "description": "How strongly input images are preserved on edits \u2014 low (default) or high.",
+       "enum": [
+        "low",
+        "high"
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "openai/gpt-image-2",
+   "type": "image",
+   "name": "GPT Image 2",
+   "capabilities": [
+    "image_generation",
+    "image_edit"
+   ],
+   "params": {
+    "image": {
+     "sizes": [
+      "1024x1024",
+      "1536x1024",
+      "1024x1536",
+      "2048x2048",
+      "2048x1152",
+      "3840x2160",
+      "2160x3840",
+      "auto"
+     ],
+     "qualities": [
+      "low",
+      "medium",
+      "high"
+     ],
+     "default": "1024x1024",
+     "size_constraints": {
+      "multiple_of": 16,
+      "max_edge": 3840,
+      "max_ratio": 3,
+      "min_pixels": 655360,
+      "max_pixels": 8294400
+     },
+     "parameters": [
+      {
+       "name": "output_format",
+       "type": "string",
+       "description": "Encoding of the returned image \u2014 png (default), jpeg, or webp.",
+       "enum": [
+        "png",
+        "jpeg",
+        "webp"
+       ]
+      },
+      {
+       "name": "output_compression",
+       "type": "integer",
+       "description": "Compression level 0-100 for jpeg/webp output; ignored for png."
+      },
+      {
+       "name": "moderation",
+       "type": "string",
+       "description": "Content-filter strictness \u2014 auto (default) or low.",
+       "enum": [
+        "auto",
+        "low"
+       ]
+      },
+      {
+       "name": "background",
+       "type": "string",
+       "description": "Background treatment \u2014 opaque or auto; transparent is not supported by this model.",
+       "enum": [
+        "opaque",
+        "auto"
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "openai/gpt-image-2.5-flare",
+   "type": "image",
+   "name": "GPT Image 2.5 Flare",
+   "capabilities": [
+    "image_generation",
+    "image_edit"
+   ],
+   "params": {
+    "image": {
+     "sizes": [
+      "1024x1024",
+      "1536x1024",
+      "1024x1536",
+      "auto"
+     ],
+     "qualities": [
+      "low",
+      "medium",
+      "high",
+      "xhigh",
+      "max",
+      "auto"
+     ],
+     "default": "1024x1024",
+     "size_constraints": {
+      "multiple_of": 16,
+      "max_edge": 3840,
+      "max_ratio": 3,
+      "min_pixels": 655360,
+      "max_pixels": 8294400
+     },
+     "parameters": [
+      {
+       "name": "output_format",
+       "type": "string",
+       "description": "Image encoding; defaults to png.",
+       "enum": [
+        "png",
+        "jpeg",
+        "webp"
+       ]
+      },
+      {
+       "name": "output_compression",
+       "type": "integer",
+       "description": "Compression level from 0 to 100 for jpeg or webp."
+      },
+      {
+       "name": "background",
+       "type": "string",
+       "description": "Background treatment. Transparent output requires png or webp.",
+       "enum": [
+        "auto",
+        "opaque",
+        "transparent"
+       ]
+      },
+      {
+       "name": "moderation",
+       "type": "string",
+       "description": "Content filter setting; defaults to auto.",
+       "enum": [
+        "auto",
+        "low"
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "openai/gpt-image-2.5-sunburst",
+   "type": "image",
+   "name": "GPT Image 2.5 Sunburst",
+   "capabilities": [
+    "image_generation",
+    "image_edit"
+   ],
+   "params": {
+    "image": {
+     "sizes": [
+      "1024x1024",
+      "1536x1024",
+      "1024x1536",
+      "auto"
+     ],
+     "qualities": [
+      "low",
+      "medium",
+      "high",
+      "xhigh",
+      "max",
+      "auto"
+     ],
+     "default": "1024x1024",
+     "size_constraints": {
+      "multiple_of": 16,
+      "max_edge": 3840,
+      "max_ratio": 3,
+      "min_pixels": 655360,
+      "max_pixels": 8294400
+     },
+     "parameters": [
+      {
+       "name": "output_format",
+       "type": "string",
+       "description": "Image encoding; defaults to png.",
+       "enum": [
+        "png",
+        "jpeg",
+        "webp"
+       ]
+      },
+      {
+       "name": "output_compression",
+       "type": "integer",
+       "description": "Compression level from 0 to 100 for jpeg or webp."
+      },
+      {
+       "name": "background",
+       "type": "string",
+       "description": "Background treatment. Transparent output requires png or webp.",
+       "enum": [
+        "auto",
+        "opaque",
+        "transparent"
+       ]
+      },
+      {
+       "name": "moderation",
+       "type": "string",
+       "description": "Content filter setting; defaults to auto.",
+       "enum": [
+        "auto",
+        "low"
+       ]
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "pruna/p-image-edit",
+   "type": "image",
+   "name": "Pruna P-Image Edit",
+   "capabilities": [
+    "text",
+    "tools",
+    "image_generation",
+    "image_edit"
+   ],
+   "params": {
+    "image": {
+     "aspect_ratios": [
+      "1:1",
+      "16:9",
+      "9:16",
+      "4:3",
+      "3:4"
+     ]
+    }
+   }
+  },
+  {
+   "id": "tencent:sg/hy-image-3.5-preview",
+   "type": "image",
+   "name": "Hy Image 3.5 Preview",
+   "capabilities": [
+    "image_generation",
+    "image_edit"
+   ],
+   "params": {
+    "image": {
+     "sizes": [
+      "1024x1024",
+      "1280x720",
+      "720x1280",
+      "2048x2048",
+      "2560x1440",
+      "1440x2560",
+      "3840x2160",
+      "2160x3840",
+      "4096x4096"
+     ],
+     "default": "1024x1024",
+     "size_constraints": {
+      "max_edge": 8192,
+      "min_edge": 256,
+      "max_pixels": 16777216
+     },
+     "parameters": [
+      {
+       "name": "seed",
+       "type": "integer",
+       "description": "Random seed, 0 to 2^63-1. 0 or omitted picks one at random."
+      },
+      {
+       "name": "footnote",
+       "type": "string",
+       "description": "Text watermark drawn in the lower right corner, up to 16 characters."
+      },
+      {
+       "name": "session",
+       "type": "string",
+       "description": "Routing key for multi-turn editing; keep it constant across one conversation."
+      }
+     ]
+    }
+   }
+  },
+  {
+   "id": "vertexai/gemini-3.1-flash-image",
+   "type": "llm",
+   "name": "Gemini 3.1 Flash Image Preview",
+   "capabilities": [
+    "text",
+    "vision",
+    "structured_output",
+    "tools",
+    "image_generation",
+    "image_edit"
+   ],
+   "params": {
+    "temperature": {
+     "min": 1,
+     "max": 2,
+     "default": 1
+    },
+    "caller_params": [
+     "seed"
+    ],
+    "image": {
+     "aspect_ratios": [
+      "1:1",
+      "2:3",
+      "3:2",
+      "3:4",
+      "4:3",
+      "4:5",
+      "5:4",
+      "9:16",
+      "16:9",
+      "21:9"
+     ],
+     "qualities": [
+      "low",
+      "medium",
+      "high",
+      "4k"
+     ]
+    }
+   }
+  },
+  {
+   "id": "xai/grok-imagine-image",
+   "type": "image",
+   "name": "Grok Imagine Image",
+   "capabilities": [
+    "image_generation",
+    "image_edit"
+   ],
+   "params": {
+    "image": {
+     "aspect_ratios": [
+      "1:1",
+      "16:9",
+      "9:16",
+      "4:3",
+      "3:4",
+      "3:2",
+      "2:3",
+      "2:1",
+      "1:2",
+      "19.5:9",
+      "9:19.5",
+      "20:9",
+      "9:20",
+      "auto"
+     ],
+     "resolutions": [
+      "1k",
+      "2k"
+     ],
+     "qualities": [
+      "low",
+      "medium",
+      "high"
+     ]
+    }
+   }
+  }
+ ],
+ "total": 13,
+ "offset": 0,
+ "limit": 500
+}
