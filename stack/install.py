@@ -11,8 +11,8 @@ Base install (always, idempotent):
               hooks into ~/.claude/settings.json (backup written first).
 --main-agent  set "agent": "delegator" in ~/.claude/settings.json so every session's main thread
               is the delegator (undo with --no-main-agent).
---enforce-models  with --user: also apply the tier-model allowlist (availableModels, exact match,
-              enforceAvailableModels) and the PreModelSwitch guard to every project, not just this repo.
+--enforce-models  with --user: also apply the tier-model allowlist (availableModels, prefix match outside managed
+              settings; exact match needs `bin/stack managed-settings --install` as admin, enforceAvailableModels) and the PreModelSwitch guard to every project, not just this repo.
 --packs a,b   with --user: link only these install packs (+ core and requirements); see
               `bin/stack packs list`. Default: all packs.
 --dry-run     print what would change.
@@ -163,7 +163,7 @@ def merge_settings(ctx: Ctx, enforce_models: bool = False) -> None:
     for k, v in proj.get("env", {}).items():
         env.setdefault(k, v)
     if enforce_models:
-        for k in ("availableModels", "availableModelsMatch", "enforceAvailableModels"):
+        for k in ("availableModels", "enforceAvailableModels"):  # availableModelsMatch: managed settings only
             if k in proj:
                 user[k] = proj[k]
     hooks = user.setdefault("hooks", {})

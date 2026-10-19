@@ -309,12 +309,18 @@ neither a tier alias (`opus`/`sonnet`/`haiku`) nor a tier model id. All checkers
 
 ```json
 "availableModels": ["claude-opus-5-5", "claude-sonnet-5-5", "claude-haiku-5-5"],
-"availableModelsMatch": "exact",
 "enforceAvailableModels": true
 ```
 
-Claude Code itself then refuses any model outside the three tier ids; `exact` means an entry matches only the
-identical id. This list is a static copy of the tier ids: when a tier's model changes (in `config/models.json` or
+Claude Code itself then refuses models outside the list. In project, user and local settings `availableModels` matches
+by prefix (a listed id also admits a later id that extends it), and `enforceAvailableModels` is read only while no
+managed settings exist. Exact matching needs `"availableModelsMatch": "exact"`, which Claude Code honours **only from
+managed settings** (anywhere else it is ignored with a warning, as is `deniedModels`; `bin/stack doctor` warns about
+both). `bin/stack managed-settings` prints the exact allowlist rendered from the tiers, and
+`sudo bin/stack managed-settings --install` merges it into the OS managed-settings file (macOS
+`/Library/Application Support/ClaudeCode/managed-settings.json`, Linux and WSL `/etc/claude-code/managed-settings.json`,
+Windows `C:\Program Files\ClaudeCode\managed-settings.json`), keeping any other keys there. Managed settings apply to
+every Claude Code session on the machine. This list is a static copy of the tier ids: when a tier's model changes (in `config/models.json` or
 through an `ADVANCED_MODEL`/`MEDIUM_MODEL`/`LOW_MODEL` override), update `availableModels` as well, or Claude Code
 will refuse the new id. `bin/stack doctor` does not compare the two. The SDK path (layer 7) computes the list from
 `tiers.allowed_models()` and so follows overrides automatically.
@@ -385,8 +391,8 @@ the header-injection path, which every normal spawn takes.
 
 `stack_sdk/options.py` `build_options()` applies the same policy without relying on any settings file:
 
-- passes `settings` as the JSON string of `{"availableModels": tiers.allowed_models(), "availableModelsMatch":
-  "exact", "enforceAvailableModels": true}`;
+- passes `settings` as the JSON string of `{"availableModels": tiers.allowed_models(), "enforceAvailableModels": true}`
+  (`availableModelsMatch` would be ignored in `--settings`; exact matching comes from managed settings, layer 2);
 - raises `ValueError` if any loaded agent's model is not a tier model;
 - with a main agent (default `delegator`), refuses `model`/`effort` overrides and pins both from
   `tiers.main_thread()`; with `--agent none`, accepts only a `--model` from `allowed_models()`;
@@ -401,8 +407,9 @@ The code and the failure cases are in [Model allowlist and main-thread pinning](
 `~/.claude/settings.json` (details, path rewriting and backups in [Installation](installation.md#installation)). Without
 `--enforce-models` the `PreModelSwitch` hook is skipped and the model keys are not copied, so other projects keep
 their own model choices while still getting the depth guard, budgets and learning. With
-`./install.sh --user --enforce-models`, `availableModels`, `availableModelsMatch` and `enforceAvailableModels` are
-copied as well and the `PreModelSwitch` guard is installed, restricting every project to the tier models.
+`./install.sh --user --enforce-models`, `availableModels` and `enforceAvailableModels` are copied as well and the
+`PreModelSwitch` guard is installed, restricting every project to the tier models (prefix matching; for exact matching
+also run `sudo bin/stack managed-settings --install`, layer 2).
 
 ## Token budgets
 

@@ -12,7 +12,6 @@
     "claude-sonnet-5-5",
     "claude-haiku-5-5"
   ],
-  "availableModelsMatch": "exact",
   "enforceAvailableModels": true,
   "enabledMcpjsonServers": [],
   "permissions": {

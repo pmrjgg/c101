@@ -457,6 +457,7 @@ def check_settings(rep: Report) -> None:
 
 def check_auth(rep: Report) -> None:
     """The stack runs on a Claude subscription; an API credential makes Claude Code bill the API instead."""
+    from .managed import MANAGED_ONLY_KEYS
     for var in ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN"):
         if os.environ.get(var):
             rep.warn("environment", "%s is set: Claude Code will bill the API instead of your subscription "
@@ -468,6 +469,10 @@ def check_auth(rep: Report) -> None:
             data = read_json(p)
         except (OSError, ValueError):
             continue
+        for k in MANAGED_ONLY_KEYS:
+            if k in data:
+                rep.warn(p.replace(os.path.expanduser("~"), "~"), "%s is honoured only from managed settings and "
+                         "is ignored here (bin/stack managed-settings --install, as admin)" % k)
         if data.get("apiKeyHelper") or (data.get("env") or {}).get("ANTHROPIC_API_KEY"):
             rep.warn(p.replace(os.path.expanduser("~"), "~"),
                      "configures an API key (apiKeyHelper or env.ANTHROPIC_API_KEY): Claude Code will bill the API "

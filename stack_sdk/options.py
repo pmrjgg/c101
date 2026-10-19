@@ -133,8 +133,8 @@ def build_options(cfg: StackRunConfig | None = None) -> ClaudeAgentOptions:
     allowed = tiers.allowed_models()
     # Same allowlist Claude Code enforces from settings; passed as SDK settings so it also holds
     # when this repo's project settings are not loaded.
-    kwargs["settings"] = json.dumps({"availableModels": allowed, "availableModelsMatch": "exact",
-                                     "enforceAvailableModels": True})
+    # availableModelsMatch is honoured only from managed settings (ignored with a warning in --settings)
+    kwargs["settings"] = json.dumps({"availableModels": allowed, "enforceAvailableModels": True})
     for name, ag in loaded.items():
         if ag.definition.model not in allowed:
             raise ValueError("agent %s uses %r, not an allowed tier model" % (name, ag.definition.model))

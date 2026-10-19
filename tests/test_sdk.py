@@ -105,6 +105,7 @@ class SdkOptionsTests(unittest.TestCase):
             build_options(StackRunConfig(cwd=ROOT, main_agent=None, model="claude-fable-5-1"))
         o = build_options(StackRunConfig(cwd=ROOT))
         self.assertEqual((o.model, o.effort), ("claude-opus-5-5", "high"))
+        self.assertNotIn("availableModelsMatch", json.loads(o.settings))  # managed settings only
         self.assertEqual(json.loads(o.settings)["availableModels"],
                          ["claude-haiku-5-5", "claude-opus-5-5", "claude-sonnet-5-5"])
 

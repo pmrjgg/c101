@@ -103,3 +103,4 @@ reported as `<checker>: checker crashed: ...` and the others still run.
 | warn `config/learning.json: bounds for unknown agent '...'` | Bounds for a renamed or removed agent | Remove or rename the entry |
 | warn `environment: ANTHROPIC_API_KEY is set: ...` (or `ANTHROPIC_AUTH_TOKEN`) | An API credential in the shell overrides the claude.ai subscription login | `unset ANTHROPIC_API_KEY` (and remove it from shell profiles) |
 | warn `<settings file>: configures an API key ...` | `apiKeyHelper` or `env.ANTHROPIC_API_KEY` in a settings file | Remove it so Claude Code uses the subscription login |
+| warn `<settings file>: availableModelsMatch is honoured only from managed settings ...` (or `deniedModels`) | A managed-only key in project, local or user settings; Claude Code ignores it there | Remove it; for exact model matching run `sudo bin/stack managed-settings --install` |

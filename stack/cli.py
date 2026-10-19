@@ -15,6 +15,7 @@
     stack mcp list | enable NAME | disable NAME  manage optional MCP servers (config/mcp.optional.json)
     stack mcp sync [--dry-run]                  re-render inline (lazy) servers in agents from config/mcp.servers.json
     stack packs list                            install packs (skills + agents per pack)
+    stack managed-settings [--install]          exact tier-model allowlist for Claude Code managed settings (admin)
     stack packs apply --only a,b | --all [--dry-run]   enable packs for this project (settings.local.json)
 """
 from __future__ import annotations
@@ -301,6 +302,21 @@ def cmd_mcp(a) -> int:
     return 0
 
 
+def cmd_managed(a) -> int:
+    from . import managed
+    path = a.path or managed.managed_path()
+    if not a.install:
+        print(json.dumps(managed.allowlist(), indent=2))
+        print("\n# merge into %s (needs admin): bin/stack managed-settings --install" % path, file=sys.stderr)
+        return 0
+    if managed.install(path):
+        print("wrote %s: availableModels exact, enforceAvailableModels (other keys kept)" % path)
+        return 0
+    print("%s is not writable; run it as an administrator:\n  sudo %s managed-settings --install"
+          % (path, os.path.join(paths.REPO, "bin", "stack")), file=sys.stderr)
+    return 1
+
+
 def cmd_packs(a) -> int:
     from . import packs
     cfg = packs.load()
@@ -379,6 +395,11 @@ def main(argv=None) -> int:
     pk.add_argument("--all", action="store_true")
     pk.add_argument("--dry-run", action="store_true")
     pk.set_defaults(fn=cmd_packs)
+
+    ms = sub.add_parser("managed-settings")
+    ms.add_argument("--install", action="store_true")
+    ms.add_argument("--path", help="managed settings file (default: the OS location)")
+    ms.set_defaults(fn=cmd_managed)
 
     mc = sub.add_parser("mcp")
     mc.add_argument("action", choices=["list", "enable", "disable", "sync"])

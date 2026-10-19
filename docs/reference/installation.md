@@ -54,7 +54,7 @@ no `uv.lock`), warns when `node` is missing, and finally `exec`s `stack/install.
 | *(none)* | | base install only |
 | `--user` | | link components, register `.mcp.json` servers at user scope (none by default), merge env and hooks into `~/.claude/settings.json` |
 | `--packs a,b` | `--user` | link only these packs plus `core` and their `requires`; default is every pack. Ignored without `--user` |
-| `--enforce-models` | `--user` | also copy `availableModels`, `availableModelsMatch`, `enforceAvailableModels` and the `PreModelSwitch` hook into user settings. Ignored without `--user` |
+| `--enforce-models` | `--user` | also copy `availableModels`, `enforceAvailableModels` and the `PreModelSwitch` hook into user settings (exact matching needs `sudo bin/stack managed-settings --install`). Ignored without `--user` |
 | `--main-agent` | | set `"agent": "delegator"` in `~/.claude/settings.json` (wins if both main-agent flags are given) |
 | `--no-main-agent` | | remove the `agent` key |
 | `--dry-run` | | `install.sh` prints the uv commands instead of running them; `stack.install` prints every action prefixed `[dry-run]` and writes nothing under `~/.claude` (the final `uv run` still creates or syncs `.venv`, as uv always does) |
@@ -110,7 +110,7 @@ outside the repo.
 * `hooks`: for every event, previous stack hook groups (any command containing `/.claude/stack/bin/stack hook`)
   are removed and the project groups are appended with `"$CLAUDE_PROJECT_DIR"/bin/stack` rewritten to
   `"$HOME"/.claude/stack/bin/stack`. `PreModelSwitch` is skipped unless `--enforce-models`.
-* `availableModels`, `availableModelsMatch`, `enforceAvailableModels`: copied only with `--enforce-models`, so
+* `availableModels`, `enforceAvailableModels`: copied only with `--enforce-models`, so
   other projects are not restricted to the tier models unless you ask for it.
 * Not merged: `permissions` (including the two `deny` rules that keep `~/.claude/stack.env` unreadable),
   `enabledMcpjsonServers` and `$schema`. Copy the deny rules into your user settings if you want them everywhere.
@@ -275,6 +275,7 @@ installed as the `stack` script (`[project.scripts]` in `pyproject.toml`).
 | `packs apply` | `--only a,b` \| `--all`, `--dry-run` | write `skillOverrides` for this project | 2 without `--only`/`--all` |
 | `mcp list` | | lazy (`config/mcp.servers.json`), active (`.mcp.json`) and optional (`config/mcp.optional.json`) servers with URL or command, plus `_note` | 0 |
 | `mcp sync` | `--dry-run` | re-render the inline catalog servers in agent `mcpServers` from `config/mcp.servers.json`; `--dry-run` only lists out-of-date files | 1 with `--dry-run` if any file is out of date |
+| `managed-settings` | `--install`, `--path FILE` | print the exact tier-model allowlist (`availableModels`, `availableModelsMatch: exact`, `enforceAvailableModels`); `--install` merges it into the OS managed-settings file, keeping other keys (needs an administrator: `sudo bin/stack managed-settings --install`) | 1 when the file is not writable |
 | `mcp enable NAME` | | copy the optional entry (minus `_` keys) into `.mcp.json` (session-wide, not lazy), add NAME to `enabledMcpjsonServers` and `mcp__NAME` to `permissions.allow` in `.claude/settings.json` | 1 for an unknown server |
 | `mcp disable NAME` | | remove the entry from `.mcp.json`, `enabledMcpjsonServers` and `permissions.allow` | 0 |
 | `install ...` | installer flags | same as `install.sh` without the uv bootstrap | 0 |
@@ -440,8 +441,7 @@ Every key, its default and meaning, and the per-agent bounds are in
 | `env.CLAUDE_CODE_WORKFLOW_MAX_CONCURRENT_AGENTS` | `"16"` | concurrent agents inside a saved workflow |
 | `env.MAX_MCP_OUTPUT_TOKENS` | `"40000"` | cap on a single MCP tool result |
 | `availableModels` | `claude-opus-5-5`, `claude-sonnet-5-5`, `claude-haiku-5-5` | the only models allowed in this project |
-| `availableModelsMatch` | `"exact"` | ids must match exactly |
-| `enforceAvailableModels` | `true` | Claude Code enforces the list |
+| `enforceAvailableModels` | `true` | Claude Code enforces the list (prefix matching here; exact matching only via managed settings: `bin/stack managed-settings`) |
 | `enabledMcpjsonServers` | `[]` | `.mcp.json` servers approved without a prompt (catalog servers are not `.mcp.json` servers); maintained by `bin/stack mcp enable/disable` |
 | `permissions.allow` | `Bash(bin/stack *)`, `Bash(./bin/stack *)`, `mcp__exa`, `mcp__jina`, `mcp__spider`, `mcp__image`, `mcp__context7`, `mcp__fetch`, `mcp__neural-memory`, and `Workflow(<name>)` for `swarm-run`, `fanout`, `mediate`, `expert-panel`, `research-sweep`, `review-verify`, `plan-tournament` and `visual-iterate` | pre-approved tools (Playwright tools still ask) |
 | `permissions.deny` | `Read(~/.claude/stack.env)`, `Bash(cat ~/.claude/stack.env*)` | keep secrets out of every context |
@@ -589,7 +589,7 @@ connectivity or key values (use `/mcp` and `bin/stack keys`).
 | workflows (`.claude/workflows/*.js`) | first statement not `export const meta`; `Date.now()`, `Math.random()` or `new Date()`; any import; `model:` literal not a tier alias or id; unknown `agentType` literal; with `node`: meta not a pure literal (no templates, spreads or calls) or not evaluable, body not parsable as an async function, missing `name`/`description`, duplicate name, name `deep-research` (bundled) or equal to a skill name | `phase()` title missing from `meta.phases`; `node` not found (syntax check skipped) |
 | MCP (`.mcp.json`, `config/mcp.servers.json`) | unreadable `.mcp.json`; catalog missing, unreadable or empty; remote server without `url`; `bin/mcp-headers` or `bin/mcp-run` not executable; stdio without `command`; a `${CLAUDE_PROJECT_DIR:-.}/` or `"$d"/<path>` argument pointing at a missing file; unknown `type` | a server in both files (the `.mcp.json` copy connects for the whole session and defeats lazy loading); `alwaysLoad: true` |
 | settings | unreadable `.claude/settings.json`; a `bin/stack hook <name>` with no handler | `env.ENABLE_TOOL_SEARCH` is `false`; the two depth variables differ; `config/learning.json` bounds for an unknown agent |
-| auth | | `ANTHROPIC_API_KEY` or `ANTHROPIC_AUTH_TOKEN` set in the environment, or an `apiKeyHelper` / `env.ANTHROPIC_API_KEY` in project, local or user settings: Claude Code would bill the API instead of your subscription |
+| auth | | `ANTHROPIC_API_KEY` or `ANTHROPIC_AUTH_TOKEN` set in the environment, or an `apiKeyHelper` / `env.ANTHROPIC_API_KEY` in project, local or user settings: Claude Code would bill the API instead of your subscription; `availableModelsMatch` or `deniedModels` in those files (honoured only from managed settings) |
 
 The summary line reads `N error(s), M warning(s); A agents, S skills, W workflows, P MCP servers` (P counts catalog
 and `.mcp.json` servers). Message-by-message

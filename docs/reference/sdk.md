@@ -178,7 +178,7 @@ receive its children's results.
 | `setting_sources` | `["user", "project", "local"]` | `cfg.setting_sources or [...]` | Explicit, so local settings are not silently dropped |
 | `skills` | `"all"` | `options.py` | Enables every skill the CLI discovers (`Skill` is also allowed) |
 | `env` | settings `env` + stack variables (below) | `options.py` | Depth, concurrency and runner flags reach the CLI and every hook and MCP server it starts |
-| `settings` | `{"availableModels": [...], "availableModelsMatch": "exact", "enforceAvailableModels": true}` | `tiers.allowed_models()` | Same tier allowlist Claude Code enforces from project settings, also when they are not loaded |
+| `settings` | `{"availableModels": [...], "enforceAvailableModels": true}` | `tiers.allowed_models()` | Same tier allowlist Claude Code enforces from project settings, also when they are not loaded |
 | `task_budget` | `{"total": max_prompt_tokens}` = `{"total": 400000000}` | `budget.limits()` | API task budget as a pacing hint; the hooks enforce the hard limits |
 | `max_budget_usd` | `None` | `--max-budget-usd` | Optional stop at an estimated cost in USD, on top of the token budgets. On a Claude subscription nothing is billed per call: the figure is a list-price estimate of usage, not a charge |
 | `max_turns` | `None` | Python only | Optional turn cap for the main thread |
@@ -238,8 +238,7 @@ checks every loaded agent:
 
 ```python
 allowed = tiers.allowed_models()          # ["claude-haiku-5-5", "claude-opus-5-5", "claude-sonnet-5-5"]
-kwargs["settings"] = json.dumps({"availableModels": allowed, "availableModelsMatch": "exact",
-                                 "enforceAvailableModels": True})
+kwargs["settings"] = json.dumps({"availableModels": allowed, "enforceAvailableModels": True})
 for name, ag in loaded.items():
     if ag.definition.model not in allowed:
         raise ValueError("agent %s uses %r, not an allowed tier model" % (name, ag.definition.model))

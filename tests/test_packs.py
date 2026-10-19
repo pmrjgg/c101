@@ -74,5 +74,43 @@ class DoctorAuthTests(unittest.TestCase):
                 os.environ["ANTHROPIC_API_KEY"] = saved
 
 
+class ManagedSettingsTests(unittest.TestCase):
+    def test_install_merges_exact_allowlist_and_keeps_other_keys(self):
+        import tempfile
+        from stack import managed
+        d = tempfile.mkdtemp()
+        p = os.path.join(d, "ClaudeCode", "managed-settings.json")
+        os.makedirs(os.path.dirname(p))
+        with open(p, "w") as fh:
+            json.dump({"permissions": {"deny": ["WebFetch"]}, "availableModelsMatch": "prefix"}, fh)
+        self.assertTrue(managed.install(p))
+        with open(p) as fh:
+            got = json.load(fh)
+        self.assertEqual(got["permissions"], {"deny": ["WebFetch"]})
+        self.assertEqual(got["availableModelsMatch"], "exact")
+        self.assertEqual(got["availableModels"], sorted(tiers.allowed_models()))
+        self.assertFalse(managed.install("/proc/no-such-dir/managed-settings.json"))
+
+    def test_doctor_warns_on_managed_only_keys_outside_managed_settings(self):
+        import tempfile
+        d = tempfile.mkdtemp()
+        os.makedirs(os.path.join(d, ".claude"))
+        with open(os.path.join(d, ".claude", "settings.json"), "w") as fh:
+            json.dump({"availableModelsMatch": "exact"}, fh)
+        real, paths.REPO = paths.REPO, d
+        try:
+            rep = doctor.Report()
+            doctor.check_auth(rep)
+        finally:
+            paths.REPO = real
+        self.assertTrue(any("availableModelsMatch is honoured only from managed settings" in w for w in rep.warnings))
+
+    def test_repo_settings_carry_no_managed_only_keys(self):
+        from stack.managed import MANAGED_ONLY_KEYS
+        with open(os.path.join(paths.REPO, ".claude", "settings.json")) as fh:
+            st = json.load(fh)
+        self.assertFalse(set(MANAGED_ONLY_KEYS) & set(st))
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -56,7 +56,7 @@ Or only the agents: `from stack_sdk import load_agents; ClaudeAgentOptions(agent
 * Main thread pinned to its agent's tier model and effort (delegator: `claude-opus-5-5`, `high`);
   `--model`/`--effort` are refused while a main agent is set. Subagents run on their tier models;
   per-call overrides are stripped by the hook.
-* Only the three tier models are allowed anywhere: `availableModels` (exact match, enforced) is passed
+* Only the three tier models are allowed anywhere: `availableModels` (prefix match; exact only via managed settings, `bin/stack managed-settings`) is passed
   as SDK settings, and agents whose model is not a tier model are rejected at option build time.
 * `task_budget = max_prompt_tokens` (400M) as the API pacing hint; the hooks enforce the hard
   session/prompt token limits; `--max-budget-usd` adds a USD hard stop.
