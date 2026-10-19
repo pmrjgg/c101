@@ -403,13 +403,22 @@ The code and the failure cases are in [Model allowlist and main-thread pinning](
 
 ### Installing enforcement for every project: `--enforce-models`
 
-`./install.sh --user` (`stack/install.py` `merge_settings`) merges this repo's `env` and hooks into
-`~/.claude/settings.json` (details, path rewriting and backups in [Installation](installation.md#installation)). Without
-`--enforce-models` the `PreModelSwitch` hook is skipped and the model keys are not copied, so other projects keep
-their own model choices while still getting the depth guard, budgets and learning. With
-`./install.sh --user --enforce-models`, `availableModels` and `enforceAvailableModels` are copied as well and the
-`PreModelSwitch` guard is installed, restricting every project to the tier models (prefix matching; for exact matching
-also run `sudo bin/stack managed-settings --install`, layer 2).
+`./install.sh --enforce-models` (`stack/install.py` `enforce_models_global`) writes three things into
+`~/.claude/settings.json`, after a backup, and installs nothing else:
+
+- `availableModels`, rendered from `config/models.json` (so tier overrides are picked up when you re-run it): Claude Code
+  refuses any model outside the list, matching by prefix (a listed `claude-opus-5-5` also admits a later id that extends
+  it);
+- `enforceAvailableModels: true`, which Claude Code reads there only while no managed settings exist;
+- the `PreModelSwitch` guard (`"$HOME"/.claude/stack/bin/stack hook model-switch`), the strongest lever: it blocks
+  switches to non-tier models, and when a stack main agent runs (`bin/claude-stack`) it pins the main thread to that
+  agent's exact tier model, so even a longer id that extends it is refused.
+
+It also drops an `availableModelsMatch` there, which Claude Code would ignore. Re-running is idempotent and
+`./install.sh --no-enforce-models` removes all of it. Combined with `--user` (`merge_settings`, which merges this
+repo's `env` and other hooks), the result is the same; without `--enforce-models`, `--user` skips the guard and the
+model keys, so other projects keep their own model choices while still getting the depth guard, budgets and learning.
+For exact matching of every model, also run `sudo bin/stack managed-settings --install` (layer 2).
 
 ## Token budgets
 

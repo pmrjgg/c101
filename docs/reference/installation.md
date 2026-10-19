@@ -24,7 +24,8 @@ Python dependencies (`pyproject.toml`, project `claude-stack` 0.1.0, `requires-p
 ./install.sh                                  # base install (this repo is the project)
 ./install.sh --user                           # + agents, skills, workflows, MCP servers and hooks in every project
 ./install.sh --user --packs rust,quantum      # + only these packs (core and requirements always included)
-./install.sh --user --enforce-models          # + tier-model allowlist and model-switch guard everywhere
+./install.sh --enforce-models                 # tier-model allowlist + model-switch guard in every project (nothing else)
+./install.sh --no-enforce-models              # undo --enforce-models
 ./install.sh --main-agent                     # + delegator as the main thread of every session
 ./install.sh --no-main-agent                  # undo --main-agent
 ./install.sh --dry-run --user                 # print what would change
@@ -54,7 +55,8 @@ no `uv.lock`), warns when `node` is missing, and finally `exec`s `stack/install.
 | *(none)* | | base install only |
 | `--user` | | link components, register `.mcp.json` servers at user scope (none by default), merge env and hooks into `~/.claude/settings.json` |
 | `--packs a,b` | `--user` | link only these packs plus `core` and their `requires`; default is every pack. Ignored without `--user` |
-| `--enforce-models` | `--user` | also copy `availableModels`, `enforceAvailableModels` and the `PreModelSwitch` hook into user settings (exact matching needs `sudo bin/stack managed-settings --install`). Ignored without `--user` |
+| `--enforce-models` | | restrict every project to the tier models from `~/.claude/settings.json`: `availableModels` (rendered from `config/models.json`), `enforceAvailableModels` and the `PreModelSwitch` guard; drops an ignored `availableModelsMatch`. Works alone (installs nothing else) or with `--user`; backup written first. Exact matching for every model needs `sudo bin/stack managed-settings --install` |
+| `--no-enforce-models` | | remove those keys and the guard again |
 | `--main-agent` | | set `"agent": "delegator"` in `~/.claude/settings.json` (wins if both main-agent flags are given) |
 | `--no-main-agent` | | remove the `agent` key |
 | `--dry-run` | | `install.sh` prints the uv commands instead of running them; `stack.install` prints every action prefixed `[dry-run]` and writes nothing under `~/.claude` (the final `uv run` still creates or syncs `.venv`, as uv always does) |

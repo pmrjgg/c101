@@ -81,7 +81,7 @@ Use the stack in every project, with only the packs you want:
 
 ```bash
 ./install.sh --user --packs rust,quantum,graphic-design   # core is always included
-./install.sh --user --enforce-models                        # also restrict every project to the tier models
+./install.sh --enforce-models                               # restrict every project to the tier models (alone or with --user)
 ./install.sh --main-agent                                   # make the delegator the default main thread
 ```
 

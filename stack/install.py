@@ -11,8 +11,11 @@ Base install (always, idempotent):
               hooks into ~/.claude/settings.json (backup written first).
 --main-agent  set "agent": "delegator" in ~/.claude/settings.json so every session's main thread
               is the delegator (undo with --no-main-agent).
---enforce-models  with --user: also apply the tier-model allowlist (availableModels, prefix match outside managed
-              settings; exact match needs `bin/stack managed-settings --install` as admin, enforceAvailableModels) and the PreModelSwitch guard to every project, not just this repo.
+--enforce-models  restrict every project to the tier models from ~/.claude/settings.json: availableModels (from
+              config/models.json; prefix match outside managed settings), enforceAvailableModels and the
+              PreModelSwitch guard (pins a stack main agent to its exact tier model). Works alone (nothing
+              else is installed) or with --user. Undo with --no-enforce-models. Exact matching for every
+              model needs managed settings: `sudo bin/stack managed-settings --install`.
 --packs a,b   with --user: link only these install packs (+ core and requirements); see
               `bin/stack packs list`. Default: all packs.
 --dry-run     print what would change.
@@ -182,6 +185,37 @@ def merge_settings(ctx: Ctx, enforce_models: bool = False) -> None:
     _write_settings(ctx, user_path, user, "stack env + hooks")
 
 
+MODEL_HOOK = '"$HOME"/.claude/stack/bin/stack hook model-switch'
+
+
+def enforce_models_global(ctx: Ctx, on: bool) -> None:
+    """Restrict every project to the tier models from ~/.claude/settings.json, without installing anything else.
+
+    Writes availableModels (rendered from config/models.json), enforceAvailableModels and the PreModelSwitch
+    guard. availableModels matches by prefix outside managed settings and enforceAvailableModels is read only while
+    no managed settings exist; the guard blocks non-tier switches and pins a stack main agent to its exact tier
+    model. availableModelsMatch is dropped: Claude Code ignores it outside managed settings.
+    """
+    from . import tiers
+    user_path = os.path.join(CLAUDE, "settings.json")
+    user = _load_settings(user_path)
+    groups = user.setdefault("hooks", {}).setdefault("PreModelSwitch", [])
+    groups[:] = [g for g in groups if not any(MODEL_HOOK in h.get("command", "") for h in g.get("hooks", []))]
+    user.pop("availableModelsMatch", None)
+    if on:
+        user["availableModels"] = sorted(tiers.allowed_models())
+        user["enforceAvailableModels"] = True
+        groups.append({"hooks": [{"type": "command", "command": MODEL_HOOK, "timeout": 10}]})
+    else:
+        user.pop("availableModels", None)
+        user.pop("enforceAvailableModels", None)
+    if not groups:
+        user["hooks"].pop("PreModelSwitch")
+    if not user["hooks"]:
+        user.pop("hooks")
+    _write_settings(ctx, user_path, user, "tier-model enforcement %s" % ("on" if on else "off"))
+
+
 def set_main_agent(ctx: Ctx, on: bool) -> None:
     user_path = os.path.join(CLAUDE, "settings.json")
     user = _load_settings(user_path)
@@ -199,6 +233,7 @@ def main(argv: List[str]) -> int:
     p.add_argument("--main-agent", action="store_true")
     p.add_argument("--no-main-agent", action="store_true")
     p.add_argument("--enforce-models", action="store_true")
+    p.add_argument("--no-enforce-models", action="store_true")
     p.add_argument("--packs", help="comma-separated packs for --user (default: all); core is always included")
     p.add_argument("--dry-run", action="store_true")
     a = p.parse_args(argv)
@@ -208,6 +243,8 @@ def main(argv: List[str]) -> int:
         link_components(ctx, [x.strip() for x in a.packs.split(",")] if a.packs else None)
         register_mcp(ctx)
         merge_settings(ctx, enforce_models=a.enforce_models)
+    if a.enforce_models or a.no_enforce_models:
+        enforce_models_global(ctx, a.enforce_models)
     if a.main_agent or a.no_main_agent:
         set_main_agent(ctx, a.main_agent)
     if not ctx.log:

@@ -112,5 +112,35 @@ class ManagedSettingsTests(unittest.TestCase):
         self.assertFalse(set(MANAGED_ONLY_KEYS) & set(st))
 
 
+class GlobalModelEnforcementTests(unittest.TestCase):
+    def test_enforce_models_alone_writes_only_model_keys_and_undoes_cleanly(self):
+        import tempfile
+        from stack import install
+        d = tempfile.mkdtemp()
+        p = os.path.join(d, "settings.json")
+        before = {"theme": "dark", "availableModelsMatch": "exact",
+                  "hooks": {"Stop": [{"hooks": [{"type": "command", "command": "echo hi"}]}]}}
+        with open(p, "w") as fh:
+            json.dump(before, fh)
+        real, install.CLAUDE = install.CLAUDE, d
+        try:
+            install.enforce_models_global(install.Ctx(False), True)
+            install.enforce_models_global(install.Ctx(False), True)  # idempotent
+            with open(p) as fh:
+                on = json.load(fh)
+            install.enforce_models_global(install.Ctx(False), False)
+            with open(p) as fh:
+                off = json.load(fh)
+        finally:
+            install.CLAUDE = real
+        self.assertEqual(on["availableModels"], sorted(tiers.allowed_models()))
+        self.assertIs(on["enforceAvailableModels"], True)
+        self.assertNotIn("availableModelsMatch", on)  # ignored outside managed settings
+        self.assertEqual(len(on["hooks"]["PreModelSwitch"]), 1)
+        self.assertIn(install.MODEL_HOOK, on["hooks"]["PreModelSwitch"][0]["hooks"][0]["command"])
+        self.assertEqual(on["theme"], "dark")
+        self.assertEqual(off, {"theme": "dark", "hooks": before["hooks"]})
+
+
 if __name__ == "__main__":
     unittest.main()
