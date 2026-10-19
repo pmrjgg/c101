@@ -1,5 +1,8 @@
 # Architecture
 
+Rendered diagrams of everything below (system, lifecycle, guards, web safety, learning, image pipeline
+and all eight workflows): [DIAGRAMS.md](DIAGRAMS.md).
+
 ```
                          user
                           │
@@ -15,6 +18,7 @@
                     │              │              │                  │        /research-sweep
                     ▼              ▼              ▼                  ▼        /review-verify
              web-searcher    planner/architect  13 domain experts  voters     /plan-tournament
+                                                                             /visual-iterate
              web-scraper     swarm-coordinator  rust cpp go haskell (any
              web-crawler     mesh-router        julia java kotlin   agents)
              browser-op      concurrent-        cg cs quantum math

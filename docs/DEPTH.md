@@ -20,7 +20,9 @@
    (Claude Code ignores `Agent(type)` lists inside subagent definitions, so per-level control lives here;
    e.g. `web-scraper` may only call summarizers) and `orchestrators_until_depth` (default 6: no
    orchestrator, mediator or panel is started deeper than that — deep levels are for leaves);
-4. **denies** when the per-session spawn budget (`config/policy.json` → `max_spawns_per_session`, default 400)
+4. **denies** when the per-session spawn budget (`config/policy.json` → `max_spawns_per_session`, default 128)
+   The same hook also denies spawns when the whole-tree token budget is at `hard` (except finishing
+   agents) and when the caller read flagged web content (it may then spawn only `tainted_may_spawn`).
    is exhausted — a runaway-fan-out guard;
 5. otherwise prepends one line to the child's prompt:
 
@@ -38,7 +40,7 @@ The hook fails open: on any internal error the spawn proceeds unchanged (errors 
 * Several `Agent` calls in one assistant message run in parallel (Claude Code caps at
   `CLAUDE_CODE_MAX_CONCURRENT_SUBAGENTS=20`).
 * Saved workflows (`/swarm-run`, `/fanout`, `/mediate`, `/expert-panel`, `/research-sweep`,
-  `/review-verify`, `/plan-tournament`) run up to `CLAUDE_CODE_WORKFLOW_MAX_CONCURRENT_AGENTS=16`
+  `/review-verify`, `/plan-tournament`, `/visual-iterate`) run up to `CLAUDE_CODE_WORKFLOW_MAX_CONCURRENT_AGENTS=16`
   agents at once with deterministic control flow.
 * Agent teams (experimental, `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`) give long-lived teammates that
   message each other; not enabled by default because teammates cannot nest and skills don't preload.

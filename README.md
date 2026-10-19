@@ -94,7 +94,7 @@ Claude Code 2.1.29x or later.
 - [Overview and request lifecycle](#overview-and-request-lifecycle)
   - [Two runtimes](#two-runtimes)
   - [Agent layers](#agent-layers)
-  - [The control plane: six hooks](#the-control-plane-six-hooks)
+  - [The control plane: eight hooks](#the-control-plane-eight-hooks)
   - [Lifecycle of one request](#lifecycle-of-one-request)
   - [Depth map of the example](#depth-map-of-the-example)
   - [How limits change behaviour mid-request](#how-limits-change-behaviour-mid-request)
@@ -128,6 +128,7 @@ Claude Code 2.1.29x or later.
   - [Doubt escalation](#doubt-escalation)
   - [Context-first policy](#context-first-policy)
 - [Saved workflows](#saved-workflows)
+  - [Workflows diagram](#workflows-diagram)
   - [Launching](#launching)
   - [Runtime contract](#runtime-contract)
   - [fanout](#fanout)
@@ -199,7 +200,7 @@ Claude Code 2.1.29x or later.
 ## Overview and request lifecycle
 
 Under the hood, one session becomes a hierarchical multi-agent system. The repository contains 55 subagents in eight groups (`.claude/agents/<group>/<name>.md`), 225 skills
-(`.claude/skills/<name>/SKILL.md`), eight saved workflows (`.claude/workflows/<name>.js`), six hooks wired in
+(`.claude/skills/<name>/SKILL.md`), eight saved workflows (`.claude/workflows/<name>.js`), eight hooks wired in
 `.claude/settings.json`, project MCP servers (`.mcp.json`), and the stdlib-only Python tooling that the hooks run
 (`stack/`, CPython 3.13 via uv). No code in this repository answers a request itself. The code sets the rules
 under which agents route, delegate, verify and report.
@@ -352,7 +353,7 @@ A spawn rule makes the orchestration group (plus `expert-panel-chair` and `debat
 depth 6 (`spawn_rules.orchestrators_until_depth`). Deep levels are left to leaves because a coordinator needs
 depth beneath it to do its job.
 
-### The control plane: six hooks
+### The control plane: eight hooks
 
 Six command hooks form the control plane: `SessionStart` (`session-start`), `UserPromptSubmit` (`prompt-submit`),
 `PreToolUse` on `Agent|Task` (`pre-agent`), `PreModelSwitch` (`model-switch`), `SubagentStop` (`subagent-stop`,
@@ -1728,6 +1729,120 @@ context peak passes 0.8 of the current window.
 
 ## Saved workflows
 
+### Workflows diagram
+
+All eight saved workflows in one picture: the shared entry (main thread, Workflow tool, argument validation)
+and one row per workflow with its producers, judges, the decision the script computes in code, and its stop
+rule. Each workflow has its own, more detailed diagram in [docs/DIAGRAMS.md](docs/DIAGRAMS.md#8-workflows-one-by-one)
+(also a static [SVG](docs/diagrams/all-workflows.svg) for viewers without Mermaid).
+
+```mermaid
+flowchart TB
+    subgraph ENTRY["Shared entry, main thread only"]
+        direction LR
+        E1(["main thread, depth 0<br/>Workflow tool or /name"]):::entry
+        E2{"args valid?"}:::calc
+        E3[/"started: false,<br/>reason + next example,<br/>no agent started"/]:::halt
+        E1 --> E2
+        E2 -->|no| E3
+    end
+
+    subgraph ALL["Agents produce content, the script decides"]
+        direction TB
+
+        subgraph SW["swarm-run"]
+            direction LR
+            SW1["Work: a worker per<br/>shard, pipelined,<br/>re-run once if dead"]:::agent
+            SW2["Normalize:<br/>file-summarizer,<br/>code parser fallback"]:::agent
+            SW3{{"code: retry only<br/>the uncovered part<br/>once; exact-key<br/>dedup, coverage<br/>ledger"}}:::calc
+            SW4["Merge:<br/>swarm-coordinator;<br/>none if every<br/>shard failed"]:::out
+            SW1 --> SW2 --> SW3 --> SW4
+        end
+
+        subgraph FO["fanout"]
+            direction LR
+            FO1["Map: one agentType<br/>call per item;<br/>prompts rendered<br/>up front"]:::agent
+            FO2{{"code: retry null,<br/>empty or thrown;<br/>once by default,<br/>max 3"}}:::calc
+            FO3[/"results in input<br/>order, failed,<br/>skipped"/]:::out
+            FO1 --> FO2 --> FO3
+        end
+
+        subgraph ME["mediate"]
+            direction LR
+            ME1["Solve: 3-9 diverse<br/>voters, independent"]:::agent
+            ME2["Critique+Rank: the<br/>same voters rank<br/>S1..Sn blind"]:::judge
+            ME3{{"code: tally the<br/>declared rule,<br/>Schulze by default;<br/>robustness checks"}}:::calc
+            ME4["Debate on a<br/>near-tie: top two<br/>rebut, voters re-vote"]:::judge
+            ME5["Synthesize:<br/>mediator, winner<br/>+ grafts"]:::out
+            ME1 --> ME2 --> ME3 -->|clear| ME5
+            ME3 -->|near-tie| ME4 --> ME5
+        end
+
+        subgraph EP["expert-panel"]
+            direction LR
+            EP1["Frame:<br/>expert-panel-chair,<br/>4-7 panelists"]:::agent
+            EP2["Round k: panelists<br/>answer blind,<br/>in parallel"]:::agent
+            EP3{{"code: median, IQR,<br/>pools, Borda; stop:<br/>convergence,<br/>stability, cap,<br/>budget"}}:::calc
+            EP4["Feedback:<br/>source-summarizer,<br/>fact-checker<br/>rules on cruxes"]:::judge
+            EP5["Synthesize: chair,<br/>consensus and<br/>minority report"]:::out
+            EP1 --> EP2 --> EP3 -->|stop| EP5
+            EP3 -->|continue| EP4 -->|packet| EP2
+        end
+
+        subgraph RS["research-sweep"]
+            direction LR
+            RS1["Plan:<br/>deep-researcher,<br/>sub-questions"]:::agent
+            RS2["Sweep + Extract:<br/>web-searcher,<br/>paper-researcher,<br/>web-crawler,<br/>source-summarizer"]:::agent
+            RS3{{"code: claim ledger,<br/>dedup; risk score<br/>picks claims"}}:::calc
+            RS4["Verify:<br/>fact-checker;<br/>Critic:<br/>quality-control"]:::judge
+            RS5["Synthesize:<br/>deep-researcher,<br/>cited report"]:::out
+            RS1 --> RS2 --> RS3 --> RS4 -->|"dry or cap"| RS5
+            RS4 -->|gaps| RS2
+        end
+
+        subgraph RV["review-verify"]
+            direction LR
+            RV1["Scope:<br/>file-summarizer;<br/>Find: a finder per<br/>dimension x shard"]:::agent
+            RV2{{"code: dedup within<br/>2 lines, triage,<br/>cap at maxVerify"}}:::calc
+            RV3["Verify: 3<br/>adversarial-verifier<br/>lenses try to refute"]:::judge
+            RV4{{"code: majority<br/>confirms, else<br/>inconclusive or<br/>rejected"}}:::calc
+            RV5["Report:<br/>file-summarizer"]:::out
+            RV1 --> RV2 --> RV3 --> RV4 --> RV5
+        end
+
+        subgraph PT["plan-tournament"]
+            direction LR
+            PT1["Generate: planner<br/>or architect, one<br/>plan per angle"]:::agent
+            PT2["Judge: 1-7 blind<br/>judges, 5 criteria"]:::judge
+            PT3{{"code: medians x<br/>weights, Borda<br/>tie-break, grafts"}}:::calc
+            PT4["Synthesize:<br/>planner merges<br/>the winner"]:::out
+            PT5["Critique:<br/>plan-critic; one<br/>Revise by planner"]:::judge
+            PT1 --> PT2 --> PT3 --> PT4 --> PT5
+        end
+
+        subgraph VI["visual-iterate"]
+            direction LR
+            VI1["Produce:<br/>image-generator,<br/>image-editor or<br/>vector-artist"]:::agent
+            VI2["Review:<br/>visual-reviewer<br/>scores the rubric"]:::judge
+            VI3{{"code: overall, PASS,<br/>best so far; stop:<br/>pass, max rounds,<br/>no gain twice,<br/>STOP, blocked,<br/>budget"}}:::calc
+            VI4["Export, optional:<br/>layered SVG, PDF"]:::out
+            VI1 --> VI2 --> VI3 -->|stop| VI4
+            VI3 -->|revise| VI1
+        end
+
+        SW ~~~ FO ~~~ ME ~~~ EP ~~~ RS ~~~ RV ~~~ PT ~~~ VI
+    end
+
+    ENTRY -->|"valid: the script runs"| ALL
+
+    classDef entry fill:#b0bec5,stroke:#37474f,color:#111
+    classDef agent fill:#90caf9,stroke:#1565c0,color:#111
+    classDef judge fill:#ffcc80,stroke:#e65100,color:#111
+    classDef calc fill:#a5d6a7,stroke:#2e7d32,color:#111
+    classDef out fill:#ce93d8,stroke:#6a1b9a,color:#111
+    classDef halt fill:#ef9a9a,stroke:#c62828,color:#111
+```
+
 A saved workflow is a plain JavaScript script in `.claude/workflows/<name>.js` that the Workflow runtime executes
 with deterministic control flow. Agents only produce content (solutions, ballots, findings, claims, plans);
 everything that decides an outcome — vote tallies, quantiles, stopping rules, dedup, coverage ledgers, survival
@@ -2473,6 +2588,10 @@ imports dominate, and `session-end` does no work beyond starting a detached proc
 The `uv run` fallback adds resolver start-up to every call; `./install.sh` creates `.venv` so the fast path is used.
 
 ### `pre-agent`: depth guard, spawn rules, budgets and tier stripping
+
+Since the web-content safety layer, `pre_agent` also checks the caller's taint between the spawn rules and
+the token budget: an agent that read flagged web content may only spawn `tainted_may_spawn` agents (deny for
+subagents, `ask` for the main thread). See [Web content safety](#web-content-safety-prompt-injection).
 
 Fires on `PreToolUse` for the `Agent` and `Task` tools (any other `tool_name` returns `None`).
 
@@ -5176,4 +5295,4 @@ causes and fixes are in `.claude/skills/stack-authoring/references/doctor-errors
 ## Documentation
 
 [Architecture](docs/ARCHITECTURE.md) · [Conventions](docs/CONVENTIONS.md) · [Depth and budgets](docs/DEPTH.md) ·
-[Learning](docs/LEARNING.md) · [MCP servers](docs/MCP.md) · [Agent SDK](docs/SDK.md)
+[Learning](docs/LEARNING.md) · [MCP servers](docs/MCP.md) · [Agent SDK](docs/SDK.md) · [Diagrams](docs/DIAGRAMS.md)
