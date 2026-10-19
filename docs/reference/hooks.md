@@ -422,8 +422,8 @@ From `config/policy.json` → `token_budget` (the same values are the code defau
 
 | Scope | `min` (guaranteed) | `soft` (converge) | `max` (hard) | Learned ceiling |
 |---|---|---|---|---|
-| Session | `min_global_tokens` 400,000,000 | `soft_global_tokens` 1,200,000,000 | `max_global_tokens` 1,600,000,000 | 2× configured |
-| Prompt | `min_prompt_tokens` 30,000,000 | `soft_prompt_tokens` 90,000,000 | `max_prompt_tokens` 120,000,000 | 2× configured |
+| Session | `min_global_tokens` 2,500,000,000 | `soft_global_tokens` 7,500,000,000 | `max_global_tokens` 10,000,000,000 | 2× configured |
+| Prompt | `min_prompt_tokens` 100,000,000 | `soft_prompt_tokens` 300,000,000 | `max_prompt_tokens` 400,000,000 | 2× configured |
 
 Other keys: `finishing_agents` = `file-summarizer`, `quality-control`, `validator`, `source-summarizer`;
 `learn_global` = `report`. Keys starting with `_` are ignored.
@@ -513,7 +513,7 @@ them, and never past twice the configured value, so one outlier session cannot b
 are never learned. The fit, the formulas and where the learned values are stored are in
 [Global token budgets](learning.md#global-token-budgets).
 
-Under the Agent SDK, `task_budget.total` is set to `max_prompt_tokens` (120,000,000) as the API's pacing hint; the
+Under the Agent SDK, `task_budget.total` is set to `max_prompt_tokens` (400,000,000) as the API's pacing hint; the
 hard session and prompt limits are still enforced by the `pre-agent` hook.
 
 Every setting and environment variable these mechanisms read is listed in

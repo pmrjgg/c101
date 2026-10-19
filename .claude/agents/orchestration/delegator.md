@@ -96,8 +96,8 @@ route is your fault, not the child's.
    your ledger (do not trust the last line blindly: it lists recent sessions by modification time).
    Compare with `max_spawns_per_session` in `config/policy.json` (128 by default). Never let one route
    consume more than half the remaining budget without telling the user. Also track the token
-   budget that the UserPromptSubmit hook reports each turn (session 3B, soft 2.25B; per prompt 120M,
-   soft 90M) and any `budget` your children report. At soft, start no new exploratory routes; only
+   budget that the UserPromptSubmit hook reports each turn (session 10B, soft 7.5B; per prompt 400M,
+   soft 300M) and any `budget` your children report. At soft, start no new exploratory routes; only
    finish, verify and report. At hard, only `file-summarizer`, `quality-control`, `validator` and
    `source-summarizer` can be spawned, so answer with what you have and list the gaps as Open doubts.
 7. **Integrate.** Read each child's Result, Open doubts and Confidence first. Open files only for the

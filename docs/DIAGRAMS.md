@@ -262,7 +262,7 @@ sequenceDiagram
     U->>H: bin/claude-stack starts<br/>SessionStart
     H-->>D: status line: max depth 8,<br/>missing keys, recent tuning
     U->>H: prompt<br/>UserPromptSubmit
-    H-->>D: prompt + budget note:<br/>session of 3B, soft 2.25B,<br/>prompt up to 120M, soft 90M
+    H-->>D: prompt + budget note:<br/>session of 10B, soft 7.5B,<br/>prompt up to 400M, soft 300M
     D->>D: classify, pick the<br/>cheapest adequate route
     D->>H: Agent call<br/>PreToolUse pre-agent
     H->>H: depth, spawn rules, taint,<br/>tokens, 128 spawns
@@ -331,9 +331,9 @@ flowchart TD
     C -->|no| T
     T -->|yes| X5
     T -->|no| E --> LV
-    LV -->|"ok: below soft;<br/>never throttled under<br/>750M session, 30M prompt"| G
-    LV -->|"soft: session 2.25B+<br/>or prompt 90M+;<br/>header says converge"| G
-    LV -->|"hard: session 3B+<br/>or prompt 120M+"| HF
+    LV -->|"ok: below soft;<br/>never throttled under<br/>2.5B session, 100M prompt"| G
+    LV -->|"soft: session 7.5B+<br/>or prompt 300M+;<br/>header says converge"| G
+    LV -->|"hard: session 10B+<br/>or prompt 400M+"| HF
     HF -->|"yes: file-summarizer,<br/>quality-control,<br/>validator or<br/>source-summarizer"| G
     HF -->|no| X3
     G --> H

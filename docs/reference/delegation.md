@@ -64,7 +64,7 @@ from `stack/hooks.py`:
 Example as a child sees it:
 
 ```
-<stack-context depth="3" max_depth="8" parent="orchestrator" remaining_depth="5" spawns_this_session="57" budget="ok" prompt_tokens="12.4M/120M" session_tokens="310M/3B" out_dir=".stack/out/rust-expert"/>
+<stack-context depth="3" max_depth="8" parent="orchestrator" remaining_depth="5" spawns_this_session="57" budget="ok" prompt_tokens="12.4M/400M" session_tokens="310M/10B" out_dir=".stack/out/rust-expert"/>
 ```
 
 | Attribute | Computed as | How the agent acts on it |
@@ -75,8 +75,8 @@ Example as a child sees it:
 | `remaining_depth` | `max_depth - depth` | what the agent may spawn (depth table below) |
 | `spawns_this_session` | session spawn counter including this child; a snapshot, siblings keep spawning | spawn headroom `H` (spawn budget below) |
 | `budget` | `ok`, `soft` or `hard`; the worse of the session level and the prompt level | convergence rules (token budgets below) |
-| `prompt_tokens` | tokens used by the current user prompt / `max_prompt_tokens` (120M) | headroom for new branches |
-| `session_tokens` | tokens used this session / `max_global_tokens` (3B) | headroom for new branches |
+| `prompt_tokens` | tokens used by the current user prompt / `max_prompt_tokens` (400M) | headroom for new branches |
+| `session_tokens` | tokens used this session / `max_global_tokens` (10B) | headroom for new branches |
 | `out_dir` | `.stack/out/<subagent_type>` (`general-purpose` if none was given) | where offloaded files go (output contract) |
 
 Token counts are formatted with three significant digits and a `k`, `M` or `B` suffix (`budget.fmt`).
@@ -177,8 +177,8 @@ and only single essential spawns remain.
 ## Token budgets as seen by delegation
 
 Budgets cover the whole tree (main transcript plus every `<session>/subagents/**/agent-*.jsonl`),
-per session and per user prompt (`promptId`). The limits (guaranteed / soft / hard: session 750M / 2.25B / 3B,
-prompt 30M / 90M / 120M), the weighted token count and the incremental accounting in `stack/budget.py` are described
+per session and per user prompt (`promptId`). The limits (guaranteed / soft / hard: session 2.5B / 7.5B / 10B,
+prompt 100M / 300M / 400M), the weighted token count and the incremental accounting in `stack/budget.py` are described
 in [Token budgets](hooks.md#token-budgets). Below the guaranteed amount an agent is never throttled; the header's `budget` is
 the worse of the session level and the prompt level, and it sets the agent's conduct:
 

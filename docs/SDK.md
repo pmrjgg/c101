@@ -58,7 +58,7 @@ Or only the agents: `from stack_sdk import load_agents; ClaudeAgentOptions(agent
   per-call overrides are stripped by the hook.
 * Only the three tier models are allowed anywhere: `availableModels` (exact match, enforced) is passed
   as SDK settings, and agents whose model is not a tier model are rejected at option build time.
-* `task_budget = max_prompt_tokens` (120M) as the API pacing hint; the hooks enforce the hard
+* `task_budget = max_prompt_tokens` (400M) as the API pacing hint; the hooks enforce the hard
   session/prompt token limits; `--max-budget-usd` adds a USD hard stop.
 
 ## Agent definitions under the SDK

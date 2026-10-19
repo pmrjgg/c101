@@ -382,8 +382,8 @@ the `<stack-context>` header and the tier rules.
 | `spawn_rules.groups.research_leaves` | `quick-researcher`, `web-searcher`, `web-scraper`, `web-crawler`, `browser-operator`, `fact-checker`, `source-summarizer`, `file-summarizer`, `paper-researcher` | `@research_leaves` |
 | `spawn_rules.callers.<caller>` | see [Per-caller spawn rules](delegation.md#per-caller-spawn-rules) | allowed child types for that caller (`*` = any, `@group` expands); callers not listed may spawn anything. Enforced here because Claude Code ignores `Agent(type)` lists in a subagent's `tools` |
 | `token_budget.cache_read_weight` | `1.0` | weight of cache-read tokens in the effective count |
-| `token_budget.min_global_tokens` / `soft_global_tokens` / `max_global_tokens` | `750000000` / `2250000000` / `3000000000` | session scope: never throttled below min; converge at soft; deny new spawns at max |
-| `token_budget.min_prompt_tokens` / `soft_prompt_tokens` / `max_prompt_tokens` | `30000000` / `90000000` / `120000000` | same per user prompt (`promptId`); `max_prompt_tokens` is also the SDK `task_budget` |
+| `token_budget.min_global_tokens` / `soft_global_tokens` / `max_global_tokens` | `2500000000` / `7500000000` / `10000000000` | session scope: never throttled below min; converge at soft; deny new spawns at max |
+| `token_budget.min_prompt_tokens` / `soft_prompt_tokens` / `max_prompt_tokens` | `100000000` / `300000000` / `400000000` | same per user prompt (`promptId`); `max_prompt_tokens` is also the SDK `task_budget` |
 | `token_budget.finishing_agents` | `file-summarizer`, `quality-control`, `validator`, `source-summarizer` | still spawnable at the hard limit so work can be wrapped up |
 | `token_budget.learn_global` | `"report"` | `"report"`: `learn update` only recommends raised limits; `"apply"`: `budgets.json` `_global.applied` raises the effective limits |
 | `context_policy.offload_lines` / `offload_chars` | `60` / `3000` | replies longer than this go to `.stack/out/<agent>/` with a summary returned (convention via `output-contract`) |

@@ -84,10 +84,10 @@ class BudgetTests(unittest.TestCase):
 
     def test_policy_values(self):
         lim = budget.limits()
-        self.assertEqual(lim["max_global_tokens"], 3_000_000_000)
-        self.assertEqual(lim["soft_global_tokens"], 2_250_000_000)
-        self.assertEqual(lim["min_global_tokens"], 750_000_000)
-        self.assertEqual(lim["max_prompt_tokens"], 120_000_000)
+        self.assertEqual(lim["max_global_tokens"], 10_000_000_000)
+        self.assertEqual(lim["soft_global_tokens"], 7_500_000_000)
+        self.assertEqual(lim["min_global_tokens"], 2_500_000_000)
+        self.assertEqual(lim["max_prompt_tokens"], 400_000_000)
         self.assertLess(lim["min_prompt_tokens"], lim["soft_prompt_tokens"])
         self.assertLess(lim["soft_prompt_tokens"], lim["max_prompt_tokens"])
 
@@ -99,7 +99,7 @@ class HardLimitHookTests(unittest.TestCase):
             main = os.path.join(tmp, "s.jsonl")
             with open(main, "w") as fh:
                 fh.write(line(type="user", promptId="P", message={"content": "x"}))
-                fh.write(assistant("m", inp=130_000_000))  # beyond the 120M per-prompt maximum
+                fh.write(assistant("m", inp=410_000_000))  # beyond the 400M per-prompt maximum
             env = dict(os.environ, CLAUDE_STACK_DATA=os.path.join(tmp, "data"))
             base = {"tool_name": "Agent", "session_id": "H", "transcript_path": main, "prompt_id": "P",
                     "tool_input": {"subagent_type": "deep-researcher", "prompt": "go"}}

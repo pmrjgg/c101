@@ -136,12 +136,12 @@
   "token_budget": {
     "_doc": "Whole-tree token budgets (main thread + every subagent), see docs/DEPTH.md#token-budgets. Tokens = input + cache_creation + output + cache_read_weight * cache_read. Below min: never throttled. soft: agents converge (no new exploratory branches). max: new spawns denied except finishing_agents. Per prompt = one user prompt (promptId). Learned values may only RAISE these (stack learn update reports; apply with learn_global=apply).",
     "cache_read_weight": 1.0,
-    "min_global_tokens": 750000000,
-    "soft_global_tokens": 2250000000,
-    "max_global_tokens": 3000000000,
-    "min_prompt_tokens": 30000000,
-    "soft_prompt_tokens": 90000000,
-    "max_prompt_tokens": 120000000,
+    "min_global_tokens": 2500000000,
+    "soft_global_tokens": 7500000000,
+    "max_global_tokens": 10000000000,
+    "min_prompt_tokens": 100000000,
+    "soft_prompt_tokens": 300000000,
+    "max_prompt_tokens": 400000000,
     "finishing_agents": [
       "file-summarizer",
       "quality-control",

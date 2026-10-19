@@ -36,12 +36,12 @@ FIELDS = ("input", "cache_creation", "cache_read", "output")
 
 DEFAULTS = {
     "cache_read_weight": 1.0,
-    "min_global_tokens": 750_000_000,
-    "soft_global_tokens": 2_250_000_000,
-    "max_global_tokens": 3_000_000_000,
-    "min_prompt_tokens": 30_000_000,
-    "soft_prompt_tokens": 90_000_000,
-    "max_prompt_tokens": 120_000_000,
+    "min_global_tokens": 2_500_000_000,
+    "soft_global_tokens": 7_500_000_000,
+    "max_global_tokens": 10_000_000_000,
+    "min_prompt_tokens": 100_000_000,
+    "soft_prompt_tokens": 300_000_000,
+    "max_prompt_tokens": 400_000_000,
     "finishing_agents": ["file-summarizer", "quality-control", "validator", "source-summarizer"],
 }
 

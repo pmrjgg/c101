@@ -39,7 +39,7 @@ both ([docs/CONVENTIONS.md](../CONVENTIONS.md) section 11) are listed with their
 | Permissions | interactive prompts | `permission_mode="dontAsk"`, `--permission-prompts none`, explicit allow-list (settings allow-list minus `Bash(...)` entries, core tools, `Agent`, `Workflow`, `Skill`, every `mcp__<project server>`) |
 | Subagent results | foreground when the caller passes `run_in_background: false` | forced: `CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1` and `CLAUDE_STACK_FOREGROUND=1` (the hook rewrites every Agent call to `run_in_background: false`); `--background` turns it off |
 | Questions to the user | the delegator asks in plain text at the end of its turn | none mid-run: the delegator proceeds on its stated default and reports it |
-| Budget pacing | hooks only | hooks, plus `task_budget = max_prompt_tokens` (120M) as an API hint and optional `--max-budget-usd` |
+| Budget pacing | hooks only | hooks, plus `task_budget = max_prompt_tokens` (400M) as an API hint and optional `--max-budget-usd` |
 | Learning trigger | `SessionEnd` hook detaches `learn run` | the runner calls `engine.run_after_session()` on the finished transcript (the SDK has no SessionEnd callback) |
 
 Both runtimes export `CLAUDE_STACK_MAIN_AGENT`. The hooks use it to name the depth-0 parent and to pin the main

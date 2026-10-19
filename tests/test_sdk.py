@@ -61,7 +61,7 @@ class SdkOptionsTests(unittest.TestCase):
         self.assertIsNone(o.hooks)  # settings.json command hooks run instead
         self.assertIn("project", o.setting_sources)
         self.assertEqual(o.model, "claude-opus-5-5")
-        self.assertEqual(o.task_budget, {"total": 120_000_000})
+        self.assertEqual(o.task_budget, {"total": 400_000_000})
         self.assertEqual(o.skills, "all")
         self.assertEqual(o.permission_mode, "dontAsk")
         self.assertEqual(o.extra_args.get("permission-prompts"), "none")

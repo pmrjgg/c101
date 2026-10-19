@@ -172,7 +172,7 @@ receive its children's results.
 | `skills` | `"all"` | `options.py` | Enables every skill the CLI discovers (`Skill` is also allowed) |
 | `env` | settings `env` + stack variables (below) | `options.py` | Depth, concurrency and runner flags reach the CLI and every hook and MCP server it starts |
 | `settings` | `{"availableModels": [...], "availableModelsMatch": "exact", "enforceAvailableModels": true}` | `tiers.allowed_models()` | Same tier allowlist Claude Code enforces from project settings, also when they are not loaded |
-| `task_budget` | `{"total": max_prompt_tokens}` = `{"total": 120000000}` | `budget.limits()` | API task budget as a pacing hint; the hooks enforce the hard limits |
+| `task_budget` | `{"total": max_prompt_tokens}` = `{"total": 400000000}` | `budget.limits()` | API task budget as a pacing hint; the hooks enforce the hard limits |
 | `max_budget_usd` | `None` | `--max-budget-usd` | Optional USD hard stop on top of the token budgets |
 | `max_turns` | `None` | Python only | Optional turn cap for the main thread |
 | `model`, `effort` | the main agent's tier model and effort | `tiers.main_thread()` | See the next subsection |
@@ -219,7 +219,7 @@ Foreground execution trades speed for context: each parent gets its children's f
 it takes its next step, so it never polls or guesses. `--background` (`foreground=False`) leaves both
 foreground variables unset.
 
-`task_budget_tokens` defaults to `budget.limits()["max_prompt_tokens"]`. That is 120,000,000 from
+`task_budget_tokens` defaults to `budget.limits()["max_prompt_tokens"]`. That is 400,000,000 from
 `config/policy.json` `token_budget.max_prompt_tokens`, or a higher value the learner has applied in
 `<data_dir>/budgets.json`, since learned limits may only raise the configured ones.
 

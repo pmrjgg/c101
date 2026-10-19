@@ -33,8 +33,8 @@ tooling) that turns a single session into a coordinated team:
   top of the three protocol skills every agent preloads.
 - **Depth 8, bounded.** Native nested subagents are raised from 3 to 8 levels. The `pre-agent` hook gives every child
   a `<stack-context>` header (depth, parent, remaining depth, spawn count, token budget, output directory) and
-  enforces per-caller spawn rules, a 128-spawn session budget and whole-tree token budgets (session 750M guaranteed,
-  2.25B soft, 3B hard; per prompt 30M, 90M, 120M).
+  enforces per-caller spawn rules, a 128-spawn session budget and whole-tree token budgets (session 2.5B guaranteed,
+  7.5B soft, 10B hard; per prompt 100M, 300M, 400M).
 - **Three model tiers.** `claude-opus-5-5`, `claude-sonnet-5-5` and `claude-haiku-5-5` are the only models allowed
   anywhere, enforced at seven layers; a caller that wants cheaper or stronger work picks a different agent, never a
   per-call model or effort.

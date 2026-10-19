@@ -403,8 +403,8 @@ max  = min(max(cfg_max,  int(Q95 * 1.5), soft), 2 * cfg_max)
   only in `budgets.json`, never written back to `policy.json`. The x2 cap is therefore an absolute
   ceiling of twice the configured limit, so one outlier session cannot open the budget without limit.
 
-Example: 11 prompts with `Q90 = 166.9M` and `Q95 = 307.3M` give `soft_prompt_tokens = min(max(90M, 208.6M), 180M) = 180M`
-and `max_prompt_tokens = min(max(120M, 460.9M, 180M), 240M) = 240M`.
+Example: 11 prompts with `Q90 = 556.3M` and `Q95 = 1.024B` give `soft_prompt_tokens = min(max(300M, 695.4M), 600M) = 600M`
+and `max_prompt_tokens = min(max(400M, 1.536B, 600M), 800M) = 800M`.
 
 ## Applying changes
 
@@ -509,8 +509,8 @@ names that do not exist.
 
 Related keys in `config/policy.json`: `ingest_debounce_seconds` (60), `midsession_update_minutes`
 (30), and in `token_budget`: `learn_global` (`"report"` or `"apply"`), `cache_read_weight` (1.0),
-`soft_global_tokens` (2.25B), `max_global_tokens` (3B), `soft_prompt_tokens` (90M) and
-`max_prompt_tokens` (120M).
+`soft_global_tokens` (7.5B), `max_global_tokens` (10B), `soft_prompt_tokens` (300M) and
+`max_prompt_tokens` (400M).
 
 Fixed constants in code:
 
