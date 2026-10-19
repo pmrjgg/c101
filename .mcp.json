@@ -1,0 +1,44 @@
+{
+  "mcpServers": {
+    "playwright": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@playwright/mcp@latest",
+        "--headless",
+        "--isolated",
+        "--caps=vision,pdf,devtools",
+        "--output-dir=.stack/playwright",
+        "--viewport-size=1280x800"
+      ]
+    },
+    "exa": {
+      "type": "http",
+      "url": "https://mcp.exa.ai/mcp?tools=web_search_exa,web_fetch_exa,web_search_advanced_exa,agent_run",
+      "headersHelper": "\"${CLAUDE_PROJECT_DIR:-$HOME/.claude/stack}/bin/mcp-headers\" exa"
+    },
+    "jina": {
+      "type": "http",
+      "url": "https://mcp.jina.ai/v1",
+      "headersHelper": "\"${CLAUDE_PROJECT_DIR:-$HOME/.claude/stack}/bin/mcp-headers\" jina"
+    },
+    "spider": {
+      "type": "http",
+      "url": "https://mcp.spider.cloud/mcp",
+      "headersHelper": "\"${CLAUDE_PROJECT_DIR:-$HOME/.claude/stack}/bin/mcp-headers\" spider"
+    },
+    "context7": {
+      "type": "http",
+      "url": "https://mcp.context7.com/mcp",
+      "headersHelper": "\"${CLAUDE_PROJECT_DIR:-$HOME/.claude/stack}/bin/mcp-headers\" context7"
+    },
+    "image": {
+      "type": "stdio",
+      "command": "${CLAUDE_PROJECT_DIR:-.}/bin/mcp-run",
+      "args": [
+        "${CLAUDE_PROJECT_DIR:-.}/bin/image-router"
+      ]
+    }
+  }
+}

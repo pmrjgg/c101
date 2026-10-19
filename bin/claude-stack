@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+# Start Claude Code with the stack's main-thread agent (default: delegator) pinned to
+# its tier model and effort (config/models.json):
+#   bin/claude-stack                      interactive, delegator
+#   bin/claude-stack -p "question"        headless
+#   STACK_MAIN_AGENT=orchestrator bin/claude-stack
+# --model / --effort / --agent are refused: the tier list is authoritative (change it with
+# `bin/stack agents set <agent> tier=...`). Other arguments pass through to `claude`.
+set -euo pipefail
+here="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+agent="${STACK_MAIN_AGENT:-delegator}"
+for a in "$@"; do
+  case "$a" in
+    --model|--model=*|--effort|--effort=*|--agent|--agent=*)
+      echo "claude-stack: $a is not allowed; the main thread runs $agent on its tier model/effort." >&2
+      echo "  change it with: bin/stack agents set $agent tier=ADVANCED_MODEL|MEDIUM_MODEL|LOW_MODEL" >&2
+      exit 2 ;;
+  esac
+done
+read -r -a pin <<< "$("$here/stack" agents main-args "$agent")"
+export CLAUDE_STACK_MAIN_AGENT="$agent"
+exec claude "${pin[@]}" "$@"

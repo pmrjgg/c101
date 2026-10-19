@@ -1,0 +1,160 @@
+{
+  "_doc": "Runtime policy enforced by the hooks in stack/hooks.py. See docs/DEPTH.md.",
+  "max_spawns_per_session": 400,
+  "inject_context": true,
+  "midsession_update_minutes": 30,
+  "expected_keys": [
+    "EXA_API_KEY",
+    "JINA_API_KEY",
+    "SPIDER_API_KEY"
+  ],
+  "optional_keys": [
+    "IMAGE_GEN_URL",
+    "IMAGE_GEN_KEY",
+    "IMAGE_GEN_MODEL",
+    "IMAGE_REF_URL",
+    "IMAGE_REF_KEY",
+    "IMAGE_REF_MODEL",
+    "IMAGE_EDIT_URL",
+    "IMAGE_EDIT_KEY",
+    "IMAGE_EDIT_MODEL",
+    "IMAGE_TRANSPARENT_URL",
+    "IMAGE_TRANSPARENT_KEY",
+    "IMAGE_TRANSPARENT_MODEL",
+    "IMAGE_SEGMENT_URL",
+    "IMAGE_SEGMENT_KEY",
+    "IMAGE_SEGMENT_MODEL",
+    "IMAGE_BG_REMOVAL_URL",
+    "IMAGE_BG_REMOVAL_KEY",
+    "IMAGE_BG_REMOVAL_MODEL",
+    "IMAGE_UPSCALE_URL",
+    "IMAGE_UPSCALE_KEY",
+    "IMAGE_UPSCALE_MODEL",
+    "IMAGE_VECTOR_URL",
+    "IMAGE_VECTOR_KEY",
+    "IMAGE_VECTOR_MODEL",
+    "IMAGE_TRACE_URL",
+    "IMAGE_TRACE_KEY",
+    "IMAGE_TRACE_MODEL",
+    "CONTEXT7_API_KEY",
+    "FIRECRAWL_API_KEY",
+    "TAVILY_API_KEY",
+    "BRAVE_API_KEY"
+  ],
+  "ingest_debounce_seconds": 60,
+  "spawn_rules": {
+    "_doc": "Caller agent_type -> allowed child types ('*' = any; '@group' expands below). Callers not listed may spawn anything. Enforced by the pre-agent hook because Agent(type) lists in a subagent's tools are ignored by Claude Code.",
+    "orchestrators_until_depth": 6,
+    "groups": {
+      "orchestration": [
+        "delegator",
+        "orchestrator",
+        "swarm-coordinator",
+        "mesh-router",
+        "ensemble-assembler",
+        "concurrent-dispatcher",
+        "mediator",
+        "expert-panel-chair",
+        "debate-moderator"
+      ],
+      "doubt": [
+        "quick-researcher",
+        "deep-researcher",
+        "fact-checker",
+        "tester",
+        "quality-control",
+        "code-quality-analyst",
+        "adversarial-verifier",
+        "file-summarizer"
+      ],
+      "research_leaves": [
+        "quick-researcher",
+        "web-searcher",
+        "web-scraper",
+        "web-crawler",
+        "browser-operator",
+        "fact-checker",
+        "source-summarizer",
+        "file-summarizer",
+        "paper-researcher"
+      ]
+    },
+    "callers": {
+      "quick-researcher": [
+        "@research_leaves"
+      ],
+      "web-searcher": [
+        "file-summarizer",
+        "source-summarizer"
+      ],
+      "web-scraper": [
+        "file-summarizer",
+        "source-summarizer"
+      ],
+      "web-crawler": [
+        "file-summarizer",
+        "source-summarizer",
+        "web-scraper"
+      ],
+      "browser-operator": [
+        "file-summarizer"
+      ],
+      "computer-operator": [
+        "file-summarizer"
+      ],
+      "fact-checker": [
+        "@research_leaves"
+      ],
+      "image-generator": [
+        "file-summarizer",
+        "quick-researcher",
+        "visual-reviewer"
+      ],
+      "image-editor": [
+        "file-summarizer",
+        "quick-researcher",
+        "visual-reviewer"
+      ],
+      "vector-artist": [
+        "file-summarizer",
+        "quick-researcher",
+        "visual-reviewer"
+      ],
+      "general-chat": [
+        "quick-researcher",
+        "fact-checker"
+      ],
+      "validator": [
+        "@doubt"
+      ],
+      "adversarial-verifier": [
+        "@research_leaves",
+        "tester"
+      ]
+    }
+  },
+  "token_budget": {
+    "_doc": "Whole-tree token budgets (main thread + every subagent), see docs/DEPTH.md#token-budgets. Tokens = input + cache_creation + output + cache_read_weight * cache_read. Below min: never throttled. soft: agents converge (no new exploratory branches). max: new spawns denied except finishing_agents. Per prompt = one user prompt (promptId). Learned values may only RAISE these (stack learn update reports; apply with learn_global=apply).",
+    "cache_read_weight": 1.0,
+    "min_global_tokens": 400000000,
+    "soft_global_tokens": 1200000000,
+    "max_global_tokens": 1600000000,
+    "min_prompt_tokens": 30000000,
+    "soft_prompt_tokens": 90000000,
+    "max_prompt_tokens": 120000000,
+    "finishing_agents": [
+      "file-summarizer",
+      "quality-control",
+      "validator",
+      "source-summarizer"
+    ],
+    "learn_global": "report"
+  },
+  "context_policy": {
+    "_doc": "Optimise for context usage, not speed: keep every agent's window lean and spend tokens on fresh-context subagents instead of bloating one context. Values are surfaced in the stack-context header and enforced by convention (delegation-protocol, output-contract).",
+    "offload_lines": 60,
+    "offload_chars": 3000,
+    "prefer_fresh_context_reads": true
+  },
+  "enforce_tiers": true
+}

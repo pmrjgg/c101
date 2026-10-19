@@ -1,0 +1,407 @@
+{
+  "_doc": "Install packs (see stack/packs.py). core is always installed; domain packs add a hub skill, its granular skills and the expert agent. `bin/stack packs list|apply`, `./install.sh --user --packs a,b`.",
+  "granular_listing": "name-only",
+  "packs": {
+    "core": {
+      "description": "Protocols, orchestration, decision/synthesis methods, research, quality gates, self-tuning; all non-specialist agents",
+      "requires": [],
+      "skills": [
+        "adversarial-verification",
+        "analogical-transfer",
+        "bayesian-aggregation",
+        "browser-automation",
+        "code-quality-metrics",
+        "code-review-checklist",
+        "computer-use",
+        "concurrent-fanout",
+        "debugging-method",
+        "deep-research",
+        "delegation-protocol",
+        "delphi-method",
+        "doubt-escalation",
+        "effort-and-model-selection",
+        "ensemble-assembly",
+        "expert-synthesis",
+        "first-principles",
+        "judge-panel",
+        "literature-review",
+        "mediator-voting",
+        "mesh-blackboard",
+        "orchestration-patterns",
+        "output-contract",
+        "performance-optimization",
+        "planning-dag",
+        "quick-research",
+        "red-teaming",
+        "scraping-crawling",
+        "security-review",
+        "source-evaluation",
+        "stack-authoring",
+        "stack-tuning",
+        "structured-debate",
+        "swarm-execution",
+        "testing-strategy",
+        "tree-of-thought",
+        "triz-morphological",
+        "validation-gates",
+        "web-search-tools"
+      ],
+      "agents": [
+        "adversarial-verifier",
+        "agent-architect",
+        "analogy-mapper",
+        "architect",
+        "browser-operator",
+        "code-optimizer",
+        "code-quality-analyst",
+        "computer-operator",
+        "concurrent-dispatcher",
+        "cross-domain-synthesizer",
+        "debate-moderator",
+        "debugger",
+        "deep-researcher",
+        "delegator",
+        "ensemble-assembler",
+        "expert-panel-chair",
+        "fact-checker",
+        "file-summarizer",
+        "first-principles-decomposer",
+        "general-chat",
+        "mediator",
+        "mesh-router",
+        "orchestrator",
+        "paper-researcher",
+        "plan-critic",
+        "planner",
+        "quality-control",
+        "quick-researcher",
+        "reviewer",
+        "security-auditor",
+        "source-summarizer",
+        "stack-tuner",
+        "swarm-coordinator",
+        "tester",
+        "validator",
+        "web-crawler",
+        "web-scraper",
+        "web-searcher"
+      ]
+    },
+    "image": {
+      "description": "Image MCP skills (generation, editing, vector, visual review), the image agents and the visual-reviewer",
+      "requires": [
+        "core"
+      ],
+      "skills": [
+        "image-brief-writing",
+        "image-editing",
+        "image-generation",
+        "photo-retouch-composite",
+        "social-asset-kit",
+        "vector-art",
+        "visual-review"
+      ],
+      "agents": [
+        "image-generator",
+        "image-editor",
+        "vector-artist",
+        "visual-reviewer"
+      ]
+    },
+    "rust": {
+      "description": "rust-craft hub skill, granular skills and the rust-expert agent",
+      "requires": [
+        "core"
+      ],
+      "hub": "rust-craft",
+      "skills": [
+        "rust-craft",
+        "cargo-workspaces-features",
+        "rust-async-tokio",
+        "rust-axum-services",
+        "rust-error-handling",
+        "rust-ffi-bindings",
+        "rust-ownership-lifetimes",
+        "rust-performance",
+        "rust-testing-fuzzing",
+        "rust-traits-generics",
+        "rust-unsafe-soundness"
+      ],
+      "agents": [
+        "rust-expert"
+      ]
+    },
+    "cpp": {
+      "description": "cpp-craft hub skill, granular skills and the cpp-expert agent",
+      "requires": [
+        "core"
+      ],
+      "hub": "cpp-craft",
+      "skills": [
+        "cpp-craft",
+        "cmake-presets",
+        "cpp-concurrency-atomics",
+        "cpp-memory-raii",
+        "cpp-simd-performance",
+        "cpp-templates-concepts",
+        "cpp-testing-fuzzing",
+        "cpp-ub-sanitizers"
+      ],
+      "agents": [
+        "cpp-expert"
+      ]
+    },
+    "go": {
+      "description": "go-craft hub skill, granular skills and the go-expert agent",
+      "requires": [
+        "core"
+      ],
+      "hub": "go-craft",
+      "skills": [
+        "go-craft",
+        "go-concurrency-context",
+        "go-error-handling",
+        "go-http-services",
+        "go-interfaces-generics",
+        "go-modules-tooling",
+        "go-profiling-pprof",
+        "go-testing-fuzzing"
+      ],
+      "agents": [
+        "go-expert"
+      ]
+    },
+    "haskell": {
+      "description": "haskell-craft hub skill, granular skills and the haskell-expert agent",
+      "requires": [
+        "core"
+      ],
+      "hub": "haskell-craft",
+      "skills": [
+        "haskell-craft",
+        "haskell-concurrency-stm",
+        "haskell-effects",
+        "haskell-type-level"
+      ],
+      "agents": [
+        "haskell-expert"
+      ]
+    },
+    "julia": {
+      "description": "julia-craft hub skill, granular skills and the julia-expert agent",
+      "requires": [
+        "core"
+      ],
+      "hub": "julia-craft",
+      "skills": [
+        "julia-craft",
+        "julia-performance-allocations",
+        "julia-sciml-diffeq",
+        "julia-type-stability"
+      ],
+      "agents": [
+        "julia-expert"
+      ]
+    },
+    "java": {
+      "description": "java-craft hub skill, granular skills and the java-expert agent",
+      "requires": [
+        "core"
+      ],
+      "hub": "java-craft",
+      "skills": [
+        "java-craft",
+        "java-jvm-tuning-jfr",
+        "java-modern-language",
+        "java-virtual-threads"
+      ],
+      "agents": [
+        "java-expert"
+      ]
+    },
+    "kotlin": {
+      "description": "kotlin-craft hub skill, granular skills and the kotlin-expert agent",
+      "requires": [
+        "core"
+      ],
+      "hub": "kotlin-craft",
+      "skills": [
+        "kotlin-craft",
+        "kotlin-compose",
+        "kotlin-coroutines-flow",
+        "kotlin-gradle-builds",
+        "kotlin-java-interop",
+        "kotlin-multiplatform",
+        "kotlin-testing"
+      ],
+      "agents": [
+        "kotlin-expert"
+      ]
+    },
+    "computer-graphics": {
+      "description": "computer-graphics hub skill, granular skills and the computer-graphics-expert agent",
+      "requires": [
+        "core"
+      ],
+      "hub": "computer-graphics",
+      "skills": [
+        "computer-graphics"
+      ],
+      "agents": [
+        "computer-graphics-expert"
+      ]
+    },
+    "computer-science": {
+      "description": "cs-foundations hub skill, granular skills and the computer-science-expert agent",
+      "requires": [
+        "core"
+      ],
+      "hub": "cs-foundations",
+      "skills": [
+        "cs-foundations"
+      ],
+      "agents": [
+        "computer-science-expert"
+      ]
+    },
+    "quantum": {
+      "description": "quantum-computing hub skill, granular skills and the quantum-computing-expert agent",
+      "requires": [
+        "core"
+      ],
+      "hub": "quantum-computing",
+      "skills": [
+        "quantum-computing",
+        "variational-quantum-algorithms"
+      ],
+      "agents": [
+        "quantum-computing-expert"
+      ]
+    },
+    "mathematics": {
+      "description": "mathematics-toolkit hub skill, granular skills and the mathematics-expert agent",
+      "requires": [
+        "core"
+      ],
+      "hub": "mathematics-toolkit",
+      "skills": [
+        "mathematics-toolkit",
+        "inequality-proving",
+        "matrix-decompositions-conditioning",
+        "number-theory-modular",
+        "probability-distributions-limits",
+        "real-complex-analysis",
+        "statistical-inference-bayesian"
+      ],
+      "agents": [
+        "mathematics-expert"
+      ]
+    },
+    "physics": {
+      "description": "physics-toolkit hub skill, granular skills and the physics-expert agent",
+      "requires": [
+        "core"
+      ],
+      "hub": "physics-toolkit",
+      "skills": [
+        "physics-toolkit",
+        "dimensional-analysis-units",
+        "lagrangian-hamiltonian-mechanics",
+        "schrodinger-numerics",
+        "simulation-verification-validation",
+        "uncertainty-propagation-fitting"
+      ],
+      "agents": [
+        "physics-expert"
+      ]
+    },
+    "graphic-design": {
+      "description": "graphic-design hub skill, granular skills and the graphic-design-expert agent",
+      "requires": [
+        "core",
+        "image"
+      ],
+      "hub": "graphic-design",
+      "skills": [
+        "graphic-design",
+        "design-tokens-dtcg",
+        "icon-system-design",
+        "layout-grids-posters-editorial",
+        "logo-design-process",
+        "oklch-palette-ramps",
+        "svg-hand-authoring",
+        "type-scale-systems",
+        "ui-mockup-hifi"
+      ],
+      "agents": [
+        "graphic-design-expert"
+      ]
+    },
+    "coding-core": {
+      "description": "Language-agnostic coding playbooks (refactoring, APIs, SQL, git, CI, concurrency, profiling)",
+      "requires": [
+        "core"
+      ],
+      "skills": [
+        "coding-general",
+        "api-contract-design",
+        "codemod-automation",
+        "dependency-upgrades",
+        "docs-and-adr-writing",
+        "git-advanced-workflows",
+        "refactoring-playbook",
+        "regex-engineering",
+        "resilience-patterns",
+        "sql-query-tuning",
+        "zero-downtime-migrations"
+      ],
+      "agents": [],
+      "hub": "coding-general"
+    },
+    "python": {
+      "description": "Python 3.13 with uv: packaging, typing, asyncio, pytest, performance",
+      "requires": [
+        "core",
+        "coding-core"
+      ],
+      "skills": [
+        "fastapi-pydantic-services",
+        "pytest-patterns",
+        "python-asyncio",
+        "python-performance-profiling",
+        "python-typing",
+        "python-uv-packaging"
+      ],
+      "agents": []
+    },
+    "typescript": {
+      "description": "TypeScript/Node/Bun: strict typing, tsconfig, testing, runtime patterns",
+      "requires": [
+        "core",
+        "coding-core"
+      ],
+      "skills": [
+        "node-runtime-patterns",
+        "react-typescript-components",
+        "typescript-build-config",
+        "typescript-strict-types",
+        "typescript-testing-vitest"
+      ],
+      "agents": []
+    },
+    "devops": {
+      "description": "Containers, CI/CD, shell robustness, observability",
+      "requires": [
+        "core",
+        "coding-core"
+      ],
+      "skills": [
+        "ci-pipelines",
+        "container-images",
+        "observability-instrumentation",
+        "shell-scripting"
+      ],
+      "agents": []
+    }
+  }
+}

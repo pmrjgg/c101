@@ -1,0 +1,100 @@
+{
+  "_doc": "Optional MCP servers. Enable with `bin/stack mcp enable <name>` (copies the entry into .mcp.json and settings approvals); disable with `bin/stack mcp disable <name>`. OAuth servers authenticate via /mcp inside Claude Code.",
+  "mcpServers": {
+    "fal": {
+      "type": "http",
+      "url": "https://mcp.fal.ai/mcp",
+      "headersHelper": "\"${CLAUDE_PROJECT_DIR:-$HOME/.claude/stack}/bin/mcp-headers\" fal",
+      "_note": "fal's hosted MCP (~60 tools: search_models, run_model, submit_jobs, create_entity for reusable characters/styles from 1-20 refs). Key-header auth accepted for initialize/tools/list on probe; the documented route is OAuth via https://mcp.fal.ai/mcp-relay. Cannot read local paths (use upload_file)."
+    },
+    "fal-oauth": {
+      "type": "http",
+      "url": "https://mcp.fal.ai/mcp-relay",
+      "_note": "official OAuth route; authenticate with /mcp"
+    },
+    "replicate": {
+      "type": "stdio",
+      "command": "${CLAUDE_PROJECT_DIR:-.}/bin/mcp-run",
+      "args": [
+        "npx",
+        "-y",
+        "replicate-mcp@latest"
+      ],
+      "_note": "official local Replicate MCP; reads REPLICATE_API_TOKEN"
+    },
+    "recraft": {
+      "type": "http",
+      "url": "https://mcp.recraft.ai/mcp",
+      "_note": "official remote Recraft MCP (OAuth, subscription credits): generate_image incl. _vector models, vectorize_image, remove_background, crisp_upscale"
+    },
+    "flux": {
+      "type": "http",
+      "url": "https://mcp.bfl.ai",
+      "_note": "official Black Forest Labs MCP (OAuth): FLUX.2 generate/variations"
+    },
+    "runware": {
+      "type": "stdio",
+      "command": "${CLAUDE_PROJECT_DIR:-.}/bin/mcp-run",
+      "args": [
+        "npx",
+        "-y",
+        "@runware/mcp"
+      ],
+      "_note": "official Runware MCP; reads RUNWARE_API_KEY"
+    },
+    "peekaboo": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@steipete/peekaboo",
+        "mcp"
+      ],
+      "_note": "open-source macOS computer use (accessibility-tree first). Needs Screen Recording + Accessibility for the app running Claude Code. Use when the built-in computer-use server is unavailable (e.g. headless/-p runs)."
+    },
+    "firecrawl": {
+      "type": "http",
+      "url": "https://mcp.firecrawl.dev/v2/mcp",
+      "headersHelper": "\"${CLAUDE_PROJECT_DIR:-$HOME/.claude/stack}/bin/mcp-headers\" firecrawl"
+    },
+    "tavily": {
+      "type": "http",
+      "url": "https://mcp.tavily.com/mcp/",
+      "headersHelper": "\"${CLAUDE_PROJECT_DIR:-$HOME/.claude/stack}/bin/mcp-headers\" tavily"
+    },
+    "brave-search": {
+      "type": "stdio",
+      "command": "${CLAUDE_PROJECT_DIR:-.}/bin/mcp-run",
+      "args": [
+        "npx",
+        "-y",
+        "@brave/brave-search-mcp-server",
+        "--transport",
+        "stdio"
+      ],
+      "_note": "reads BRAVE_API_KEY"
+    },
+    "fetch": {
+      "type": "stdio",
+      "command": "${CLAUDE_PROJECT_DIR:-.}/bin/mcp-run",
+      "args": [
+        "uvx",
+        "--python",
+        "3.13",
+        "mcp-server-fetch"
+      ],
+      "_note": "official fetch server (one tool: fetch url->markdown), run with uvx on Python 3.13"
+    },
+    "markitdown": {
+      "type": "stdio",
+      "command": "${CLAUDE_PROJECT_DIR:-.}/bin/mcp-run",
+      "args": [
+        "uvx",
+        "--python",
+        "3.13",
+        "markitdown-mcp"
+      ],
+      "_note": "Microsoft markitdown: convert_to_markdown(uri) for PDFs/Office/HTML, run with uvx on Python 3.13"
+    }
+  }
+}

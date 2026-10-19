@@ -1,0 +1,349 @@
+{
+  "_doc": "Model tiers and initial traits for every agent. The three tiers are the single place to change models: `bin/stack agents tiers --apply` renders tier -> model id into each agent's frontmatter (env vars ADVANCED_MODEL / MEDIUM_MODEL / LOW_MODEL override the ids). effort and maxTurns here are INITIAL traits (maxTurns is a moderate allowance, ~2x a typical demanding run: enough headroom that demanding work is not cut short before the learner has evidence, without inviting runaway loops): they are written only when missing or with --reset-traits; afterwards the Bayesian learner (config/learning.json) owns them. 'alias' is what callers pass as the per-call `model` override of the Agent tool, which accepts only aliases.",
+  "tiers": {
+    "ADVANCED_MODEL": {
+      "model": "claude-opus-5-5",
+      "alias": "opus"
+    },
+    "MEDIUM_MODEL": {
+      "model": "claude-sonnet-5-5",
+      "alias": "sonnet"
+    },
+    "LOW_MODEL": {
+      "model": "claude-haiku-5-5",
+      "alias": "haiku"
+    }
+  },
+  "agents": {
+    "delegator": {
+      "tier": "ADVANCED_MODEL",
+      "effort": "high",
+      "maxTurns": 300,
+      "why": "routes every request; a wrong route costs more than any token saving"
+    },
+    "orchestrator": {
+      "tier": "ADVANCED_MODEL",
+      "effort": "high",
+      "maxTurns": 300,
+      "why": "plans DAGs, judges gates, re-plans on failure"
+    },
+    "swarm-coordinator": {
+      "tier": "ADVANCED_MODEL",
+      "effort": "medium",
+      "maxTurns": 220,
+      "why": "sharding is mechanical but merge/dedup judgement needs the strongest model"
+    },
+    "mesh-router": {
+      "tier": "MEDIUM_MODEL",
+      "effort": "high",
+      "maxTurns": 220,
+      "why": "many cheap routing rounds over a blackboard; Sonnet with more thinking"
+    },
+    "ensemble-assembler": {
+      "tier": "ADVANCED_MODEL",
+      "effort": "high",
+      "maxTurns": 180,
+      "why": "choosing disciplines and roles decides the quality ceiling"
+    },
+    "concurrent-dispatcher": {
+      "tier": "LOW_MODEL",
+      "effort": "medium",
+      "maxTurns": 150,
+      "why": "pure fan-out/fan-in bookkeeping, no content judgement"
+    },
+    "mediator": {
+      "tier": "ADVANCED_MODEL",
+      "effort": "xhigh",
+      "maxTurns": 180,
+      "why": "final arbiter of contested decisions"
+    },
+    "planner": {
+      "tier": "ADVANCED_MODEL",
+      "effort": "high",
+      "maxTurns": 80,
+      "why": "acceptance criteria and dependencies must be right"
+    },
+    "architect": {
+      "tier": "ADVANCED_MODEL",
+      "effort": "xhigh",
+      "maxTurns": 120,
+      "why": "design trade-offs with long-lived consequences"
+    },
+    "plan-critic": {
+      "tier": "ADVANCED_MODEL",
+      "effort": "high",
+      "maxTurns": 60,
+      "why": "finding what is missing needs depth"
+    },
+    "reviewer": {
+      "tier": "ADVANCED_MODEL",
+      "effort": "high",
+      "maxTurns": 120,
+      "why": "subtle correctness/security findings"
+    },
+    "adversarial-verifier": {
+      "tier": "ADVANCED_MODEL",
+      "effort": "high",
+      "maxTurns": 90,
+      "why": "refutation requires independent reasoning"
+    },
+    "validator": {
+      "tier": "MEDIUM_MODEL",
+      "effort": "medium",
+      "maxTurns": 90,
+      "why": "mechanical criteria checking with evidence"
+    },
+    "tester": {
+      "tier": "MEDIUM_MODEL",
+      "effort": "high",
+      "maxTurns": 150,
+      "why": "good tests need reasoning about edge cases"
+    },
+    "quality-control": {
+      "tier": "ADVANCED_MODEL",
+      "effort": "medium",
+      "maxTurns": 70,
+      "why": "broad gate, mostly reading; strong model, moderate thinking"
+    },
+    "code-quality-analyst": {
+      "tier": "MEDIUM_MODEL",
+      "effort": "medium",
+      "maxTurns": 90,
+      "why": "tool-driven metrics plus reading"
+    },
+    "code-optimizer": {
+      "tier": "ADVANCED_MODEL",
+      "effort": "high",
+      "maxTurns": 150,
+      "why": "algorithmic and data-layout reasoning"
+    },
+    "security-auditor": {
+      "tier": "ADVANCED_MODEL",
+      "effort": "high",
+      "maxTurns": 120,
+      "why": "threat modeling and subtle vulnerabilities"
+    },
+    "debugger": {
+      "tier": "ADVANCED_MODEL",
+      "effort": "high",
+      "maxTurns": 160,
+      "why": "hypothesis-driven root cause analysis"
+    },
+    "quick-researcher": {
+      "tier": "MEDIUM_MODEL",
+      "effort": "low",
+      "maxTurns": 40,
+      "why": "fast, few searches, short answer"
+    },
+    "deep-researcher": {
+      "tier": "ADVANCED_MODEL",
+      "effort": "high",
+      "maxTurns": 240,
+      "why": "multi-hop synthesis and triangulation"
+    },
+    "web-searcher": {
+      "tier": "MEDIUM_MODEL",
+      "effort": "low",
+      "maxTurns": 50,
+      "why": "query crafting and reranking"
+    },
+    "web-scraper": {
+      "tier": "LOW_MODEL",
+      "effort": "low",
+      "maxTurns": 80,
+      "why": "extraction to a schema from given pages"
+    },
+    "web-crawler": {
+      "tier": "LOW_MODEL",
+      "effort": "medium",
+      "maxTurns": 120,
+      "why": "scoped crawl and relevance filtering"
+    },
+    "browser-operator": {
+      "tier": "MEDIUM_MODEL",
+      "effort": "medium",
+      "maxTurns": 150,
+      "why": "multi-step browsing with accessibility snapshots"
+    },
+    "computer-operator": {
+      "tier": "MEDIUM_MODEL",
+      "effort": "medium",
+      "maxTurns": 150,
+      "why": "observe-act loops on native apps"
+    },
+    "paper-researcher": {
+      "tier": "ADVANCED_MODEL",
+      "effort": "high",
+      "maxTurns": 120,
+      "why": "faithful reading of methods, equations and results"
+    },
+    "fact-checker": {
+      "tier": "MEDIUM_MODEL",
+      "effort": "medium",
+      "maxTurns": 60,
+      "why": "claim-by-claim verification against sources"
+    },
+    "source-summarizer": {
+      "tier": "LOW_MODEL",
+      "effort": "low",
+      "maxTurns": 35,
+      "why": "faithful compression of given sources"
+    },
+    "file-summarizer": {
+      "tier": "LOW_MODEL",
+      "effort": "low",
+      "maxTurns": 40,
+      "why": "offload large output to disk, return a digest"
+    },
+    "computer-graphics-expert": {
+      "tier": "ADVANCED_MODEL",
+      "effort": "high",
+      "maxTurns": 150,
+      "why": "rendering math and GPU engineering"
+    },
+    "computer-science-expert": {
+      "tier": "ADVANCED_MODEL",
+      "effort": "xhigh",
+      "maxTurns": 150,
+      "why": "proofs of complexity, correctness, distributed protocols"
+    },
+    "quantum-computing-expert": {
+      "tier": "ADVANCED_MODEL",
+      "effort": "xhigh",
+      "maxTurns": 150,
+      "why": "algorithms, error correction, resource estimates"
+    },
+    "rust-expert": {
+      "tier": "ADVANCED_MODEL",
+      "effort": "high",
+      "maxTurns": 180,
+      "why": "ownership/unsafe/async subtleties"
+    },
+    "cpp-expert": {
+      "tier": "ADVANCED_MODEL",
+      "effort": "high",
+      "maxTurns": 180,
+      "why": "UB, memory model, templates"
+    },
+    "go-expert": {
+      "tier": "MEDIUM_MODEL",
+      "effort": "high",
+      "maxTurns": 180,
+      "why": "idiomatic Go is well within Sonnet with extra thinking"
+    },
+    "haskell-expert": {
+      "tier": "ADVANCED_MODEL",
+      "effort": "high",
+      "maxTurns": 180,
+      "why": "type-level programming and laziness"
+    },
+    "julia-expert": {
+      "tier": "MEDIUM_MODEL",
+      "effort": "high",
+      "maxTurns": 180,
+      "why": "type stability and numerics"
+    },
+    "java-expert": {
+      "tier": "MEDIUM_MODEL",
+      "effort": "high",
+      "maxTurns": 180,
+      "why": "mainstream ecosystem, Sonnet with extra thinking"
+    },
+    "kotlin-expert": {
+      "tier": "MEDIUM_MODEL",
+      "effort": "high",
+      "maxTurns": 180,
+      "why": "coroutines and multiplatform"
+    },
+    "mathematics-expert": {
+      "tier": "ADVANCED_MODEL",
+      "effort": "max",
+      "maxTurns": 180,
+      "why": "rigorous proofs; the one place max effort pays"
+    },
+    "physics-expert": {
+      "tier": "ADVANCED_MODEL",
+      "effort": "xhigh",
+      "maxTurns": 150,
+      "why": "derivations, limits, numerical error analysis"
+    },
+    "graphic-design-expert": {
+      "tier": "ADVANCED_MODEL",
+      "effort": "high",
+      "maxTurns": 120,
+      "why": "art direction and critique drive the image agents"
+    },
+    "image-generator": {
+      "tier": "MEDIUM_MODEL",
+      "effort": "medium",
+      "maxTurns": 90,
+      "why": "prompting, op selection and composition on the image server; review loop with visual-reviewer"
+    },
+    "image-editor": {
+      "tier": "MEDIUM_MODEL",
+      "effort": "medium",
+      "maxTurns": 90,
+      "why": "masked edits, cutouts, segmentation and fidelity checks on the image server"
+    },
+    "vector-artist": {
+      "tier": "MEDIUM_MODEL",
+      "effort": "medium",
+      "maxTurns": 90,
+      "why": "native SVG generation, tracing, hand edits, layering and PDF export"
+    },
+    "cross-domain-synthesizer": {
+      "tier": "ADVANCED_MODEL",
+      "effort": "xhigh",
+      "maxTurns": 120,
+      "why": "integrating experts into a higher-level answer"
+    },
+    "expert-panel-chair": {
+      "tier": "ADVANCED_MODEL",
+      "effort": "high",
+      "maxTurns": 180,
+      "why": "Delphi rounds and consensus reporting"
+    },
+    "debate-moderator": {
+      "tier": "ADVANCED_MODEL",
+      "effort": "high",
+      "maxTurns": 120,
+      "why": "judging arguments against criteria"
+    },
+    "analogy-mapper": {
+      "tier": "ADVANCED_MODEL",
+      "effort": "high",
+      "maxTurns": 90,
+      "why": "structure mapping across domains"
+    },
+    "first-principles-decomposer": {
+      "tier": "ADVANCED_MODEL",
+      "effort": "xhigh",
+      "maxTurns": 90,
+      "why": "rebuilding solution spaces from invariants"
+    },
+    "general-chat": {
+      "tier": "MEDIUM_MODEL",
+      "effort": "low",
+      "maxTurns": 35,
+      "why": "conversation and explanations"
+    },
+    "stack-tuner": {
+      "tier": "MEDIUM_MODEL",
+      "effort": "medium",
+      "maxTurns": 60,
+      "why": "operates the learner and reads posteriors"
+    },
+    "agent-architect": {
+      "tier": "ADVANCED_MODEL",
+      "effort": "high",
+      "maxTurns": 120,
+      "why": "designs new agents/skills/workflows to the conventions"
+    },
+    "visual-reviewer": {
+      "tier": "ADVANCED_MODEL",
+      "effort": "high",
+      "maxTurns": 80,
+      "why": "rubric scoring, defect localisation and convergent revision instructions for images and vectors; calibration across rounds needs the strongest model"
+    }
+  }
+}

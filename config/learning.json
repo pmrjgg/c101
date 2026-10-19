@@ -1,0 +1,165 @@
+{
+  "_doc": "Bayesian self-tuning of agent budgets. See docs/LEARNING.md. Per-agent overrides go in 'agents'.",
+  "enabled": true,
+  "auto_apply": true,
+  "turns_quantile": 0.95,
+  "turns_margin": 1.15,
+  "prior_limit_ratio": 3.0,
+  "prior_turns_typical": 12,
+  "prior_spread": 2.5,
+  "min_obs_turns": 3,
+  "min_obs_effort": 5,
+  "min_points_for_window": 8,
+  "min_change_frac": 0.1,
+  "max_step_factor": 2.0,
+  "effort_bands_output_tokens": [
+    4000,
+    16000,
+    48000,
+    120000
+  ],
+  "effort_cover_mass": 0.8,
+  "effort_prior_alpha": 0.5,
+  "effort_prior_stickiness": 3.0,
+  "fail_prior": [
+    1.0,
+    4.0
+  ],
+  "fail_rate_escalate": 0.25,
+  "fail_rate_deescalate": 0.08,
+  "token_window_quantiles": [
+    0.05,
+    0.95
+  ],
+  "max_output_tokens_bounds": [
+    8000,
+    128000
+  ],
+  "context_window_tokens": 200000,
+  "context_pressure": 0.8,
+  "max_history_per_agent": 400,
+  "default_bounds": {
+    "maxTurns": [
+      5,
+      1000
+    ],
+    "effort": [
+      "low",
+      "max"
+    ],
+    "learn": true
+  },
+  "agents": {
+    "delegator": {
+      "maxTurns": [
+        80,
+        1000
+      ],
+      "effort": [
+        "medium",
+        "max"
+      ]
+    },
+    "orchestrator": {
+      "maxTurns": [
+        60,
+        1000
+      ],
+      "effort": [
+        "medium",
+        "max"
+      ]
+    },
+    "swarm-coordinator": {
+      "maxTurns": [
+        40,
+        1000
+      ]
+    },
+    "mesh-router": {
+      "maxTurns": [
+        40,
+        1000
+      ]
+    },
+    "mediator": {
+      "maxTurns": [
+        40,
+        600
+      ],
+      "effort": [
+        "high",
+        "max"
+      ]
+    },
+    "deep-researcher": {
+      "maxTurns": [
+        40,
+        800
+      ]
+    },
+    "mathematics-expert": {
+      "maxTurns": [
+        40,
+        600
+      ],
+      "effort": [
+        "high",
+        "max"
+      ]
+    },
+    "cross-domain-synthesizer": {
+      "effort": [
+        "high",
+        "max"
+      ]
+    },
+    "architect": {
+      "effort": [
+        "high",
+        "max"
+      ]
+    },
+    "quick-researcher": {
+      "maxTurns": [
+        8,
+        200
+      ],
+      "effort": [
+        "low",
+        "medium"
+      ]
+    },
+    "source-summarizer": {
+      "maxTurns": [
+        6,
+        200
+      ],
+      "effort": [
+        "low",
+        "medium"
+      ]
+    },
+    "file-summarizer": {
+      "maxTurns": [
+        6,
+        200
+      ],
+      "effort": [
+        "low",
+        "medium"
+      ]
+    },
+    "general-chat": {
+      "maxTurns": [
+        6,
+        200
+      ],
+      "effort": [
+        "low",
+        "high"
+      ]
+    }
+  },
+  "apply_compact_window": true
+}

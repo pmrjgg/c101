@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# Launch an MCP server (or any command) with API keys loaded from the stack env
+# file, so keys never live in the repo, in .mcp.json, or in settings.json.
+#
+#   bin/mcp-run npx -y @playwright/mcp@latest --headless
+#
+# The env file is parsed, not sourced: only KEY=VALUE lines are read (optional
+# `export ` prefix, optional matching quotes), so it can never execute code.
+# Variables already present in the environment win unless STACK_ENV_OVERRIDE=1.
+set -euo pipefail
+
+STACK_ENV="${CLAUDE_STACK_ENV:-${HOME:-/nonexistent}/.claude/stack.env}"
+# uv/uvx (Python 3.13 servers) and Homebrew may be missing from the PATH Claude Code passes.
+export PATH="${HOME:-/nonexistent}/.local/bin:/opt/homebrew/bin:/usr/local/bin:${PATH:-/usr/bin:/bin}"
+
+if [[ -f "$STACK_ENV" ]]; then
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    line="${line#"${line%%[![:space:]]*}"}"
+    [[ -z "$line" || "$line" == \#* ]] && continue
+    line="${line#export }"
+    [[ "$line" == *=* ]] || continue
+    key="${line%%=*}"
+    val="${line#*=}"
+    [[ "$key" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] || continue
+    if [[ "$val" =~ ^\"(.*)\"$ ]] || [[ "$val" =~ ^\'(.*)\'$ ]]; then
+      val="${BASH_REMATCH[1]}"
+    else
+      # unquoted: drop an inline " # comment" and surrounding whitespace
+      val="${val%%[[:space:]]#*}"
+      val="${val#"${val%%[![:space:]]*}"}"
+      val="${val%"${val##*[![:space:]]}"}"
+    fi
+    if [[ -z "${!key:-}" || "${STACK_ENV_OVERRIDE:-0}" == "1" ]]; then
+      export "$key=$val"
+    fi
+  done < "$STACK_ENV"
+fi
+
+if [[ $# -eq 0 ]]; then
+  echo "usage: mcp-run <command> [args...]" >&2
+  exit 64
+fi
+exec "$@"

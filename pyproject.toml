@@ -1,0 +1,36 @@
+[project]
+name = "claude-stack"
+version = "0.1.0"
+description = "Claude Code agent stack: orchestrators, swarms, expert ensembles, mediators, Bayesian self-tuning, and MCP routers"
+readme = "README.md"
+requires-python = ">=3.13"
+license = "MIT"
+dependencies = [
+    "mcp>=2.3,<3",     # official Model Context Protocol Python SDK (FastMCP) for stack_mcp servers
+    "httpx>=0.27",     # async HTTP for provider APIs
+    "pillow>=11.0",    # PNG/mask/RGBA handling for the image router
+    "claude-agent-sdk>=0.2.168",
+    "resvg-py>=0.5",   # MIT: SVG -> PNG previews (svg_render) and layer coverage/appearance checks
+    "svglib>=2.3",     # LGPL-3.0 (unmodified library): SVG -> ReportLab drawing for export_pdf
+    "reportlab>=4.4.3",  # BSD: vector PDF drawing
+    "pikepdf>=10",     # MPL-2.0: PDF Optional Content Groups (layered PDF)
+    "vtracer>=0.6.15", # MIT: opt-in local tracing (IMAGE_TRACE_API=local)
+]
+
+[project.scripts]
+stack = "stack.cli:main"
+image-router = "stack_mcp.image_router.server:main"
+stack-sdk = "stack_sdk.__main__:main"
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["stack", "stack_mcp", "stack_sdk"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests", "stack_mcp"]
