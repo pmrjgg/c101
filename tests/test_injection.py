@@ -92,7 +92,8 @@ class WebContentHookTests(unittest.TestCase):
         self.tmp = tempfile.mkdtemp()
         self.proj = os.path.join(self.tmp, "proj")
         os.makedirs(os.path.join(self.proj, ".stack"))
-        self.env = {"CLAUDE_STACK_DATA": os.path.join(self.tmp, "data"), "CLAUDE_PROJECT_DIR": self.proj}
+        self.env = {"CLAUDE_STACK_DATA": os.path.join(self.tmp, "data"), "CLAUDE_PROJECT_DIR": self.proj,
+                    "CLAUDE_STACK_MAX_DEPTH": "8"}
 
     def tearDown(self):
         shutil.rmtree(self.tmp)
