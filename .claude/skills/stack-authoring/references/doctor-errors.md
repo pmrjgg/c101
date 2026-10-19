@@ -23,7 +23,9 @@ reported as `<checker>: checker crashed: ...` and the others still run.
 | `maxTurns must be an integer 1..2000, got ...` | Quoted number, float, or out of range | Bare integer |
 | `autoCompactWindow must be an integer 100000..1000000` | Out of range | Remove it or use a valid window |
 | `color must be one of [...]` | e.g. `gray` | red, blue, green, yellow, purple, orange, pink, cyan |
-| `mcpServers references unknown server '...'` | Server not in `.mcp.json` (optional servers are not active) | Use an active server, or `bin/stack mcp enable <name>` first; built-in `computer-use` only with a playwright/peekaboo fallback (it is absent under the SDK/-p); do not use `claude-in-chrome` (absent under the SDK/-p) |
+| `mcpServers references unknown server '...'` | Name not in `config/mcp.servers.json`, `.mcp.json` or the built-ins (optional servers are not active) | Use a catalog server (`bin/stack agents set <name> mcpServers=a,b`), or `bin/stack mcp enable <name>` first; built-in `computer-use` only with a playwright/peekaboo fallback (it is absent under the SDK/-p); do not use `claude-in-chrome` (absent under the SDK/-p) |
+| `inline mcpServers entry '...' is not in config/mcp.servers.json` | Hand-written inline definition for a server the catalog lacks | Add the server to the catalog and run `bin/stack mcp sync`, or reference an existing one |
+| `inline definition of MCP server '...' is missing or differs from config/mcp.servers.json (run bin/stack mcp sync)` | Catalog server referenced by plain name, or the inline copy drifted after a catalog edit | `bin/stack mcp sync` (never hand-edit inline copies) |
 | `skills references missing skill '...'` | Skill dir or its SKILL.md absent | Create the skill first, or fix the name |
 | warn `unrecognised tool '...'` | Unknown built-in tool name in tools/disallowedTools | Check spelling; MCP tools must start with `mcp__` |
 | `body too thin (N chars); agents need a real operating procedure` | Body under 600 chars | Write the full body per CONVENTIONS section 3 |
@@ -76,15 +78,18 @@ reported as `<checker>: checker crashed: ...` and the others still run.
 | warn `phase('X') has no meta.phases entry` | `phase()` title not declared | Add `{title: 'X', detail}` to meta.phases (titles match exactly) |
 | warn `node not found; skipped syntax check` | No node on PATH | Install node or run doctor where it exists |
 
-## MCP (`.mcp.json`)
+## MCP (`.mcp.json`, `config/mcp.servers.json`)
 
 | Message | Cause | Fix |
 |---|---|---|
 | `.mcp.json: unreadable` | Invalid JSON | Fix JSON |
+| `config/mcp.servers.json: missing, unreadable or without servers` | Catalog deleted, invalid JSON or empty `servers` | Restore it from version control |
+| warn `also in config/mcp.servers.json: the .mcp.json copy connects for the whole session and defeats lazy loading` | A stack server was added to `.mcp.json` | Remove it from `.mcp.json` (and `enabledMcpjsonServers`) |
+| warn `alwaysLoad: true loads every tool schema up front (tool search cannot defer it)` | `alwaysLoad` set on a server | Remove it |
 | `remote server without url` | http/sse entry lacks `url` | Add it |
 | `bin/mcp-headers is not executable` / `bin/mcp-run is not executable` | Lost exec bit | `chmod +x bin/mcp-headers bin/mcp-run` |
 | `stdio server without command` | Missing `command` | Add it |
-| `references missing path ...` | An arg under `${CLAUDE_PROJECT_DIR:-.}/` points to a missing file | Fix the path or create the launcher |
+| `references missing path ...` | An arg under `${CLAUDE_PROJECT_DIR:-.}/` or `"$d"/` points to a missing file | Fix the path or create the launcher |
 | `unknown type '...'` | Not stdio, http, sse, ws or streamable-http | Fix `type` |
 
 ## Settings and learning
@@ -92,6 +97,7 @@ reported as `<checker>: checker crashed: ...` and the others still run.
 | Message | Cause | Fix |
 |---|---|---|
 | `.claude/settings.json: unreadable` | Invalid JSON | Fix JSON |
+| warn `ENABLE_TOOL_SEARCH=false loads every MCP tool schema up front` | Tool search disabled in settings `env` | Remove the key (tool search is on by default) |
 | warn `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH and CLAUDE_STACK_MAX_DEPTH differ` | Depth env vars out of sync | Set both to the same value |
 | `unknown hook handler '...'` | A `bin/stack hook <name>` command for a handler that does not exist | Use one of pre-agent, subagent-stop, session-start, session-end, prompt-submit, model-switch (`stack/hooks.py` HANDLERS) |
 | warn `config/learning.json: bounds for unknown agent '...'` | Bounds for a renamed or removed agent | Remove or rename the entry |

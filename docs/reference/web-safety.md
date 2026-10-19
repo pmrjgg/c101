@@ -9,7 +9,7 @@ stack contains this in three layers, configured in `config/policy.json` `web_con
 |---|---|---|
 | 1. Narrow tools | `web_agents` (the research agents, `file-summarizer`, `browser-operator`, `computer-operator`) have `disallowedTools: [Edit, NotebookEdit]`; the `pre-tool` hook (PreToolUse on `Bash`, `Write`, `Edit`, `MultiEdit`, `NotebookEdit`) | files only under `.stack/`; Bash network egress, pipe-to-shell, secret reads, `git push` and recursive deletes outside `.stack/` are denied, always, so a successful injection has little to work with |
 | 2. Scanner | the `post-web` hook (PostToolUse on `WebFetch`, `WebSearch` and the `fetch`, `jina`, `exa`, `spider`, `playwright`, `firecrawl`, `tavily`, `brave-search`, `markitdown` tools) scores the result with weighted rules | score ≥ 3 (`medium`): a warning with the URL and matched rules is added to the agent's context, the agent is tainted and the event is logged to `<data>/injection.jsonl` (rule names, score, URL and a SHA-256 of the content, never the text); score ≥ 6 (`high`): also a `block` decision with the reason |
-| 3. Taint guard | `pre-tool` and `pre-agent` check `<data>/sessions/<session>.taint.json` | a tainted subagent's risky actions are denied (the main thread gets an `ask` prompt instead), including typing into or uploading to web pages; it may only spawn `tainted_may_spawn` (`@research_leaves`, all narrow-tool agents) |
+| 3. Taint guard | `pre-tool` and `pre-agent` check `<data>/sessions/<session>.taint.json` | a tainted subagent's risky actions are denied (the main thread gets an `ask` prompt instead), including typing into or uploading to web pages and writing persistent memory (every `mcp__neural-memory__*` tool except the read-only `nmem_recall`, `nmem_context`, `nmem_recap`, `nmem_situation`, `nmem_health`, `nmem_stats`); it may only spawn `tainted_may_spawn` (`@research_leaves`, all narrow-tool agents) |
 
 Rules (weights): instruction override (4), tool-call markup (4), requests to send secrets (4), ASCII smuggling
 with Unicode tag characters (4), text addressed to an AI (3), "new instructions:" (3), exfiltration-shaped URLs
@@ -20,5 +20,5 @@ characters are removed before matching, so split words are caught. Weak signals 
 
 Limits: these are tripwires, not a guarantee. Paraphrases, other languages and text inside images get through,
 which is why layer 1 applies whether or not anything was flagged. Cost: about 50 ms per guarded tool call and
-about 95 ms per 200 KB page scanned. Turn the whole feature off with `web_content.enabled: false`; tune
+about 95 ms per 200 KB page scanned. Web-reading agents never get the `neural-memory` server, so injected text cannot persist across sessions. Turn the whole feature off with `web_content.enabled: false`; tune
 `medium`, `high`, `web_agents` and `tainted_may_spawn` in the same block. Tests: `tests/test_injection.py`.

@@ -4,6 +4,10 @@ Servers are lazy: instead of living in .mcp.json (connected for the whole sessio
 conversation), each one is defined inline in the ``mcpServers`` of the agents that use it. Claude Code
 connects an inline server when such a subagent starts and disconnects it when the subagent finishes.
 ``sync`` re-renders those inline copies from the catalog; ``drift`` reports copies that differ.
+
+A *shared* server (catalog ``shared``: server -> owner agent) is inline only in its owner, a main-thread agent,
+so it connects for sessions that run the owner as the main thread; every other agent names it and shares
+that one connection (one process per session).
 """
 from __future__ import annotations
 
@@ -18,12 +22,21 @@ CATALOG = os.path.join(paths.CONFIG_DIR, "mcp.servers.json")
 Entry = Union[str, dict]
 
 
-def catalog(path: Optional[str] = None) -> Dict[str, dict]:
+def _load(path: Optional[str] = None) -> dict:
     try:
         with open(path or CATALOG, encoding="utf-8") as fh:
-            return json.load(fh).get("servers", {})
+            return json.load(fh)
     except (OSError, ValueError):
         return {}
+
+
+def catalog(path: Optional[str] = None) -> Dict[str, dict]:
+    return _load(path).get("servers", {})
+
+
+def shared(path: Optional[str] = None) -> Dict[str, str]:
+    """Shared server -> owner agent."""
+    return _load(path).get("shared", {})
 
 
 def entry_name(e: Entry) -> Optional[str]:
@@ -33,19 +46,36 @@ def entry_name(e: Entry) -> Optional[str]:
     return e
 
 
-def render(entries: List[Entry], cat: Dict[str, dict]) -> List[Entry]:
-    """Inline every catalog server; keep other entries (built-ins, .mcp.json names) as they are."""
+def _inline_here(name: str, agent: Optional[str], owners: Dict[str, str]) -> bool:
+    return name not in owners or owners[name] == agent
+
+
+def render(entries: List[Entry], cat: Dict[str, dict], agent: Optional[str] = None,
+           owners: Optional[Dict[str, str]] = None) -> List[Entry]:
+    """Inline catalog servers (shared ones only in their owner); keep other entries as they are."""
+    owners = owners or {}
     out: List[Entry] = []
     for e in entries:
         name = entry_name(e)
-        out.append({name: cat[name]} if name in cat else e)
+        if name in cat:
+            out.append({name: cat[name]} if _inline_here(name, agent, owners) else name)
+        else:
+            out.append(e)
     return out
 
 
-def drift(entries: List[Entry], cat: Dict[str, dict]) -> List[str]:
-    """Catalog servers whose inline copy is missing (referenced by name) or differs from the catalog."""
-    return [entry_name(e) for e in entries
-            if entry_name(e) in cat and (not isinstance(e, dict) or e[entry_name(e)] != cat[entry_name(e)])]
+def drift(entries: List[Entry], cat: Dict[str, dict], agent: Optional[str] = None,
+          owners: Optional[Dict[str, str]] = None) -> List[str]:
+    """Catalog servers whose entry is not what ``render`` would write (missing, stale, or wrongly inline)."""
+    return [entry_name(e) for e, want in zip(entries, render(entries, cat, agent, owners)) if e != want]
+
+
+LOOKUP = 'd="${CLAUDE_PROJECT_DIR:-$PWD}"'
+
+
+def pin_repo(cfg: dict, repo: str) -> dict:
+    """The same server config with the launcher lookup fixed to ``repo`` (SDK sessions outside the repo)."""
+    return json.loads(json.dumps(cfg).replace(json.dumps(LOOKUP)[1:-1], json.dumps('d="%s"' % repo)[1:-1]))
 
 
 def agent_files() -> List[str]:
@@ -55,12 +85,13 @@ def agent_files() -> List[str]:
 def sync(dry_run: bool = False) -> List[str]:
     """Re-render inline servers in every agent file; return the files that changed (or would change)."""
     from .doctor import _as_list
-    cat = catalog()
+    cat, owners = catalog(), shared()
     changed = []
     for f in agent_files():
-        entries = _as_list(frontmatter.read(f).get("mcpServers"))
-        if entries and drift(entries, cat):
+        fm = frontmatter.read(f)
+        entries, agent = _as_list(fm.get("mcpServers")), str(fm.get("name", ""))
+        if entries and drift(entries, cat, agent, owners):
             changed.append(f)
             if not dry_run:
-                frontmatter.update_file(f, {"mcpServers": render(entries, cat)})
+                frontmatter.update_file(f, {"mcpServers": render(entries, cat, agent, owners)})
     return changed

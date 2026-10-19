@@ -31,10 +31,22 @@ class InlineServerTests(unittest.TestCase):
         cat = mcpcat.catalog()
         self.assertTrue(cat)
         self.assertEqual(mcpcat.sync(dry_run=True), [])
+        owners = mcpcat.shared()
         for f in mcpcat.agent_files():
-            for e in doctor._as_list(frontmatter.read(f).get("mcpServers")):
-                if mcpcat.entry_name(e) in cat:
-                    self.assertIsInstance(e, dict, "%s references %r by name (not lazy)" % (f, e))
+            fm = frontmatter.read(f)
+            for e in doctor._as_list(fm.get("mcpServers")):
+                name = mcpcat.entry_name(e)
+                if name in cat:
+                    inline = name not in owners or owners[name] == fm.get("name")
+                    self.assertEqual(isinstance(e, dict), inline, "%s: %r" % (f, e))
+
+    def test_shared_server_is_inline_only_in_its_owner(self):
+        owners = {"exa": "delegator"}
+        self.assertEqual(mcpcat.render(["exa", "fetch"], CAT, "delegator", owners), [{"exa": CAT["exa"]}, {"fetch": CAT["fetch"]}])
+        self.assertEqual(mcpcat.render([{"exa": CAT["exa"]}], CAT, "debugger", owners), ["exa"])
+        self.assertEqual(mcpcat.drift([{"exa": CAT["exa"]}], CAT, "debugger", owners), ["exa"])
+        self.assertEqual(mcpcat.drift(["exa"], CAT, "debugger", owners), [])
+        self.assertEqual(mcpcat.drift(["exa"], CAT, "delegator", owners), ["exa"])
 
     def test_catalog_servers_are_not_session_wide(self):
         self.assertFalse(set(mcpcat.catalog()) & doctor.mcp_names())

@@ -161,7 +161,9 @@ eight agent groups (55 agents, nesting up to depth 8, every spawn checked by the
 Each agent lists only the MCP servers it calls: the research agents use exa, jina, spider and fetch, with
 playwright for `browser-operator` and the built-in computer-use server for `computer-operator`; `tester` uses
 playwright; nine experts and `architect` use context7; the image agents and `graphic-design-expert` use the image
-server. Every agent preloads the three protocol skills plus at most three role skills: method skills from the core
+server. Each of these connects only while its agent runs. The exception is neural-memory: the delegator carries it,
+so it runs for the whole main-thread session, and `orchestrator`, `planner`, `architect`, `debugger` and `reviewer`
+share that connection. Every agent preloads the three protocol skills plus at most three role skills: method skills from the core
 pack, or for an expert the hub skill of its domain pack, which indexes that pack's granular skills (144 skills in
 19 install packs). Any agent at any depth can hand an Open doubt to one of the doubt resolvers, budget and depth
 permitting. Source: [Agent layers](reference/overview.md#agent-layers), [docs/ARCHITECTURE.md](ARCHITECTURE.md),

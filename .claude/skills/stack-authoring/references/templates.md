@@ -27,7 +27,7 @@ description: "<Role> that <does what, with which tools or methods>. Use when <co
 model: <tier model id: jq -r '.tiers.<TIER>.model' config/models.json; or let bin/stack agents set <name> tier=<TIER> write it>
 effort: <low|medium|high|xhigh|max>
 maxTurns: <n>
-mcpServers: [<server>, <server>]
+mcpServers: [<server>, <server>]   # names here; bin/stack mcp sync (or agents set <name> mcpServers=a,b) rewrites catalog servers inline
 skills: [delegation-protocol, doubt-escalation, output-contract, <role-skill>]
 color: <group colour>
 ---

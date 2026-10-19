@@ -36,7 +36,7 @@ Or only the agents: `from stack_sdk import load_agents; ClaudeAgentOptions(agent
 |---|---|---|
 | agents | discovered from `.claude/agents` (`setting_sources` includes `project`) | sent programmatically (`options.agents`) |
 | main thread | `--agent delegator` (body replaces the system prompt) | Claude Code preset + delegator body appended |
-| MCP servers | project `.mcp.json` (loaded without prompts in SDK mode) | resolved copy with absolute launcher paths |
+| MCP servers | inline in each agent (lazy) + project `.mcp.json`, empty by default (loaded without prompts in SDK mode) | inline in each programmatic agent + resolved `.mcp.json` copy with absolute launcher paths |
 | hooks | `.claude/settings.json` command hooks | the same handlers as Python callbacks (`stack_sdk/hooks.py`) |
 | env | settings `env` | passed via `options.env` |
 | learning | SessionEnd hook | the runner ingests the finished session itself |

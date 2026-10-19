@@ -61,7 +61,7 @@ agent type). Do it only with the caller list updated in the same change.
 | tier -> `model` | Choose the tier, not a model id: `ADVANCED_MODEL` (alias opus) for judgment, orchestration, deep domain reasoning; `MEDIUM_MODEL` (sonnet) for tool-heavy operators, checkers and well-trodden ecosystems; `LOW_MODEL` (haiku) for mechanical leaves. The frontmatter `model` is rendered from the tier (`bin/stack agents set <name> tier=<TIER>`); the aliases (opus/sonnet/haiku) are used only by saved workflows for `general-purpose` agents, and per-call `model`/`effort` on this stack's agents is stripped by the pre-agent hook. Trade-offs: effort-and-model-selection |
 | `effort` | low: mechanical leaves; medium: operators and checkers; high: experts, reviewers, planners; xhigh: architecture, mediation, hard science; max: only when every run is proof-grade reasoning |
 | `maxTurns` | Counts tool-use rounds (responses that call at least one tool). A moderate allowance: about 2 x the tool rounds of a typical demanding run (`config/models.json`), checked against peers of the same shape (command below). The learner's prior then centres on maxTurns / `prior_limit_ratio` (3.0; `jq .prior_limit_ratio config/learning.json`) and adjusts from evidence |
-| `mcpServers` | Only servers the procedure calls: playwright, exa, jina, spider, context7, image-gen, image-edit, image-vector (`.mcp.json`) or built-in computer-use (interactive sessions only: absent under the SDK/-p, so the procedure must fall back to playwright or the optional peekaboo server, or return the item as blocked). Optional servers in `config/mcp.optional.json` must be enabled (`bin/stack mcp enable <name>`) before they can be referenced |
+| `mcpServers` | Only servers the procedure calls: playwright, exa, jina, spider, context7, image, fetch, neural-memory (cross-session memory; never for web-reading agents) (catalog `config/mcp.servers.json`; set them with `bin/stack agents set <name> mcpServers=a,b`, which writes each one inline as one-line JSON so it connects only while the agent runs; never hand-edit the inline copies, run `bin/stack mcp sync` after a catalog change, never add them to `.mcp.json`) or built-in computer-use as a plain name (interactive sessions only: absent under the SDK/-p, so the procedure must fall back to playwright or the optional peekaboo server, or return the item as blocked). Optional servers in `config/mcp.optional.json` must be enabled (`bin/stack mcp enable <name>`) before they can be referenced |
 | `skills` | Always `delegation-protocol, doubt-escalation, output-contract`, plus at most 3 role skills. Each preloaded skill costs about `wc -c SKILL.md / 3.6` tokens on every spawn |
 | `color` | orchestration purple, planning blue, quality red, research cyan, experts green, image pink, synthesis yellow, meta orange (allowed: red blue green yellow purple orange pink cyan) |
 | `disallowedTools` | `Agent` only for pure leaves that must never spawn; otherwise omit `tools` and inherit everything |
@@ -226,7 +226,7 @@ bin/stack-sdk agents --json | jq '.[] | select(.name=="<name>")'   # tier model 
 `AgentDefinition` or the model is not one of the three tier ids.
 
 Then check every name you reference exists: agents (`bin/stack agents list`), skills
-(`ls .claude/skills`), workflows (`ls .claude/workflows`), MCP servers (`jq '.mcpServers|keys' .mcp.json`).
+(`ls .claude/skills`), workflows (`ls .claude/workflows`), MCP servers (`jq '.servers|keys' config/mcp.servers.json`, plus `.mcp.json`).
 Ignore doctor errors about artifacts another writer is creating in the same batch only when that
 is stated in your brief; otherwise fix or report them.
 
@@ -280,7 +280,7 @@ Need: "TypeScript help keeps going to general-purpose; we want a TypeScript expe
    mention TS. Decision: new expert agent plus a role skill `typescript-craft` (new skill dir).
 2. Values: group experts, tier `MEDIUM_MODEL` (well-trodden ecosystem), `effort: high`, typical
    demanding run ~40 tool rounds -> `maxTurns: 80` (2 x 40),
-   `mcpServers: [context7]`, `skills: [delegation-protocol, doubt-escalation, output-contract, typescript-craft]`,
+   `mcpServers=context7` (written inline by `bin/stack agents set`), `skills: [delegation-protocol, doubt-escalation, output-contract, typescript-craft]`,
    `color: green`.
 3. Write `.claude/skills/typescript-craft/SKILL.md` first (doctor fails the agent while its skill
    is missing), then `.claude/agents/experts/typescript-expert.md` from the expert template.

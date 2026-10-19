@@ -4,7 +4,8 @@ The same agents, skills, saved workflows, hooks and MCP servers run interactivel
 and programmatically through the Claude Agent SDK for Python (`claude-agent-sdk`, declared as
 `claude-agent-sdk>=0.2.168` in `pyproject.toml` and locked at 0.2.168 in `uv.lock`). The bridge is the
 `stack_sdk/` package. It adds no second set of definitions: the markdown files under `.claude/agents/`,
-`.mcp.json`, `.claude/settings.json`, `config/models.json` and `config/policy.json` stay the single
+`config/mcp.servers.json` (whose servers are inlined into those files), `.mcp.json`, `.claude/settings.json`,
+`config/models.json` and `config/policy.json` stay the single
 source of truth, and `stack_sdk` translates them into `ClaudeAgentOptions`. In this section `<repo>`
 means the absolute path of the repository (`stack.paths.REPO`).
 
@@ -12,7 +13,7 @@ means the absolute path of the repository (`stack.paths.REPO`).
 |---|---|
 | `stack_sdk/__init__.py` | Exports `load_agents`, `load_all`, `StackRunConfig`, `build_options` |
 | `stack_sdk/agents.py` | Converts agent frontmatter + body into SDK `AgentDefinition` objects |
-| `stack_sdk/mcp.py` | Resolves `.mcp.json` for sessions whose working directory is outside the repo |
+| `stack_sdk/mcp.py` | Resolves `.mcp.json` (session-wide servers, empty by default) for sessions whose working directory is outside the repo |
 | `stack_sdk/hooks.py` | Runs the stack's hook handlers as in-process SDK `HookMatcher` callbacks |
 | `stack_sdk/options.py` | `StackRunConfig` and `build_options()`: placement detection, defaults, model pinning |
 | `stack_sdk/__main__.py` | The `stack-sdk` CLI (`run`, `agents`, `check`, `mcp`) and post-run learning |
@@ -68,7 +69,7 @@ elsewhere the runner has to hand over what the other project's directory does no
 |---|---|---|
 | Agents | Discovered by the CLI from `.claude/agents/` (`setting_sources` includes `project`) | Sent as `options.agents` (`{name: AgentDefinition}` for every agent) |
 | Main thread | `extra_args={"agent": "delegator"}`, i.e. `--agent delegator`; the body replaces the system prompt | `system_prompt={"type": "preset", "preset": "claude_code", "append": <delegator body>}` |
-| MCP servers | Project `.mcp.json`, read by the CLI (SDK sessions load project servers without an approval prompt) | `options.mcp_servers` = `load_mcp_servers()`: a copy with absolute launcher paths |
+| MCP servers | Inline servers in the agent files, connected while each agent runs; project `.mcp.json` (empty by default), read by the CLI (SDK sessions load project servers without an approval prompt) | Inline servers in `options.agents`, which load without the trust check; `options.mcp_servers` = `load_mcp_servers()`: a copy of `.mcp.json` with absolute launcher paths (empty by default) |
 | Hooks | `.claude/settings.json` command hooks (`bin/stack hook <name>`) | The same handlers as Python callbacks (`stack_sdk/hooks.py`) for `PreToolUse`, `SubagentStop`, `UserPromptSubmit` |
 | Env | `options.env` (built from settings `env`); project settings also apply it | `options.env` is the only carrier, since the other project's settings do not contain it |
 | Extra directories | none | `add_dirs=[<repo>]`, so skill files and configs referenced by path stay readable |
@@ -131,6 +132,11 @@ Rules applied during conversion:
 
 ## MCP servers outside the repository
 
+The stack servers are not session servers: each agent definition, filesystem or programmatic, carries its
+catalog servers inline ([Lazy loading](mcp.md#lazy-loading)), and their launchers find the stack through
+`$CLAUDE_PROJECT_DIR`, `$PWD` or the `~/.claude/stack` symlink, so they need no rewrite. What follows applies to
+`.mcp.json` servers only (none unless `bin/stack mcp enable` added one).
+
 Inside the repo the CLI reads `.mcp.json` itself. Elsewhere, `stack_sdk.mcp.load_mcp_servers(include=None,
 path=None)` reads `<repo>/.mcp.json` (or `path`), optionally keeps only the names in `include`, and
 rewrites each entry recursively with `_resolve()`:
@@ -145,9 +151,10 @@ Relative arguments without a placeholder are left alone. Playwright's `--output-
 therefore writes under the target project's working directory.
 
 ```json
-"exa":   { "type": "http", "url": "https://mcp.exa.ai/mcp?tools=...",
-           "headersHelper": "\"<repo>/bin/mcp-headers\" exa" },
-"image": { "type": "stdio", "command": "<repo>/bin/mcp-run", "args": ["<repo>/bin/image-router"] }
+"fal":          { "type": "http", "url": "https://mcp.fal.ai/mcp",
+                  "headersHelper": "\"<repo>/bin/mcp-headers\" fal" },
+"brave-search": { "type": "stdio", "command": "<repo>/bin/mcp-run",
+                  "args": ["npx", "-y", "@brave/brave-search-mcp-server", "--transport", "stdio"] }
 ```
 
 No secret ever appears in this structure. The SDK passes MCP configuration to the CLI on its command
@@ -196,7 +203,8 @@ the unrestricted `Bash` entry already covers them. With the current configuratio
 `ToolSearch`, `WebFetch`, `WebSearch`, `Workflow`, the eight `Workflow(<name>)` entries of the settings allow-list
 (`expert-panel`, `fanout`, `mediate`, `plan-tournament`, `research-sweep`, `review-verify`, `swarm-run`,
 `visual-iterate`), `Write`, and
-`mcp__context7`, `mcp__exa`, `mcp__image`, `mcp__jina`, `mcp__playwright`, `mcp__spider`. Allowing
+`mcp__context7`, `mcp__exa`, `mcp__fetch`, `mcp__image`, `mcp__jina`, `mcp__neural-memory`, `mcp__spider` (from `permissions.allow`;
+`.mcp.json` adds none). Allowing
 `Workflow` pre-authorises saved workflows, because Workflow availability in Python SDK sessions follows
 the CLI.
 

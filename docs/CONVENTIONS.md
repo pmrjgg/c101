@@ -11,7 +11,8 @@ This is the contract every agent, skill and saved workflow in this repository fo
 .claude/skills/<name>/SKILL.md       skills (+ optional references/, scripts/)
 .claude/workflows/<name>.js          saved workflows, invoked as /<meta.name>
 .claude/settings.json                hooks, env (depth 8), MCP approvals, permissions
-.mcp.json                            project MCP servers (keys come from ~/.claude/stack.env)
+.mcp.json                            session-wide MCP servers (empty; only `bin/stack mcp enable` adds to it)
+config/mcp.servers.json              stack MCP servers, inlined into agents by `bin/stack mcp sync` (lazy)
 bin/                                 stack CLI, MCP launchers (mcp-run, image-router), header helper
 stack/                               Python tooling (CPython 3.13 via uv; stdlib only)
 stack_mcp/image_router/              MCP server for image gen/edit/RGBA/masks/vector (mcp 2.x, httpx, Pillow)
@@ -37,7 +38,7 @@ description: >-                   # ONE line in the file (no block scalars). Dri
 model: claude-opus-5-5            # rendered from the agent's tier in config/models.json — never hand-edit
 effort: high                      # low | medium | high | xhigh | max (initial trait from config/models.json, then learned)
 maxTurns: 180                     # tool-use round trips; initial trait from config/models.json, then learned
-mcpServers: [context7, exa]       # string refs to servers in .mcp.json (or built-in computer-use)
+mcpServers: [{"context7": {...}}, {"exa": {...}}]   # inline copies from config/mcp.servers.json (bin/stack mcp sync); built-ins as names
 skills: [delegation-protocol, doubt-escalation, output-contract, rust-craft]
 color: green                      # red blue green yellow purple orange pink cyan
 disallowedTools: Agent            # only for pure leaves that must never spawn
@@ -49,6 +50,10 @@ Rules:
   that could confuse YAML; if you need a colon, wrap the whole value in double quotes.
 - Omit `tools` (inherit everything: built-ins, Agent, Skill, Workflow, all MCP tools) unless the role
   must be read-only or must not spawn. Prefer `disallowedTools` to a long allowlist.
+- `mcpServers` lists only servers the role calls. Catalog servers are inline one-line JSON definitions rendered
+  from `config/mcp.servers.json` (`bin/stack agents set NAME mcpServers=a,b` or `bin/stack mcp sync`; never
+  hand-edit them), so they connect only while the agent runs. Built-ins (`computer-use`) stay plain names. Never
+  add a stack server to `.mcp.json`.
 - `skills` preloads full skill text into the agent's context. Always include the three protocol skills
   `delegation-protocol`, `doubt-escalation`, `output-contract`; add at most 3 role skills.
 - **Model tiers.** `config/models.json` assigns every agent a tier — `ADVANCED_MODEL` (claude-opus-5-5),
@@ -170,6 +175,8 @@ when_to_use: Optional extra trigger guidance.
 - Keys live only in `~/.claude/stack.env` (mode 600). Template: `config/stack.env.example`.
 - stdio servers start through `bin/mcp-run` (parses the env file, never sources it).
 - Remote servers get auth headers from `bin/mcp-headers <service>` via `headersHelper`.
+- Both launchers are found via `$CLAUDE_PROJECT_DIR`, then `$PWD`, then `~/.claude/stack`, so inline servers work
+  in the repo and from a `--user` install.
 - Agents never print, log, or echo key values, and never read the env file.
 
 ## 9. Self-tuning
@@ -225,5 +232,6 @@ Every agent, skill and workflow must behave correctly in both runtimes (`bin/cla
   that reads web content belongs in that list.
 - The `post-web` hook scans web-tool results; a flagged agent is tainted for the rest of its run (risky actions
   denied, or asked for on the main thread; it may spawn only `tainted_may_spawn`). Do not design steps that need a
-  tainted agent to run network commands, push or write outside `.stack/`: hand them back as Open doubts.
+  tainted agent to run network commands, push, write outside `.stack/` or write persistent memory
+  (`mcp__neural-memory__*` writes): hand them back as Open doubts. Web-reading agents never get `neural-memory`.
 

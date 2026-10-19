@@ -123,7 +123,7 @@ def cmd_agents(a) -> int:
             elif k in LIST_KEYS:
                 upd[k] = [x.strip() for x in v.split(",") if x.strip()]
                 if k == "mcpServers":  # catalog servers are written inline (lazy)
-                    upd[k] = mcpcat.render(upd[k], mcpcat.catalog())
+                    upd[k] = mcpcat.render(upd[k], mcpcat.catalog(), a.name, mcpcat.shared())
             else:
                 upd[k] = v
         changed = frontmatter.update_file(path, upd)

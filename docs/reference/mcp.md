@@ -1,8 +1,9 @@
 # MCP servers, keys and the image server
 
-The stack talks to the outside world through MCP servers: five remote or stdio servers for browsing, search,
-crawling and library docs, one in-house server for images and vectors (`image`), and twelve optional servers that
-can be switched on per project. Every credential lives in one file outside the repository and reaches a
+The stack talks to the outside world through MCP servers: six remote or stdio servers for browsing, fetching,
+search, crawling and library docs, a project memory (`neural-memory`), one in-house server for images and vectors (`image`), and twelve optional servers that
+can be switched on per project. The stack servers are defined in `config/mcp.servers.json` and connect only inside
+the agents that use them ([Lazy loading](#lazy-loading)). Every credential lives in one file outside the repository and reaches a
 server by one of two routes: the stdio launcher `bin/mcp-run` or the HTTP header helper `bin/mcp-headers`.
 
 ## Where keys live
@@ -16,7 +17,8 @@ honours it.
 - `.gitignore` excludes `*.env` and `.env*` (except `config/stack.env.example`). `.claude/settings.json` denies
   `Read(~/.claude/stack.env)` and `Bash(cat ~/.claude/stack.env*)`, so agents cannot read the file through their
   own tools.
-- `.mcp.json`, `config/mcp.optional.json` and `.claude/settings.json` contain no key values and no `${VAR}`
+- `config/mcp.servers.json` (and its inline copies in agent frontmatter), `.mcp.json`, `config/mcp.optional.json`
+  and `.claude/settings.json` contain no key values and no `${VAR}`
   placeholders for keys. They contain only launcher paths and service names.
 
 ```mermaid
@@ -74,7 +76,7 @@ line is empty. Define each key exactly once.
 **Remote (http) servers** carry a `headersHelper` command instead of `headers`.
 
 ```json
-"headersHelper": "\"${CLAUDE_PROJECT_DIR:-$HOME/.claude/stack}/bin/mcp-headers\" exa"
+"headersHelper": "d=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; [ -x \"$d/bin/mcp-headers\" ] || d=\"$HOME/.claude/stack\"; exec \"$d/bin/mcp-headers\" exa"
 ```
 
 Claude Code runs the helper on every connection, with a 10-second limit, and before running it strips
@@ -101,13 +103,16 @@ would need the key in Claude Code's own environment. Every Bash command and chil
 inherit it, and some credential-like variables expand to empty inside remote `url`/`headers`. With the helper and
 the launcher, a key exists only inside the one server process or HTTP connection that uses it.
 
-**Paths.** Project servers use `${CLAUDE_PROJECT_DIR:-.}` for stdio commands and
-`${CLAUDE_PROJECT_DIR:-$HOME/.claude/stack}` for header helpers. `~/.claude/stack` is the symlink to the repository
-that `install.sh` creates. `./install.sh --user` registers every `.mcp.json` server at user scope after replacing both
-placeholders with the absolute `~/.claude/stack` path and dropping keys that start with `_` (the commands and an
-example are in [Installation](installation.md#installation)). Only servers present in `.mcp.json` are registered, so an optional
-server is included only after `bin/stack mcp enable`. The Agent SDK rewrites the same placeholders to the repository
-path ([MCP servers outside the repository](sdk.md#mcp-servers-outside-the-repository)).
+**Paths.** Stack servers (`config/mcp.servers.json`) find their launcher with
+`d="${CLAUDE_PROJECT_DIR:-$PWD}"; [ -x "$d/bin/mcp-run" ] || d="$HOME/.claude/stack"`: stdio servers run
+`sh -c '…; exec "$d/bin/mcp-run" …'` and `headersHelper` uses the same lookup for `bin/mcp-headers`, so they work in
+the repository and from a `--user` install. `~/.claude/stack` is the symlink to the repository that `install.sh`
+creates. Optional servers use `${CLAUDE_PROJECT_DIR:-.}` for stdio commands and
+`${CLAUDE_PROJECT_DIR:-$HOME/.claude/stack}` for header helpers. `./install.sh --user` registers only `.mcp.json`
+servers at user scope (none by default, so an optional server only after `bin/stack mcp enable`), after replacing
+both placeholders with the absolute `~/.claude/stack` path and dropping keys that start with `_` (the commands and
+an example are in [Installation](installation.md#installation)). The Agent SDK rewrites the same placeholders to the
+repository path ([MCP servers outside the repository](sdk.md#mcp-servers-outside-the-repository)).
 
 ## Checking keys: `bin/stack keys`
 
@@ -125,10 +130,13 @@ the file, never `os.environ`, and never prints a value.
 `REPLICATE_API_TOKEN` is not in the template, and `FAL_KEY` appears there only as a commented-out line. Add or
 uncomment them before you enable the `replicate` or `fal` optional server.
 
-## Active servers (`.mcp.json`)
+## Stack servers (`config/mcp.servers.json`)
 
-`.claude/settings.json` pre-approves all seven servers in `enabledMcpjsonServers`. `permissions.allow` contains
-`mcp__exa`, `mcp__jina`, `mcp__spider`, `mcp__image`, `mcp__context7` and `mcp__fetch`. Playwright is absent from that list, so its
+The eight servers are not in `.mcp.json` (it is `{"mcpServers": {}}`); each is defined once in the catalog
+`config/mcp.servers.json` (`{"_doc": …, "servers": {name: config}}`) and copied inline into the agents that use it
+([Lazy loading](#lazy-loading)). `enabledMcpjsonServers` in `.claude/settings.json` is therefore `[]`.
+Tool names are unchanged (`mcp__<server>__<tool>`), so `permissions.allow` still contains
+`mcp__exa`, `mcp__jina`, `mcp__spider`, `mcp__image`, `mcp__context7`, `mcp__fetch` and `mcp__neural-memory`. Playwright is absent from that list, so its
 browser actions still ask for permission. `MAX_MCP_OUTPUT_TOKENS` is raised to `40000` in the settings `env` block.
 
 | Server | Transport and endpoint | Key | Tools (`mcp__<server>__…`) | Used by |
@@ -139,7 +147,8 @@ browser actions still ask for permission. `MAX_MCP_OUTPUT_TOKENS` is raised to `
 | `fetch` | stdio `mcp-run uvx --python 3.13 mcp-server-fetch` (official server) | none (free) | `fetch(url, max_length=5000, start_index=0, raw=false)`: one URL to markdown, or raw text/JSON with `raw`; honours robots.txt | the eight research agents (`quick-researcher`, `deep-researcher`, `web-searcher`, `web-scraper`, `web-crawler`, `fact-checker`, `paper-researcher`, `source-summarizer`) as the first rung of the free-first ladder |
 | `spider` | http `https://mcp.spider.cloud/mcp` | `SPIDER_API_KEY` (required) | `spider_crawl`, `spider_scrape`, `spider_search`, `spider_links`, `spider_screenshot`, `spider_transform`, `spider_get_credits`, `spider_ai_*`, `spider_browser_*` | `web-scraper`, `web-crawler`, `deep-researcher` |
 | `context7` | http `https://mcp.context7.com/mcp` | `CONTEXT7_API_KEY` (optional, raises rate limits) | `resolve-library-id`, `query-docs` | language and domain experts, `architect` |
-| `image` | stdio `${CLAUDE_PROJECT_DIR:-.}/bin/mcp-run ${CLAUDE_PROJECT_DIR:-.}/bin/image-router` | `IMAGE_<OP>_KEY` per operation | see [The image server](#the-image-server) | `image-generator`, `image-editor`, `vector-artist`, `visual-reviewer`, `graphic-design-expert` |
+| `neural-memory` | stdio `sh -c '…; exec "$d/bin/neural-memory-mcp"'` (`neural-memory==4.62.0` via `uvx --python 3.13`, command `nmem-mcp`) | none | minimal tier: `nmem_recall`, `nmem_context`, `nmem_recap` (read), `nmem_remember` (write); see [NeuralMemory](#neuralmemory) | `orchestrator`, `planner`, `architect`, `debugger`, `reviewer` |
+| `image` | stdio `sh -c '…; exec "$d/bin/mcp-run" "$d"/bin/image-router'` | `IMAGE_<OP>_KEY` per operation | see [The image server](#the-image-server) | `image-generator`, `image-editor`, `vector-artist`, `visual-reviewer`, `graphic-design-expert` |
 
 **Free first.** For a URL already in hand, agents read it with `fetch` (free, no key) and escalate only when it
 cannot do the job: `jina` `read_url`/`extract_pdf` for PDFs, passage questions or 2-5 URLs per call (metered with a
@@ -147,9 +156,65 @@ key), `spider` for JavaScript-rendered or bot-protected pages and crawls (paid),
 pages are paged with `start_index` rather than handed to a paid reader. The ladder lives in the `web-search-tools`
 skill and in each research agent's operating procedure.
 
-Computer use is not configured in `.mcp.json`. The built-in `computer-use` server, enabled once through `/mcp`, is
+Computer use is not in the catalog. The built-in `computer-use` server, enabled once through `/mcp`, is
 used by `computer-operator`. `bin/stack doctor` treats `computer-use` and `claude-in-chrome` as known built-ins
-(`BUILTIN_MCP`) when it checks agents' `mcpServers` lists.
+(`BUILTIN_MCP`) when it checks agents' `mcpServers` lists; built-ins stay plain names there.
+
+### Lazy loading
+
+An agent's `mcpServers` frontmatter carries each catalog server as an inline definition, written as a one-line JSON
+flow list (JSON is valid YAML flow syntax, so Claude Code reads it natively; `stack/frontmatter.py` parses and
+writes it with `json`):
+
+```yaml
+mcpServers: [{"exa": {"type": "http", "url": "https://mcp.exa.ai/mcp?tools=…", "headersHelper": "d=…; exec \"$d/bin/mcp-headers\" exa"}}, {"fetch": {"type": "stdio", "command": "sh", "args": ["-c", "…"]}}]
+```
+
+Per the [subagent docs](https://code.claude.com/docs/en/sub-agents), "Inline servers defined here are connected when
+the subagent starts ... and disconnected when it finishes", while "String references share the parent session's
+connection", and with inline-only servers "The subagent gets the tools; the parent conversation doesn't". Every
+stack server therefore connects only while an agent that needs it runs and is unloaded when that agent finishes;
+the main thread (`delegator`) has no MCP tools and delegates. Tool search (deferred tool schemas, on by default;
+`ENABLE_TOOL_SEARCH`) additionally defers the schemas the agent does load.
+
+- **Trust.** Inline servers in a project's `.claude/agents/` load only after the folder is trusted (accept the
+  trust dialog once). Inline servers in `~/.claude/agents/` (what `./install.sh --user` symlinks) and SDK
+  programmatic agents load without the trust check.
+- **Location.** Launchers fall back from `$CLAUDE_PROJECT_DIR`/`$PWD` to `~/.claude/stack` (see **Paths** above),
+  so the same inline copy works in the repository and from a `--user` install. Keys still reach servers only through
+  `bin/mcp-run` and `bin/mcp-headers`.
+- **Sync.** `stack/mcpcat.py` owns the catalog. `bin/stack mcp sync` re-renders the inline copies in every agent
+  file from it; `--dry-run` lists out-of-date files and exits 1 if there are any.
+  `bin/stack agents set NAME mcpServers=a,b` writes catalog servers inline automatically. Never add a stack server
+  to `.mcp.json`: that copy connects for the whole session and defeats lazy loading.
+
+### NeuralMemory
+
+`neural-memory` is an associative memory graph that keeps cross-session project knowledge. `bin/neural-memory-mcp`
+runs the pinned `neural-memory==4.62.0` (`uvx --python 3.13 --from …`, command `nmem-mcp`, stdio) with data in
+`NEURALMEMORY_DIR`, default `${CLAUDE_STACK_DATA:-~/.claude/stack-data}/neural-memory`. It needs no key.
+
+- **No settings edits.** The package's own first start injects hooks into `~/.claude/settings.json` (unless its
+  plugin is installed). The launcher initialises config and brain itself, without hooks, so the server always
+  takes its already-initialised path; if that setup fails it refuses to start.
+- **Lean tool list.** The launcher sets `version_check_enabled = false` (re-asserted on every start, because the
+  package's config writer omits it) and the `minimal` tool tier, so only four tools are listed: `nmem_recall`,
+  `nmem_context`, `nmem_recap` and `nmem_remember`. The other ~60 tools (forget, edit, import, train, sync,
+  backup, licensing, …) are not listed, and Claude Code calls only listed tools.
+- **Who gets it: the main thread, shared.** `neural-memory` is a *shared* server (`"shared": {"neural-memory":
+  "delegator"}` in `config/mcp.servers.json`). Only the `delegator` carries it inline, so it starts once when the
+  delegator runs as the main thread (`bin/claude-stack`, `claude --agent delegator`, `bin/stack-sdk run`) and
+  stays up for that session. `orchestrator`, `planner`, `architect`, `debugger` and `reviewer` reference it by
+  name and share that connection, so there is one server process and one SQLite writer per session. Sessions
+  without the delegator as the main thread have no memory, and those agents carry on without it. Each of the six
+  has a `## Memory` body section: recall at the start and treat results as leads to verify; remember a few durable
+  facts; never store secrets, personal data or web text. Web-reading agents do not get it (a stored injection would
+  persist across sessions). Under the SDK with programmatic agents (no `--agent`), the runner passes the main
+  agent's inline servers as session servers so the sharing works the same way.
+- **Taint guard.** Every `mcp__neural-memory__*` tool except the read-only `nmem_recall`, `nmem_context`,
+  `nmem_recap`, `nmem_situation`, `nmem_health` and `nmem_stats` is a risky action ("writing persistent memory")
+  for the `pre-tool` hook, so a tainted agent's memory writes are denied while reads stay allowed
+  ([Web content safety](web-safety.md#web-content-safety-prompt-injection)).
 
 ## Optional servers and `bin/stack mcp`
 
@@ -167,24 +232,29 @@ used by `computer-operator`. `bin/stack doctor` treats `computer-use` and `claud
 | `brave-search` | stdio `mcp-run npx -y @brave/brave-search-mcp-server --transport stdio` | `BRAVE_API_KEY` | `brave_web_search`, `brave_local_search`, `brave_image_search`, `brave_news_search`, `brave_video_search`, `brave_summarizer`, `brave_place_search`, `brave_llm_context` |
 | `markitdown` | stdio `mcp-run uvx --python 3.13 markitdown-mcp` | none | `convert_to_markdown(uri)` for PDF, Office and HTML |
 
-`bin/stack mcp` (`cmd_mcp` in `stack/cli.py`) works on three files: `.mcp.json`, `config/mcp.optional.json` and
-`.claude/settings.json`.
+`bin/stack mcp` (`cmd_mcp` in `stack/cli.py`) works on `.mcp.json`, `config/mcp.optional.json`,
+`config/mcp.servers.json` and `.claude/settings.json`.
 
-- `list` prints one row per server, `%-14s %-9s %s`: the name, `active` or `optional`, and the URL or command line.
+- `list` prints one row per server, `%-14s %-9s %s`: the name, `lazy` (catalog), `active` (`.mcp.json`) or
+  `optional`, and the URL or command line.
   An inactive optional server gets a second line with its `_note`.
 - `enable NAME` fails with `unknown server NAME` if the name is in neither file. Otherwise it copies the optional
   entry into `.mcp.json` without its `_`-prefixed keys, appends `NAME` to `enabledMcpjsonServers` and appends
-  `mcp__NAME` to `permissions.allow`.
+  `mcp__NAME` to `permissions.allow`. An enabled server is session-wide, not lazy.
+- `sync [--dry-run]` re-renders inline catalog servers in agent files ([Lazy loading](#lazy-loading)).
 - `disable NAME` removes the entry and both settings items.
 - Both files are written atomically (temporary file, then `os.replace`), and the command prints
   `<enable|disable>d NAME (restart Claude Code or run /mcp to reconnect)`. OAuth servers then authenticate through
   `/mcp`.
-- `disable` also works on core servers. Because `enable` only copies from `config/mcp.optional.json`, a disabled core
-  server has to be restored from version control.
+- `enable` copies only from `config/mcp.optional.json`, and `disable` edits only `.mcp.json` and the settings (on a
+  catalog server it just removes `mcp__NAME` from `permissions.allow`). To change a catalog server, edit
+  `config/mcp.servers.json` and run `bin/stack mcp sync`.
 
-`bin/stack doctor` checks this configuration: `check_mcp` validates `.mcp.json` (URLs, commands, executable
-launchers, placeholder paths, transport types) and `check_agents` reports an agent whose `mcpServers` names a server
-that neither `.mcp.json` nor `BUILTIN_MCP` defines ([Doctor](installation.md#doctor)).
+`bin/stack doctor` checks this configuration: `check_mcp` validates `.mcp.json` and the catalog (URLs, commands,
+executable launchers, placeholder and `"$d"/<path>` paths, transport types; error if the catalog is missing or
+empty; warnings for a server in both files and for `alwaysLoad: true`), and `check_agents` reports an agent whose
+`mcpServers` names a server that neither `.mcp.json`, the catalog nor `BUILTIN_MCP` defines, an inline entry not in
+the catalog, or an inline copy that is missing or differs from the catalog ([Doctor](installation.md#doctor)).
 
 ## The image server
 
@@ -203,7 +273,8 @@ and producing layered SVG/PDF. It follows four rules:
 ### Launch chain
 
 ```
-.mcp.json "image"
+config/mcp.servers.json "image"   (inline in the image agents)
+  sh -c                resolve d = $CLAUDE_PROJECT_DIR, $PWD or ~/.claude/stack
   bin/mcp-run          parse ~/.claude/stack.env into the environment, fix PATH, exec
   bin/image-router     source bin/_pyenv.sh; PYTHONPATH=$REPO; exec python -m stack_mcp.image_router
   bin/_pyenv.sh        resolve symlinks to $REPO; interpreter: $CLAUDE_STACK_PYTHON > $REPO/.venv/bin/python

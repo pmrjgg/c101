@@ -29,7 +29,7 @@ tooling) that turns a single session into a coordinated team:
   experts, or a `mediator` where several agents solve the same problem independently and **vote** (Schulze, Borda,
   approval, plurality, logarithmic opinion pool).
 - **55 agents in eight groups** (orchestration, planning, quality, research, experts, synthesis, image, meta), each
-  with a model tier, an effort level, a step budget, only the MCP servers it calls, and at most three role skills on
+  with a model tier, an effort level, a step budget, only the MCP servers it calls (connected only while it runs), and at most three role skills on
   top of the three protocol skills every agent preloads.
 - **Depth 8, bounded.** Native nested subagents are raised from 3 to 8 levels. The `pre-agent` hook gives every child
   a `<stack-context>` header (depth, parent, remaining depth, spawn count, token budget, output directory) and
@@ -74,7 +74,8 @@ bin/stack doctor                # validates agents, skills, workflows, MCP, hook
 bin/claude-stack                # Claude Code with the delegator as the main thread
 ```
 
-Inside Claude Code, run `/mcp` once to approve the project MCP servers (and to enable computer use).
+Inside Claude Code, accept the folder trust dialog once: each agent defines its MCP servers inline, and Claude Code
+connects them only in a trusted folder, only while that agent runs. Run `/mcp` once to enable computer use.
 
 Use the stack in every project, with only the packs you want:
 
@@ -169,7 +170,7 @@ The full reference manual lives in [`docs/reference/`](docs/reference/); each se
   - [File format and parser rules](docs/reference/mcp.md#file-format-and-parser-rules)
   - [Delivering keys: `bin/mcp-run` and `headersHelper`](docs/reference/mcp.md#delivering-keys-binmcp-run-and-headershelper)
   - [Checking keys: `bin/stack keys`](docs/reference/mcp.md#checking-keys-binstack-keys)
-  - [Active servers (`.mcp.json`)](docs/reference/mcp.md#active-servers-mcpjson)
+  - [Stack servers (`config/mcp.servers.json`)](docs/reference/mcp.md#stack-servers-configmcpserversjson)
   - [Optional servers and `bin/stack mcp`](docs/reference/mcp.md#optional-servers-and-binstack-mcp)
   - [The image server](docs/reference/mcp.md#the-image-server)
 - [Claude Agent SDK integration](docs/reference/sdk.md#claude-agent-sdk-integration)

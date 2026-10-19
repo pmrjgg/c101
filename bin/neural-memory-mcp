@@ -4,8 +4,9 @@
 # The package's first start (no config.toml yet) injects hooks into ~/.claude/settings.json unless its
 # Claude Code plugin is installed. We initialise the data directory ourselves first (config + brain only,
 # no hooks), so the server always takes its "already initialised" path. The config also turns off the
-# PyPI version check and exposes the minimal tool tier (recall, remember, context, recap; the rest stay
-# callable), keeping the agents' context lean. stdout is reserved for JSON-RPC, so setup logs go to stderr.
+# PyPI version check and lists only the minimal tool tier (recall, remember, context, recap). Claude Code can
+# call only listed tools, so the other ~60 (forget, import, sync, ...) are out of reach and out of context.
+# stdout is reserved for JSON-RPC, so setup logs go to stderr.
 set -euo pipefail
 
 NM_VERSION="4.62.0"

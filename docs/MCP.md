@@ -1,7 +1,7 @@
 # MCP servers
 
 Keys live only in `~/.claude/stack.env` (template: `config/stack.env.example`, mode 600). Nothing
-secret is in `.mcp.json` or settings. Two mechanisms deliver them:
+secret is in `config/mcp.servers.json`, `.mcp.json` or settings. Two mechanisms deliver them:
 
 * **stdio servers** start through `bin/mcp-run`, which *parses* (never sources) the env file and
   execs the server with the keys in its environment.
@@ -11,7 +11,13 @@ secret is in `.mcp.json` or settings. Two mechanisms deliver them:
 
 `bin/stack keys` shows which keys are set (names only).
 
-## Active servers (`.mcp.json`)
+## Stack servers (`config/mcp.servers.json`)
+
+The stack's servers live in the catalog `config/mcp.servers.json`, not in `.mcp.json` (which stays
+`{"mcpServers": {}}`). `bin/stack mcp sync` copies each one inline into the `mcpServers` frontmatter of the
+agents that use it, so it connects only while such an agent runs and the main thread loads no MCP tools
+(details: [Lazy loading](reference/mcp.md#lazy-loading)). Never add a stack server to `.mcp.json`. Inline servers
+in a project's `.claude/agents/` load once the folder is trusted.
 
 | server | transport | key | used by | tools (prefix `mcp__<server>__`) |
 |---|---|---|---|---|
@@ -20,8 +26,9 @@ secret is in `.mcp.json` or settings. Two mechanisms deliver them:
 | `jina` | http `mcp.jina.ai/v1` | `JINA_API_KEY` (Bearer) | researchers, summarizers | `read_url`, `search_web`, `search_arxiv`, `search_ssrn`, `extract_pdf`, `sort_by_relevance`, `deduplicate_strings`, `capture_screenshot_url` |
 | `spider` | http `mcp.spider.cloud/mcp` | `SPIDER_API_KEY` (Bearer) | web-scraper, web-crawler | `spider_crawl`, `spider_scrape`, `spider_search`, `spider_links`, `spider_screenshot`, `spider_transform`, `spider_browser_*` |
 | `context7` | http `mcp.context7.com/mcp` | `CONTEXT7_API_KEY` (optional) | language/domain experts, architect | `resolve-library-id`, `query-docs` |
-| `fetch` | stdio `bin/mcp-run uvx --python 3.13 mcp-server-fetch` | none (free) | the eight research agents | `fetch` (url to markdown; `max_length`, `start_index`, `raw`); first choice for any known URL, before the metered readers |
-| `image` | stdio `bin/mcp-run bin/image-router` | per-operation `IMAGE_<OP>_URL` / `_KEY` / `_MODEL` | image-generator, image-editor, vector-artist, visual-reviewer, graphic-design-expert | always: `image_ops_status`, `image_info`, `mask_convert`, `svg_optimize`, `svg_inspect`, `svg_render`, `svg_layers`, `svg_layerize`, `layers_compose`, `export_pdf`; when configured: `image_generate`, `image_generate_with_references`, `image_edit`, `image_generate_transparent`, `image_segment`, `image_remove_background`, `image_upscale`, `vector_generate`, `image_vectorize`, `svg_transform` |
+| `fetch` | stdio `sh -c … bin/mcp-run uvx --python 3.13 mcp-server-fetch` | none (free) | the eight research agents | `fetch` (url to markdown; `max_length`, `start_index`, `raw`); first choice for any known URL, before the metered readers |
+| `neural-memory` | stdio `sh -c … bin/neural-memory-mcp` (pinned `neural-memory==4.62.0`, data in `~/.claude/stack-data/neural-memory`) | — | delegator (main thread, inline); orchestrator, planner, architect, debugger, reviewer share it by name | minimal tier only: `nmem_recall`, `nmem_context`, `nmem_recap`, `nmem_remember`; the launcher initialises the data dir itself so the package never edits `~/.claude/settings.json`; memory writes by a tainted agent are denied; web-reading agents do not get it |
+| `image` | stdio `sh -c … bin/mcp-run bin/image-router` | per-operation `IMAGE_<OP>_URL` / `_KEY` / `_MODEL` | image-generator, image-editor, vector-artist, visual-reviewer, graphic-design-expert | always: `image_ops_status`, `image_info`, `mask_convert`, `svg_optimize`, `svg_inspect`, `svg_render`, `svg_layers`, `svg_layerize`, `layers_compose`, `export_pdf`; when configured: `image_generate`, `image_generate_with_references`, `image_edit`, `image_generate_transparent`, `image_segment`, `image_remove_background`, `image_upscale`, `vector_generate`, `image_vectorize`, `svg_transform` |
 
 Computer use: the built-in `computer-use` server (macOS, interactive sessions, Pro/Max) — enable it once
 with `/mcp` → computer-use → Enable. `computer-operator` references it. For headless runs enable the
@@ -31,7 +38,7 @@ optional `peekaboo` server instead.
 
 `stack_mcp/image_router/` is our own MCP stdio server (Python 3.13 via uv; mcp 2.x SDK, httpx, Pillow,
 resvg-py, pikepdf, svglib/reportlab, vtracer), launched by `bin/mcp-run bin/image-router` so keys come from
-`~/.claude/stack.env` and never from `.mcp.json`. Full reference: `stack_mcp/image_router/README.md`;
+`~/.claude/stack.env` and never from the server config. Full reference: `stack_mcp/image_router/README.md`;
 operation table: `config/image-ops.json`.
 
 * **One endpoint per operation, bring your own key, no fallbacks.** Each operation reads exactly
@@ -62,7 +69,9 @@ operation table: `config/image-ops.json`.
 
 ## Optional servers (`config/mcp.optional.json`)
 
-`bin/stack mcp list`, `bin/stack mcp enable <name>`, `bin/stack mcp disable <name>`.
+`bin/stack mcp list` (catalog servers show as `lazy`), `bin/stack mcp enable <name>`, `bin/stack mcp disable <name>`.
+An enabled server goes into `.mcp.json` and connects for the whole session (not lazy). `bin/stack mcp sync
+[--dry-run]` re-renders the inline copies after a catalog change.
 
 | name | what |
 |---|---|

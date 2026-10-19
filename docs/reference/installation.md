@@ -11,7 +11,7 @@ where runtime state lives, how the stack is tested and validated, and what to do
 | macOS or Linux, `bash` | every launcher in `bin/` is a bash script; hooks use `fcntl` file locks |
 | [uv](https://docs.astral.sh/uv/) | installs CPython 3.13 and the locked dependencies (`pyproject.toml`, `uv.lock`); `install.sh` exits 1 without it |
 | Node 18+ (`node`, `npx`) | the Playwright MCP server (`npx @playwright/mcp@latest`), several optional servers, the workflow syntax check in `bin/stack doctor` and `tests/test_workflows.py` |
-| Claude Code CLI (`claude`) | the runtime; `--user` installs register MCP servers through `claude mcp add-json` |
+| Claude Code CLI (`claude`) | the runtime; `--user` installs register `.mcp.json` servers (none by default) through `claude mcp add-json` |
 
 Python dependencies (`pyproject.toml`, project `claude-stack` 0.1.0, `requires-python >= 3.13`): `mcp>=2.3,<3`,
 `httpx>=0.27`, `pillow>=11.0`, `claude-agent-sdk>=0.2.168`, `resvg-py>=0.5`, `svglib>=2.3`, `reportlab>=4.4.3`,
@@ -52,7 +52,7 @@ no `uv.lock`), warns when `node` is missing, and finally `exec`s `stack/install.
 | Flag | Requires | Effect |
 |---|---|---|
 | *(none)* | | base install only |
-| `--user` | | link components, register MCP servers at user scope, merge env and hooks into `~/.claude/settings.json` |
+| `--user` | | link components, register `.mcp.json` servers at user scope (none by default), merge env and hooks into `~/.claude/settings.json` |
 | `--packs a,b` | `--user` | link only these packs plus `core` and their `requires`; default is every pack. Ignored without `--user` |
 | `--enforce-models` | `--user` | also copy `availableModels`, `availableModelsMatch`, `enforceAvailableModels` and the `PreModelSwitch` hook into user settings. Ignored without `--user` |
 | `--main-agent` | | set `"agent": "delegator"` in `~/.claude/settings.json` (wins if both main-agent flags are given) |
@@ -82,7 +82,12 @@ symlink per component; existing correct links are left alone, foreign files are 
 Links are only added or redirected, never removed, so a later run with fewer packs leaves the earlier links in
 place (see [Troubleshooting](#troubleshooting)).
 
-**`--user`: MCP registration and path rewriting.** For every server in `.mcp.json`, keys starting with `_` are
+**`--user`: MCP registration and path rewriting.** The stack servers in `config/mcp.servers.json` are not
+registered: they travel inline in the linked agent files and load lazily inside them, with launchers that fall back
+to `~/.claude/stack` ([Lazy loading](mcp.md#lazy-loading)). `register_mcp` prints that, with a hint to remove
+stale user-scope registrations from earlier installs (`claude mcp remove --scope user <name>`). Inline servers in
+`~/.claude/agents/` load without the project trust check. For every server in `.mcp.json` (none by default; an
+optional server after `bin/stack mcp enable`), keys starting with `_` are
 dropped, both project placeholders are rewritten to the absolute `~/.claude/stack` path, and the entry is
 registered with `claude mcp remove --scope user <name>` followed by `claude mcp add-json --scope user <name> '<json>'`.
 The rewrite is needed because in another project `${CLAUDE_PROJECT_DIR}` points at that project, which has no
@@ -91,9 +96,8 @@ The rewrite is needed because in another project `${CLAUDE_PROJECT_DIR}` points 
 ```
 project (.mcp.json)                                     user scope (~/.claude.json)
 "${CLAUDE_PROJECT_DIR:-.}/bin/mcp-run"               -> "/Users/<you>/.claude/stack/bin/mcp-run"
-"${CLAUDE_PROJECT_DIR:-.}/bin/image-router"          -> "/Users/<you>/.claude/stack/bin/image-router"
-"\"${CLAUDE_PROJECT_DIR:-$HOME/.claude/stack}/bin/mcp-headers\" exa"
-                                                     -> "\"/Users/<you>/.claude/stack/bin/mcp-headers\" exa"
+"\"${CLAUDE_PROJECT_DIR:-$HOME/.claude/stack}/bin/mcp-headers\" fal"
+                                                     -> "\"/Users/<you>/.claude/stack/bin/mcp-headers\" fal"
 ```
 
 Without `claude` on `PATH` the installer prints the exact `claude mcp add-json --scope user ...` command per
@@ -122,8 +126,8 @@ additionally pins the main thread's model and effort (`--model`, `--effort`) and
 learning. Prefer `bin/claude-stack` inside this repo.
 
 **Removing the user-scope install** (no command does this for you): restore a `settings.json.bak-*` or delete the
-stack hook groups and the `agent` key; run `claude mcp remove --scope user <name>` for `playwright`, `exa`, `jina`,
-`spider`, `context7` and `image`; delete the links that point into the repo
+stack hook groups and the `agent` key; run `claude mcp remove --scope user <name>` for any server an install
+registered (earlier versions registered `playwright`, `exa`, `jina`, `spider`, `context7` and `image`); delete the links that point into the repo
 (`find ~/.claude/agents/stack ~/.claude/skills ~/.claude/workflows -type l -lname "$(pwd -P)/*" -print`, then the
 same with `-delete`); remove `~/.claude/stack`. `~/.claude/stack.env` and `~/.claude/stack-data/` are yours to keep
 or delete.
@@ -267,8 +271,9 @@ installed as the `stack` script (`[project.scripts]` in `pyproject.toml`).
 | `depth` | `[SESSION_ID]` (prefix) | spawn statistics of the last 10 sessions: spawns, max depth, spawns per depth | 0 |
 | `packs list` | | name, skill count, agent count, extra requirements, description | 0 |
 | `packs apply` | `--only a,b` \| `--all`, `--dry-run` | write `skillOverrides` for this project | 2 without `--only`/`--all` |
-| `mcp list` | | active (`.mcp.json`) and optional (`config/mcp.optional.json`) servers with URL or command, plus `_note` | 0 |
-| `mcp enable NAME` | | copy the optional entry (minus `_` keys) into `.mcp.json`, add NAME to `enabledMcpjsonServers` and `mcp__NAME` to `permissions.allow` in `.claude/settings.json` | 1 for an unknown server |
+| `mcp list` | | lazy (`config/mcp.servers.json`), active (`.mcp.json`) and optional (`config/mcp.optional.json`) servers with URL or command, plus `_note` | 0 |
+| `mcp sync` | `--dry-run` | re-render the inline catalog servers in agent `mcpServers` from `config/mcp.servers.json`; `--dry-run` only lists out-of-date files | 1 with `--dry-run` if any file is out of date |
+| `mcp enable NAME` | | copy the optional entry (minus `_` keys) into `.mcp.json` (session-wide, not lazy), add NAME to `enabledMcpjsonServers` and `mcp__NAME` to `permissions.allow` in `.claude/settings.json` | 1 for an unknown server |
 | `mcp disable NAME` | | remove the entry from `.mcp.json`, `enabledMcpjsonServers` and `permissions.allow` | 0 |
 | `install ...` | installer flags | same as `install.sh` without the uv bootstrap | 0 |
 
@@ -313,7 +318,7 @@ exit 2 because the tier list is authoritative; every other argument (for example
 Launches the `image` MCP server (`python -m stack_mcp.image_router`, stdio JSON-RPC on stdout, logs on stderr)
 with the repo on `PYTHONPATH`; arguments pass through. It does not `cd`, so relative output paths resolve against the
 project Claude Code runs in. It reads `$CLAUDE_STACK_ENV` itself on every call and falls back to the environment,
-which `bin/mcp-run` fills when `.mcp.json` starts it; operation tools are registered only for operations whose `IMAGE_<OP>_URL`, `_KEY` and `_MODEL` are set (see
+which `bin/mcp-run` fills when an agent's inline `image` entry starts it; operation tools are registered only for operations whose `IMAGE_<OP>_URL`, `_KEY` and `_MODEL` are set (see
 [The image server](mcp.md#the-image-server)), and `image_ops_status` reports what is missing.
 
 ### `bin/mcp-run`
@@ -330,6 +335,14 @@ win unless `STACK_ENV_OVERRIDE=1`, and `~/.local/bin`, `/opt/homebrew/bin` and `
 object of auth headers built from `$CLAUDE_STACK_ENV`, on every connection (10 s limit). The services, headers and
 key names, and why the helper reads the file itself, are in
 [Delivering keys](mcp.md#delivering-keys-binmcp-run-and-headershelper).
+
+### `bin/neural-memory-mcp`
+
+Launches the `neural-memory` MCP server: pinned `neural-memory==4.62.0` through `uvx --python 3.13 --from …`,
+command `nmem-mcp`, stdio, no key. `NEURALMEMORY_DIR` defaults to `${CLAUDE_STACK_DATA:-~/.claude/stack-data}/neural-memory`.
+On first use it writes the config (version check off, `minimal` tool tier) and brain itself, without the hooks
+the package would add to `~/.claude/settings.json`, and exits 1 if that setup fails; every start re-asserts
+`version_check_enabled = false`. Setup logs go to stderr. See [NeuralMemory](mcp.md#neuralmemory).
 
 ### `bin/_pyenv.sh`
 
@@ -427,8 +440,8 @@ Every key, its default and meaning, and the per-agent bounds are in
 | `availableModels` | `claude-opus-5-5`, `claude-sonnet-5-5`, `claude-haiku-5-5` | the only models allowed in this project |
 | `availableModelsMatch` | `"exact"` | ids must match exactly |
 | `enforceAvailableModels` | `true` | Claude Code enforces the list |
-| `enabledMcpjsonServers` | `playwright`, `exa`, `jina`, `spider`, `context7`, `image` | project servers approved without a prompt; maintained by `bin/stack mcp enable/disable` |
-| `permissions.allow` | `Bash(bin/stack *)`, `Bash(./bin/stack *)`, `mcp__exa`, `mcp__jina`, `mcp__spider`, `mcp__image`, `mcp__context7`, and `Workflow(<name>)` for `swarm-run`, `fanout`, `mediate`, `expert-panel`, `research-sweep`, `review-verify`, `plan-tournament` and `visual-iterate` | pre-approved tools (Playwright tools still ask) |
+| `enabledMcpjsonServers` | `[]` | `.mcp.json` servers approved without a prompt (catalog servers are not `.mcp.json` servers); maintained by `bin/stack mcp enable/disable` |
+| `permissions.allow` | `Bash(bin/stack *)`, `Bash(./bin/stack *)`, `mcp__exa`, `mcp__jina`, `mcp__spider`, `mcp__image`, `mcp__context7`, `mcp__fetch`, `mcp__neural-memory`, and `Workflow(<name>)` for `swarm-run`, `fanout`, `mediate`, `expert-panel`, `research-sweep`, `review-verify`, `plan-tournament` and `visual-iterate` | pre-approved tools (Playwright tools still ask) |
 | `permissions.deny` | `Read(~/.claude/stack.env)`, `Bash(cat ~/.claude/stack.env*)` | keep secrets out of every context |
 | `hooks.SessionStart` | `bin/stack hook session-start`, timeout 10 | status line: depth, missing keys, recent self-tuning |
 | `hooks.PreToolUse` (matcher `Agent\|Task`) | `bin/stack hook pre-agent`, timeout 10 | depth guard, spawn rules, budgets, context header, tier enforcement |
@@ -446,7 +459,8 @@ Every hook command is `"$CLAUDE_PROJECT_DIR"/bin/stack hook <name>`.
 
 | File | Contents |
 |---|---|
-| `.mcp.json` | active project MCP servers: `playwright` (stdio `npx -y @playwright/mcp@latest --headless --isolated --caps=vision,pdf,devtools --output-dir=.stack/playwright --viewport-size=1280x800`), `exa`, `jina`, `spider`, `context7` (http with `headersHelper`), `image` (stdio via `bin/mcp-run bin/image-router`) |
+| `.mcp.json` | session-wide project MCP servers: `{"mcpServers": {}}`; only `bin/stack mcp enable` adds to it |
+| `config/mcp.servers.json` | the stack's MCP server catalog (`{"_doc": …, "servers": {name: config}}`), inlined into agents by `bin/stack mcp sync`: `playwright` (stdio `npx -y @playwright/mcp@latest --headless --isolated --caps=vision,pdf,devtools --output-dir=.stack/playwright --viewport-size=1280x800`), `exa`, `jina`, `spider`, `context7` (http with `headersHelper`), `image`, `fetch` (stdio via `sh -c` and `bin/mcp-run`), `neural-memory` (stdio via `sh -c` and `bin/neural-memory-mcp`) |
 | `config/mcp.optional.json` | `mcpServers.<name>` entries (`type`, `url`/`headersHelper` or `command`/`args`, `_note`) for `fal`, `fal-oauth`, `replicate`, `recraft`, `flux`, `runware`, `peekaboo`, `firecrawl`, `tavily`, `brave-search`, `markitdown` |
 | `config/image-ops.json` | per image operation: env names, tool, adapter request-mapping notes, default output format; no secrets and no model choices |
 | `config/stack.env.example` | template for `~/.claude/stack.env`: web keys (`EXA_API_KEY`, `JINA_API_KEY`, `SPIDER_API_KEY`, `CONTEXT7_API_KEY`), `IMAGE_<OP>_URL/_KEY/_MODEL` blocks (optional `_API`, `_PARAMS`), optional fallback keys |
@@ -503,17 +517,17 @@ c101/
 ├── pyproject.toml uv.lock  Python 3.13 project and locked dependencies   .python-version  3.13
 ├── CLAUDE.md               project memory: conventions, test commands, secret rules
 ├── .github/workflows/      ci.yml: doctor + both test suites on push and pull request
-├── .mcp.json               active project MCP servers
+├── .mcp.json               session-wide project MCP servers (empty; stack servers are in config/mcp.servers.json)
 ├── .gitignore              .stack/, .claude-flow/ (third-party plugin state), settings.local.json, *.env, caches, .venv/
 ├── .claude/
 │   ├── settings.json       env, model allowlist, MCP approvals, permissions, hooks
 │   ├── agents/<group>/     subagents: orchestration, planning, quality, research, experts, synthesis, image, meta
 │   ├── skills/<name>/      SKILL.md + references/ + scripts/ (hubs, granular, protocols, methods)
 │   └── workflows/*.js      saved workflows (main thread only)
-├── bin/                    stack, stack-sdk, claude-stack, image-router, mcp-run, mcp-headers, _pyenv.sh
-├── config/                 models, policy, learning, packs, image-ops, mcp.optional (JSON); stack.env.example
+├── bin/                    stack, stack-sdk, claude-stack, image-router, neural-memory-mcp, mcp-run, mcp-headers, _pyenv.sh
+├── config/                 models, policy, learning, packs, image-ops, mcp.servers, mcp.optional (JSON); stack.env.example
 ├── stack/                  stdlib-only tooling (runs inside hooks)
-│   ├── cli.py install.py packs.py doctor.py hooks.py budget.py tiers.py paths.py envfile.py frontmatter.py
+│   ├── cli.py install.py packs.py doctor.py hooks.py budget.py tiers.py paths.py envfile.py frontmatter.py mcpcat.py
 │   └── learn/              ingest.py (transcripts), engine.py (pipeline), model.py (recommendations), bayes.py (posteriors)
 ├── stack_mcp/image_router/ image MCP server: server and tools, per-protocol adapters (providers/), imaging and
 │                           masks, output io and sidecars, SVG layers, PDF export, tests/
@@ -544,6 +558,7 @@ Every suite that touches state points `CLAUDE_STACK_DATA` at a temporary directo
 | `tests/test_budget.py` | `BudgetTests`: totals and per-prompt attribution, incremental scan counts appended lines once, a partial line waits for its newline, level thresholds, policy values; `HardLimitHookTests`: at the hard limit only finishing agents may be spawned |
 | `tests/test_hooks.py` | `DepthGuardTests` (through `bin/stack hook`): depth-1 header for main-thread spawns, nested depth from `meta.json`, deny beyond max depth, spawn rules for leaf callers, no orchestrators below `orchestrators_until_depth`, SubagentStop records effort, header not duplicated, other tools ignored, fail-open on garbage input; `ModelSwitchTests`: only tier models, main thread pinned; `EnvFileTests`: parse rules, and `bin/mcp-run` agrees with `stack/envfile.py` |
 | `tests/test_learning.py` | `BayesTests`: log-normal parameter recovery, censoring pushes estimates up, predictive CDF/quantile inverse, normal tail log-survival, Beta quantile, Dirichlet covering, drift detection by forgetting, effective window; `ModelTests`: raise `maxTurns` when capped, lower for short runs, converge then hold, de-escalate effort one level for tiny outputs, escalate on failures, bounds respected, no data; `IngestTests`: session ingest; `FrontmatterTests`: parse, set preserves body and other keys, delete a key |
+| `tests/test_mcpcat.py` | `InlineServerTests`: inline frontmatter round trip, drift detection, every repo agent's catalog servers inline and current, catalog servers not in `.mcp.json` (not session-wide) |
 | `tests/test_packs.py` | `PackTests`: core always first and requirements ordered, unknown pack rejected, every skill and agent in a pack, overrides switch off unselected domains only, preloaded skills never name-only; `TierTests`: allowed models are the three tiers, every agent on an allowed model, delegator pinned to `claude-opus-5-5`/`high` |
 | `tests/test_sdk.py` | skipped unless `claude_agent_sdk` imports (run under uv). `SdkAgentTests` and `SdkOptionsTests`; each test and what it asserts is in [SDK tests](sdk.md#sdk-tests) |
 | `tests/test_workflows.py` | skipped without `node`. Each `.claude/workflows/*.js` runs in `tests/wf_harness.mjs` ([Dry-run harness](workflows.md#dry-run-harness)): with no args it must return `{started: false}` without spawning an agent, and each fixture in `tests/workflow_args.json` must complete with at least one agent call and an object result under seeds 1, 2 and 3 |
@@ -558,16 +573,17 @@ connectivity or key values (use `/mcp` and `bin/stack keys`).
 
 | Checker | Errors | Warnings |
 |---|---|---|
-| agents (`.claude/agents/**.md`) | unparsable frontmatter; missing, invalid (`:`, leading `-`, over 256 chars) or duplicate `name`; `description` under 40 chars; keys outside `name, description, tools, disallowedTools, model, effort, maxTurns, mcpServers, skills, memory, hooks, permissionMode, isolation, background, color, initialPrompt, omitClaudeMd, autoCompactWindow, experimental`; unknown model alias (not `claude-*`); effort not in `low..max`; `maxTurns` not 1..2000; `autoCompactWindow` not 100000..1000000; color not in `red, blue, green, yellow, purple, orange, pink, cyan`; `mcpServers` not in `.mcp.json` or the built-ins `computer-use`, `claude-in-chrome`; missing skills; body under 600 chars | file stem differs from `name`; unrecognised tool names; no `## Output` section |
+| agents (`.claude/agents/**.md`) | unparsable frontmatter; missing, invalid (`:`, leading `-`, over 256 chars) or duplicate `name`; `description` under 40 chars; keys outside `name, description, tools, disallowedTools, model, effort, maxTurns, mcpServers, skills, memory, hooks, permissionMode, isolation, background, color, initialPrompt, omitClaudeMd, autoCompactWindow, experimental`; unknown model alias (not `claude-*`); effort not in `low..max`; `maxTurns` not 1..2000; `autoCompactWindow` not 100000..1000000; color not in `red, blue, green, yellow, purple, orange, pink, cyan`; a `mcpServers` name not in `.mcp.json`, `config/mcp.servers.json` or the built-ins `computer-use`, `claude-in-chrome`; an inline entry not in the catalog; a catalog server referenced by name or an inline copy that differs from the catalog (`run bin/stack mcp sync`); missing skills; body under 600 chars | file stem differs from `name`; unrecognised tool names; no `## Output` section |
 | tiers (`config/models.json`) | unreadable file; a missing tier; agent without an entry; unknown tier; frontmatter `model` not one of the tier models | `model` differs from its tier (run `agents tiers --apply`); entry for an unknown agent |
 | packs (`config/packs.json`) | unknown `requires`; missing skill or agent; `hub` not in `skills`; a skill in no pack; a core agent preloading a non-core skill | |
 | skills (`.claude/skills/<name>/SKILL.md`) | no `SKILL.md`; `name` differs from the directory; description under 40 chars; unknown keys (allowed: `name, description, when_to_use, argument-hint, arguments, disable-model-invocation, user-invocable, allowed-tools, disallowed-tools, model, effort, context, agent, background, hooks, paths, shell, metadata, license, compatibility`); bad effort; `context` other than `fork`; body under 400 chars; broken links into `references/`, `scripts/`, `examples/`, `assets/` | over 500 lines |
 | workflows (`.claude/workflows/*.js`) | first statement not `export const meta`; `Date.now()`, `Math.random()` or `new Date()`; any import; `model:` literal not a tier alias or id; unknown `agentType` literal; with `node`: meta not a pure literal (no templates, spreads or calls) or not evaluable, body not parsable as an async function, missing `name`/`description`, duplicate name, name `deep-research` (bundled) or equal to a skill name | `phase()` title missing from `meta.phases`; `node` not found (syntax check skipped) |
-| MCP (`.mcp.json`) | unreadable; remote server without `url`; `bin/mcp-headers` or `bin/mcp-run` not executable; stdio without `command`; a `${CLAUDE_PROJECT_DIR:-.}/` argument pointing at a missing file; unknown `type` | |
-| settings | unreadable `.claude/settings.json`; a `bin/stack hook <name>` with no handler | the two depth variables differ; `config/learning.json` bounds for an unknown agent |
+| MCP (`.mcp.json`, `config/mcp.servers.json`) | unreadable `.mcp.json`; catalog missing, unreadable or empty; remote server without `url`; `bin/mcp-headers` or `bin/mcp-run` not executable; stdio without `command`; a `${CLAUDE_PROJECT_DIR:-.}/` or `"$d"/<path>` argument pointing at a missing file; unknown `type` | a server in both files (the `.mcp.json` copy connects for the whole session and defeats lazy loading); `alwaysLoad: true` |
+| settings | unreadable `.claude/settings.json`; a `bin/stack hook <name>` with no handler | `env.ENABLE_TOOL_SEARCH` is `false`; the two depth variables differ; `config/learning.json` bounds for an unknown agent |
 | auth | | `ANTHROPIC_API_KEY` or `ANTHROPIC_AUTH_TOKEN` set in the environment, or an `apiKeyHelper` / `env.ANTHROPIC_API_KEY` in project, local or user settings: Claude Code would bill the API instead of your subscription |
 
-The summary line reads `N error(s), M warning(s); A agents, S skills, W workflows, P MCP servers`. Message-by-message
+The summary line reads `N error(s), M warning(s); A agents, S skills, W workflows, P MCP servers` (P counts catalog
+and `.mcp.json` servers). Message-by-message
 causes and fixes are in `.claude/skills/stack-authoring/references/doctor-errors.md`.
 
 ## Troubleshooting
@@ -583,11 +599,12 @@ causes and fixes are in `.claude/skills/stack-authoring/references/doctor-errors
 | unselected skills still present in other projects after `--packs` | earlier, broader `--user` runs left their links | delete the extra links under `~/.claude/skills/` and `~/.claude/agents/stack/` |
 | depth limit is 3 in other projects | your `~/.claude/settings.json` already had the env key; `setdefault` keeps it | set `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH` and `CLAUDE_STACK_MAX_DEPTH` to `8` there |
 | project MCP servers do not appear | not yet approved, or the server list changed | `/mcp` inside Claude Code; restart after `bin/stack mcp enable/disable` |
+| an agent's MCP tools are missing in this repo | inline servers in a project's `.claude/agents/` load only after the folder is trusted | accept the trust dialog once; catalog servers never show in `/mcp` of the main thread, only inside the agent |
 | remote server runs anonymously or returns 401 | key missing or empty (`bin/mcp-headers` sends `{}`) | `bin/stack keys`; fill `~/.claude/stack.env`; reconnect via `/mcp` |
 | `npx`/`uvx` not found when a server starts | minimal `PATH` in the MCP launch environment | servers started through `bin/mcp-run` get `~/.local/bin`, `/opt/homebrew/bin` and `/usr/local/bin` prepended; `playwright` and `peekaboo` call `npx` directly, so it must be on the `PATH` Claude Code starts with (or use an absolute `command`) |
 | an `image_*` tool is missing | its operation lacks `IMAGE_<OP>_URL`, `_KEY` or `_MODEL` | call `image_ops_status` for the missing names, edit `~/.claude/stack.env`, reconnect the `image` server via `/mcp` |
-| `enable <name>` reports an unknown server after disabling a base server | `disable` removed the entry from `.mcp.json` and base servers are not in `config/mcp.optional.json` | restore the entry from version control |
 | doctor: `mcpServers references unknown server` | an agent references a disabled or optional server | `bin/stack mcp enable <name>` or `bin/stack agents set <agent> mcpServers=...` |
+| doctor: `inline definition of MCP server '...' is missing or differs` | `config/mcp.servers.json` changed, or an agent names a catalog server as a plain string | `bin/stack mcp sync` |
 | `Stack depth limit reached` / `Spawn policy: ...` / `Stack spawn budget exhausted` / `Token budget exhausted` | `pre-agent` denied the spawn by design | do the work in the caller or return an Open doubt; adjust `CLAUDE_STACK_MAX_DEPTH`, `spawn_rules`, `max_spawns_per_session` or `token_budget` if the limit is wrong |
 | `Model switch to ... blocked` | `PreModelSwitch` keeps the tiers authoritative | change the tier (`bin/stack agents set <agent> tier=...`) or set `CLAUDE_STACK_ALLOW_MODEL_SWITCH=1` for the session |
 | `claude-stack: --model is not allowed` | the main thread is pinned | change the agent's tier, or run `claude` directly |

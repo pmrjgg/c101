@@ -24,6 +24,7 @@ parent receives its children's results before continuing -- context usage over s
 """
 from __future__ import annotations
 
+import dataclasses
 import json
 import os
 import shutil
@@ -32,7 +33,7 @@ from typing import Any, Literal
 
 from claude_agent_sdk import ClaudeAgentOptions
 
-from stack import budget, paths
+from stack import budget, mcpcat, paths
 
 from . import agents as agents_mod
 from . import hooks as hooks_mod
@@ -98,6 +99,7 @@ def build_options(cfg: StackRunConfig | None = None) -> ClaudeAgentOptions:
     # dontAsk denies anything not allowed here, so the list is the stack's whole capability set.
     allowed = [t for t in settings.get("permissions", {}).get("allow", []) if not t.startswith("Bash(")]
     allowed += list(UNATTENDED_TOOLS) + ["mcp__%s" % n for n in mcp_mod.project_servers()]
+    allowed += ["mcp__%s" % n for n in mcpcat.catalog()]  # lazy servers inlined into agents
     allowed += list(cfg.extra_allowed_tools)
 
     kwargs: dict[str, Any] = dict(
@@ -120,7 +122,10 @@ def build_options(cfg: StackRunConfig | None = None) -> ClaudeAgentOptions:
         kwargs["mcp_servers"] = mcp_mod.load_mcp_servers()
         kwargs["add_dirs"] = [paths.REPO]  # skills/configs referenced by path stay readable
     if source == "programmatic":
-        kwargs["agents"] = {n: a.definition for n, a in loaded.items()}
+        kwargs["agents"] = {n: a.definition if local else dataclasses.replace(a.definition, mcpServers=[
+            {k: mcpcat.pin_repo(v, paths.REPO) for k, v in e.items()} if isinstance(e, dict) else e
+            for e in a.definition.mcpServers]) if a.definition.mcpServers else a.definition
+            for n, a in loaded.items()}
     if hooks_mode == "python":
         kwargs["hooks"] = hooks_mod.python_hooks()
 
@@ -144,6 +149,12 @@ def build_options(cfg: StackRunConfig | None = None) -> ClaudeAgentOptions:
             extra_args["agent"] = main.name  # --agent: the body replaces the system prompt
         else:
             kwargs["system_prompt"] = {"type": "preset", "preset": "claude_code", "append": main.definition.prompt}
+            # Without --agent the main agent's inline servers are not attached; pass them as session servers
+            # (subagents that name them then share this connection, as under --agent).
+            inline = {k: (v if local else mcpcat.pin_repo(v, paths.REPO))
+                      for e in main.definition.mcpServers or [] if isinstance(e, dict) for k, v in e.items()}
+            if inline:
+                kwargs["mcp_servers"] = {**(kwargs.get("mcp_servers") or {}), **inline}
     else:
         if cfg.model and cfg.model not in allowed:
             raise ValueError("model %r is not an allowed tier model %s" % (cfg.model, allowed))

@@ -85,8 +85,14 @@ class SdkOptionsTests(unittest.TestCase):
                 if cfg.get("type") == "http":
                     self.assertNotIn("headers", cfg, name)  # auth only via headersHelper
                     self.assertIn(ROOT + "/bin/mcp-headers", cfg["headersHelper"], name)
+                elif cfg["command"] == "sh":  # launcher pinned to this repo
+                    self.assertIn('d="%s"' % ROOT, cfg["args"][-1], name)
                 else:
                     self.assertTrue(cfg["command"].startswith("/") or cfg["command"] == "npx", name)
+            for name, ag in o.agents.items():  # subagents' inline servers are pinned too
+                for e in ag.mcpServers or []:
+                    if isinstance(e, dict):
+                        self.assertNotIn("CLAUDE_PROJECT_DIR", json.dumps(e), name)
         finally:
             shutil.rmtree(tmp)
 

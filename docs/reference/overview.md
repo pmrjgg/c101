@@ -2,7 +2,8 @@
 
 Under the hood, one session becomes a hierarchical multi-agent system. The repository contains 55 subagents in eight groups (`.claude/agents/<group>/<name>.md`), 225 skills
 (`.claude/skills/<name>/SKILL.md`), eight saved workflows (`.claude/workflows/<name>.js`), eight hooks wired in
-`.claude/settings.json`, project MCP servers (`.mcp.json`), and the stdlib-only Python tooling that the hooks run
+`.claude/settings.json`, MCP servers (`config/mcp.servers.json`, inlined into the agents that use them, so each
+connects only while such an agent runs), and the stdlib-only Python tooling that the hooks run
 (`stack/`, CPython 3.13 via uv). No code in this repository answers a request itself. The code sets the rules
 under which agents route, delegate, verify and report.
 
@@ -36,7 +37,7 @@ both ([docs/CONVENTIONS.md](../CONVENTIONS.md) section 11) are listed with their
 | Agent discovery | `.claude/agents` on disk | in repo: from disk (`--agents-source filesystem`); elsewhere: sent as `AgentDefinition`s (`programmatic`) |
 | Main-thread prompt | the delegator body replaces the system prompt | in repo: `--agent`; elsewhere: Claude Code preset with the delegator body appended |
 | Hooks | `.claude/settings.json` command hooks (`bin/stack hook <name>`) | in repo: the same settings hooks; elsewhere: the same handlers as Python callbacks (`stack_sdk/hooks.py`: PreToolUse `Agent\|Task`, SubagentStop, UserPromptSubmit) |
-| Permissions | interactive prompts | `permission_mode="dontAsk"`, `--permission-prompts none`, explicit allow-list (settings allow-list minus `Bash(...)` entries, core tools, `Agent`, `Workflow`, `Skill`, every `mcp__<project server>`) |
+| Permissions | interactive prompts | `permission_mode="dontAsk"`, `--permission-prompts none`, explicit allow-list (settings allow-list minus `Bash(...)` entries, core tools, `Agent`, `Workflow`, `Skill`, every `mcp__<.mcp.json server>`) |
 | Subagent results | foreground when the caller passes `run_in_background: false` | forced: `CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1` and `CLAUDE_STACK_FOREGROUND=1` (the hook rewrites every Agent call to `run_in_background: false`); `--background` turns it off |
 | Questions to the user | the delegator asks in plain text at the end of its turn | none mid-run: the delegator proceeds on its stated default and reports it |
 | Budget pacing | hooks only | hooks, plus `task_budget = max_prompt_tokens` (400M) as an API hint and optional `--max-budget-usd` |

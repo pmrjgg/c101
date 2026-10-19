@@ -106,7 +106,7 @@ def agent_names() -> Dict[str, str]:
 # --------------------------------------------------------------------------- #
 def check_agents(rep: Report) -> None:
     servers = mcp_names() | BUILTIN_MCP
-    cat = mcpcat.catalog()
+    cat, owners = mcpcat.catalog(), mcpcat.shared()
     skills = skill_names()
     seen: Dict[str, str] = {}
     files = paths.all_agent_files()
@@ -162,9 +162,9 @@ def check_agents(rep: Report) -> None:
                 rep.err(where, "inline mcpServers entry %r is not in config/mcp.servers.json" % (name or e))
             elif not isinstance(e, dict) and name not in servers | set(cat):
                 rep.err(where, "mcpServers references unknown server %r" % name)
-        for name in mcpcat.drift(entries, cat):
-            rep.err(where, "inline definition of MCP server %r is missing or differs from config/mcp.servers.json "
-                           "(run bin/stack mcp sync)" % name)
+        for name in mcpcat.drift(entries, cat, str(fm.get("name", "")), owners):
+            rep.err(where, "MCP server %r is not as config/mcp.servers.json renders it (inline copy missing or stale, "
+                           "or a shared server inlined outside its owner; run bin/stack mcp sync)" % name)
         for s in _as_list(fm.get("skills")):
             if s not in skills:
                 rep.err(where, "skills references missing skill %r" % s)
@@ -376,6 +376,12 @@ def check_mcp(rep: Report) -> None:
     cat = mcpcat.catalog()
     if not cat:
         rep.err("config/mcp.servers.json", "missing, unreadable or without servers")
+    known = agent_names()
+    for name, owner in mcpcat.shared().items():
+        if name not in cat:
+            rep.err("config/mcp.servers.json", "shared server %r is not in servers" % name)
+        if owner not in known:
+            rep.err("config/mcp.servers.json", "shared server %r has unknown owner agent %r" % (name, owner))
     for name in set(cat) & set(data.get("mcpServers", {})):
         rep.warn(".mcp.json:%s" % name, "also in config/mcp.servers.json: the .mcp.json copy connects for the whole "
                                         "session and defeats lazy loading")

@@ -58,5 +58,9 @@
         "d=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; [ -x \"$d/bin/neural-memory-mcp\" ] || d=\"$HOME/.claude/stack\"; exec \"$d/bin/neural-memory-mcp\""
       ]
     }
-  }
+  },
+  "shared": {
+    "neural-memory": "delegator"
+  },
+  "_doc_shared": "shared: server -> owner agent. The owner (a main-thread agent) carries the server inline, so it connects only in sessions that run that agent as the main thread; every other agent references it by name and shares that one connection (one process per session, e.g. one SQLite writer)."
 }
