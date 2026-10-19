@@ -1,4 +1,5 @@
 """Tests for whole-tree token budgets (stack/budget.py) and their hook enforcement."""
+import stackenv  # noqa: F401  (first: scrub leaked env vars, see tests/stackenv.py)
 import json
 import os
 import shutil

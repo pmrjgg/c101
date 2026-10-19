@@ -1,4 +1,5 @@
 """Tests for running the stack under the Claude Agent SDK (stack_sdk). No API calls."""
+import stackenv  # noqa: F401  (first: scrub leaked env vars, see tests/stackenv.py)
 import asyncio
 import contextlib
 import io

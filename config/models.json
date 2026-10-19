@@ -344,6 +344,18 @@
       "effort": "high",
       "maxTurns": 80,
       "why": "rubric scoring, defect localisation and convergent revision instructions for images and vectors; calibration across rounds needs the strongest model"
+    },
+    "python-expert": {
+      "tier": "MEDIUM_MODEL",
+      "effort": "high",
+      "maxTurns": 180,
+      "why": "Python specialist (typing, asyncio, packaging with uv, pytest, profiling, FastAPI); well-trodden ecosystem, peers go/java/kotlin"
+    },
+    "typescript-expert": {
+      "tier": "MEDIUM_MODEL",
+      "effort": "high",
+      "maxTurns": 180,
+      "why": "TypeScript and Node specialist (strict types, tsconfig/build, vitest, React, Node runtime); well-trodden ecosystem, peers go/java/kotlin"
     }
   }
 }

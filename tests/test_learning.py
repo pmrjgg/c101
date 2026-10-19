@@ -2,6 +2,7 @@
 
 Run:  python3 -m unittest discover -s tests -v
 """
+import stackenv  # noqa: F401  (first: scrub leaked env vars, see tests/stackenv.py)
 import json
 import math
 import os
@@ -79,8 +80,8 @@ class BayesTests(unittest.TestCase):
         self.assertAlmostEqual(bayes.effective_window(0.9, 1000), 10.0, places=3)
 
 
-CFG = json.load(open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                                  "config", "learning.json")))
+with open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "config", "learning.json")) as _fh:
+    CFG = json.load(_fh)
 
 
 def _obs(turns, out_tokens, capped=False, t=0.0, effort="high"):

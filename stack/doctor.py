@@ -50,6 +50,16 @@ class Report:
         self.warnings.append("%s: %s" % (where, msg))
 
 
+def read_text(p: str) -> str:
+    with open(p, encoding="utf-8") as fh:
+        return fh.read()
+
+
+def read_json(p: str):
+    with open(p, encoding="utf-8") as fh:
+        return json.load(fh)
+
+
 def _rel(p: str) -> str:
     return os.path.relpath(p, paths.REPO)
 
@@ -115,7 +125,7 @@ def check_agents(rep: Report) -> None:
     for f in files:
         where = _rel(f)
         try:
-            text = open(f, encoding="utf-8").read()
+            text = read_text(f)
             fm = frontmatter.parse(text)
             _, body = frontmatter.split(text)
         except (OSError, frontmatter.FrontmatterError) as e:
@@ -258,7 +268,7 @@ def check_skills(rep: Report) -> None:
             rep.err(_rel(sd), "no SKILL.md")
             continue
         try:
-            text = open(f, encoding="utf-8").read()
+            text = read_text(f)
             fm = frontmatter.parse(text)
             _, body = frontmatter.split(text)
         except (OSError, frontmatter.FrontmatterError) as e:
@@ -303,7 +313,7 @@ def check_workflows(rep: Report) -> None:
             continue
         p = os.path.join(base, f)
         where = _rel(p)
-        src = open(p, encoding="utf-8").read()
+        src = read_text(p)
         if not src.lstrip().startswith("export const meta"):
             rep.err(where, "first statement must be `export const meta = {...}`")
         if re.search(r"\b(Date\.now|Math\.random)\s*\(|new\s+Date\s*\(\s*\)", src):
@@ -369,7 +379,7 @@ out({meta});
 def check_mcp(rep: Report) -> None:
     p = os.path.join(paths.REPO, ".mcp.json")
     try:
-        data = json.load(open(p, encoding="utf-8"))
+        data = read_json(p)
     except (OSError, ValueError) as e:
         rep.err(".mcp.json", "unreadable: %s" % e)
         return
@@ -420,7 +430,7 @@ def check_mcp(rep: Report) -> None:
 def check_settings(rep: Report) -> None:
     p = os.path.join(paths.REPO, ".claude", "settings.json")
     try:
-        data = json.load(open(p, encoding="utf-8"))
+        data = read_json(p)
     except (OSError, ValueError) as e:
         rep.err(".claude/settings.json", "unreadable: %s" % e)
         return
@@ -438,7 +448,7 @@ def check_settings(rep: Report) -> None:
                     from .hooks import HANDLERS
                     if m.group(1) not in HANDLERS:
                         rep.err(".claude/settings.json:%s" % event, "unknown hook handler %r" % m.group(1))
-    cfg = json.load(open(os.path.join(paths.CONFIG_DIR, "learning.json"), encoding="utf-8"))
+    cfg = read_json(os.path.join(paths.CONFIG_DIR, "learning.json"))
     known = set(agent_names())
     for a in cfg.get("agents", {}):
         if a not in known:
@@ -455,7 +465,7 @@ def check_auth(rep: Report) -> None:
               os.path.join(paths.REPO, ".claude", "settings.local.json"),
               os.path.expanduser("~/.claude/settings.json")):
         try:
-            data = json.load(open(p, encoding="utf-8"))
+            data = read_json(p)
         except (OSError, ValueError):
             continue
         if data.get("apiKeyHelper") or (data.get("env") or {}).get("ANTHROPIC_API_KEY"):

@@ -440,12 +440,13 @@
       "hub": "coding-general"
     },
     "python": {
-      "description": "Python 3.13 with uv: packaging, typing, asyncio, pytest, performance",
+      "description": "python-craft hub skill, granular Python skills and the python-expert agent",
       "requires": [
         "core",
         "coding-core"
       ],
       "skills": [
+        "python-craft",
         "fastapi-pydantic-services",
         "pytest-patterns",
         "python-asyncio",
@@ -453,22 +454,29 @@
         "python-typing",
         "python-uv-packaging"
       ],
-      "agents": []
+      "agents": [
+        "python-expert"
+      ],
+      "hub": "python-craft"
     },
     "typescript": {
-      "description": "TypeScript/Node/Bun: strict typing, tsconfig, testing, runtime patterns",
+      "description": "typescript-craft hub skill, granular TypeScript/Node skills and the typescript-expert agent",
       "requires": [
         "core",
         "coding-core"
       ],
       "skills": [
+        "typescript-craft",
         "node-runtime-patterns",
         "react-typescript-components",
         "typescript-build-config",
         "typescript-strict-types",
         "typescript-testing-vitest"
       ],
-      "agents": []
+      "agents": [
+        "typescript-expert"
+      ],
+      "hub": "typescript-craft"
     },
     "devops": {
       "description": "Containers, CI/CD, shell robustness, observability",

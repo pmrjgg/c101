@@ -550,6 +550,12 @@ bin/stack-sdk check                                         # SDK options for bo
 CI (`.github/workflows/ci.yml`) runs the doctor and both suites on every push to `main` and every pull
 request, on Python 3.13 and Node 22, with no secrets.
 
+Every test module imports `tests/stackenv.py` first, which removes environment variables that would leak a
+developer shell's or a container's settings into the hooks under test: every `CLAUDE_STACK_*`, the tier
+variables (`ADVANCED_MODEL`, `MEDIUM_MODEL`, `LOW_MODEL`), `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH`,
+`CLAUDE_PROJECT_DIR`, `CLAUDE_PROJECTS_ROOT`, `ANTHROPIC_API_KEY` / `ANTHROPIC_AUTH_TOKEN` and
+`ENABLE_TOOL_SEARCH`. A test that needs one sets it explicitly.
+
 Every suite that touches state points `CLAUDE_STACK_DATA` at a temporary directory, so tests never modify
 `~/.claude/stack-data`.
 

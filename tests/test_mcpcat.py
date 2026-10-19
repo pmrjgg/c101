@@ -1,3 +1,4 @@
+import stackenv  # noqa: F401  (first: scrub leaked env vars, see tests/stackenv.py)
 import os
 import sys
 import unittest

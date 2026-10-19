@@ -199,7 +199,7 @@ def cmd_learn(a) -> int:
         if not os.path.exists(p):
             print("no recommendations yet; run `stack learn ingest --all && stack learn update`")
             return 1
-        recs = json.load(open(p, encoding="utf-8"))["agents"]
+        recs = doctor.read_json(p)["agents"]
         if a.agent:
             recs = {k: v for k, v in recs.items() if k in a.agent}
         if a.json:

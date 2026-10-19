@@ -1,4 +1,5 @@
 """Tests for the hook entry points (depth guard, budgets) and the env-file parser."""
+import stackenv  # noqa: F401  (first: scrub leaked env vars, see tests/stackenv.py)
 import io
 import json
 import os
@@ -93,7 +94,8 @@ class DepthGuardTests(unittest.TestCase):
                    "effort": {"level": "xhigh"}, "transcript_path": "/nonexistent/s.jsonl"}
         rc, out, _ = run_hook("subagent-stop", payload, self.env)
         self.assertEqual(rc, 0)
-        lines = open(os.path.join(self.env["CLAUDE_STACK_DATA"], "stops", "S2.jsonl")).read().splitlines()
+        with open(os.path.join(self.env["CLAUDE_STACK_DATA"], "stops", "S2.jsonl")) as fh:
+            lines = fh.read().splitlines()
         ev = json.loads(lines[-1])
         self.assertEqual((ev["agent_id"], ev["effort"]), ("x1", "xhigh"))
 

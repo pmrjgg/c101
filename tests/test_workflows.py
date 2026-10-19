@@ -5,6 +5,7 @@ forbidden Date/Math.random calls, missing-arg handling). Fixture args per
 workflow live in tests/workflow_args.json: {"<file>.js": [args, ...]}; each
 workflow also runs once with no args and must return {started:false} cleanly.
 """
+import stackenv  # noqa: F401  (first: scrub leaked env vars, see tests/stackenv.py)
 import json
 import os
 import shutil
@@ -26,7 +27,10 @@ def run(path, args, seed=1):
 class WorkflowDryRuns(unittest.TestCase):
     def fixtures(self):
         p = os.path.join(ROOT, "tests", "workflow_args.json")
-        return json.load(open(p)) if os.path.exists(p) else {}
+        if not os.path.exists(p):
+            return {}
+        with open(p, encoding="utf-8") as fh:
+            return json.load(fh)
 
     def test_missing_args_are_rejected_cleanly(self):
         for f in sorted(os.listdir(WF)):

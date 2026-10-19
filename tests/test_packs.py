@@ -1,4 +1,5 @@
 """Tests for install packs (stack/packs.py) and tier enforcement helpers (stack/tiers.py)."""
+import stackenv  # noqa: F401  (first: scrub leaked env vars, see tests/stackenv.py)
 import json
 import os
 import sys

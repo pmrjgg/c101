@@ -49,7 +49,8 @@ def _convert(key: str, value: Any) -> Any:
 
 
 def load_agent(path: str, use_tiers: bool = True) -> LoadedAgent:
-    text = open(path, encoding="utf-8").read()
+    with open(path, encoding="utf-8") as fh:
+        text = fh.read()
     fm = frontmatter.parse(text)
     _, body = frontmatter.split(text)
     name = str(fm["name"])
