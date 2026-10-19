@@ -225,5 +225,77 @@ class FrontmatterTests(unittest.TestCase):
         self.assertIn("skills", frontmatter.parse(out))
 
 
+class SessionLifecycleTests(unittest.TestCase):
+    """SessionEnd records (history.jsonl) without applying; SessionStart applies pending values."""
+
+    def setUp(self):
+        import tempfile
+        self.tmp = tempfile.mkdtemp()
+        self.data = os.path.join(self.tmp, "data")
+        os.makedirs(os.path.join(self.data, "obs"))
+        os.environ["CLAUDE_STACK_DATA"] = self.data
+        self.agent = os.path.join(self.tmp, "a.md")
+        with open(self.agent, "w") as fh:
+            fh.write("---\nname: a\ndescription: x\nmaxTurns: 40\neffort: medium\n---\nbody\n")
+        with open(os.path.join(self.data, "recommendations.json"), "w") as fh:
+            json.dump({"agents": {"a": {"managed": True, "status": "ok", "path": self.agent,
+                                        "maxTurns": {"current": 40, "recommended": 60, "reason": "r"},
+                                        "effort": {"current": "medium", "recommended": "high", "reason": "e"}}}}, fh)
+        with open(os.path.join(self.data, "obs", "S1.json"), "w") as fh:
+            json.dump({"x1": {"agent_id": "x1", "agent_type": "a", "turns": 12, "tool_rounds": 9, "capped": False,
+                              "tool_errors": 1, "tokens_total": 5000, "output_tokens": 700, "duration_s": 3.5,
+                              "effort": "medium", "model": "claude-sonnet-5-5", "started_at": 1.7e9,
+                              "transcript": "/p/proj/S1.jsonl"},
+                       "x2": {"agent_id": "x2", "agent_type": "a", "turns": 30, "tool_rounds": 40, "capped": True,
+                              "tool_errors": 0, "tokens_total": 9000, "output_tokens": 900, "duration_s": 8.0,
+                              "effort": "medium", "model": "claude-sonnet-5-5", "started_at": 1.7e9 + 60,
+                              "transcript": "/p/proj/S1.jsonl"}}, fh)
+
+    def tearDown(self):
+        os.environ.pop("CLAUDE_STACK_DATA", None)
+
+    def test_record_is_idempotent_and_summarises_agents(self):
+        from stack.learn import engine
+        engine.record_session("S1")
+        line = engine.record_session("S1")
+        with open(os.path.join(self.data, "history.jsonl")) as fh:
+            self.assertEqual(len(fh.readlines()), 1)
+        a = line["agents"]["a"]
+        self.assertEqual((a["runs"], a["capped"], a["tool_errors"], a["turns_max"]), (2, 1, 1, 30))
+        self.assertEqual(a["maxTurns"], {"current": 40, "recommended": 60})
+        rows = engine.history(by="session")["a"]
+        self.assertEqual(rows[0]["cap_rate"], 0.5)
+
+    def test_start_applies_pending_values_and_respects_apply_on(self):
+        from stack import frontmatter
+        from stack.learn import engine
+        real = engine.load_config
+        try:
+            engine.load_config = lambda: dict(real(), apply_on="never")
+            self.assertEqual(engine.start_of_session(), [])
+            self.assertEqual(frontmatter.read(self.agent)["maxTurns"], "40")
+            engine.load_config = lambda: dict(real(), apply_on="session_start")
+            ch = engine.start_of_session()
+        finally:
+            engine.load_config = real
+        self.assertEqual(ch[0]["updates"], {"maxTurns": "60", "effort": "high"})
+        fm = frontmatter.read(self.agent)
+        self.assertEqual((fm["maxTurns"], fm["effort"]), ("60", "high"))
+
+    def test_session_end_records_without_applying(self):
+        from stack import frontmatter
+        from stack.learn import engine
+        real_ingest, real_update = engine.ingest_transcript, engine.update
+        engine.ingest_transcript = lambda tp: 2
+        engine.update = lambda only=None: {"agents": {}}
+        try:
+            res = engine.run_after_session("/p/proj/S1.jsonl")
+        finally:
+            engine.ingest_transcript, engine.update = real_ingest, real_update
+        self.assertTrue(res["recorded"])
+        self.assertEqual(res["changes"], [])
+        self.assertEqual(frontmatter.read(self.agent)["maxTurns"], "40")
+
+
 if __name__ == "__main__":
     unittest.main()

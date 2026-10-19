@@ -2,6 +2,7 @@
   "_doc": "Bayesian self-tuning of agent budgets. See docs/LEARNING.md. Per-agent overrides go in 'agents'.",
   "enabled": true,
   "auto_apply": true,
+  "apply_on": "session_start",
   "turns_quantile": 0.95,
   "turns_margin": 1.15,
   "prior_limit_ratio": 3.0,

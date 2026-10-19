@@ -6,12 +6,20 @@ Storage (outside the repo, never committed):
         recommendations.json        latest per-agent posterior summaries
         budgets.json                learned token windows / max output tokens
         changes.jsonl               audit log of every frontmatter change applied
+        history.jsonl               one summary line per session (per-agent runs, turns, caps, errors,
+                                    tokens, effort, current vs recommended values) for analysis over time
+
+Lifecycle: SessionEnd ingests the session, updates the posteriors and appends its history line
+(``run_after_session``); SessionStart applies the pending recommendations to agent frontmatter
+(``start_of_session``), so agent files never change while a session runs. ``apply_on`` in
+config/learning.json moves applying to session end or turns it off; ``auto_apply: false`` disables it.
 """
 from __future__ import annotations
 
 import glob
 import json
 import os
+import statistics
 import time
 from typing import Dict, List, Optional
 
@@ -228,12 +236,141 @@ def apply(dry_run: bool = False, only: Optional[List[str]] = None) -> List[dict]
     return changes
 
 
+def apply_on(cfg: Optional[dict] = None) -> str:
+    """When learned values are written: 'session_start' (default), 'session_end' or 'never'."""
+    cfg = cfg or load_config()
+    if not cfg.get("enabled", True) or not cfg.get("auto_apply", True):
+        return "never"
+    return cfg.get("apply_on", "session_start")
+
+
+def _history_path() -> str:
+    return os.path.join(paths.data_dir(), "history.jsonl")
+
+
+def record_session(session_id: str) -> Optional[dict]:
+    """Append (or replace) this session's summary line in history.jsonl."""
+    p = os.path.join(_obs_dir(), "%s.json" % session_id)
+    if not os.path.exists(p):
+        return None
+    with open(p, encoding="utf-8") as fh:
+        records = list(json.load(fh).values())
+    recs: Dict[str, dict] = {}
+    rp = os.path.join(paths.data_dir(), "recommendations.json")
+    if os.path.exists(rp):
+        with open(rp, encoding="utf-8") as fh:
+            recs = json.load(fh).get("agents", {})
+    agents: Dict[str, dict] = {}
+    for r in records:
+        a = agents.setdefault(r["agent_type"], {"runs": 0, "turns": [], "tool_rounds": [], "capped": 0,
+                                                "tool_errors": 0, "tokens_total": 0, "output_tokens": 0,
+                                                "duration_s": 0.0, "effort": {}, "models": set()})
+        a["runs"] += 1
+        a["turns"].append(int(r.get("turns") or 0))
+        a["tool_rounds"].append(int(r.get("tool_rounds") or 0))
+        a["capped"] += int(bool(r.get("capped")))
+        a["tool_errors"] += int(r.get("tool_errors") or 0)
+        a["tokens_total"] += int(r.get("tokens_total") or 0)
+        a["output_tokens"] += int(r.get("output_tokens") or 0)
+        a["duration_s"] += float(r.get("duration_s") or 0.0)
+        if r.get("effort"):
+            a["effort"][r["effort"]] = a["effort"].get(r["effort"], 0) + 1
+        if r.get("model"):
+            a["models"].add(r["model"])
+    for name, a in agents.items():
+        a["turns_median"] = statistics.median(a["turns"]) if a["turns"] else 0
+        a["turns_max"] = max(a["turns"]) if a["turns"] else 0
+        a["tool_rounds_median"] = statistics.median(a["tool_rounds"]) if a["tool_rounds"] else 0
+        a["tool_rounds_max"] = max(a["tool_rounds"]) if a["tool_rounds"] else 0
+        a["duration_s"] = round(a["duration_s"], 1)
+        a["models"] = sorted(a["models"])
+        del a["turns"], a["tool_rounds"]
+        rec = recs.get(name) or {}
+        if rec:
+            a["maxTurns"] = {k: (rec.get("maxTurns") or {}).get(k) for k in ("current", "recommended")}
+            a["effort_setting"] = {k: (rec.get("effort") or {}).get(k) for k in ("current", "recommended")}
+    starts = [r.get("started_at") for r in records if r.get("started_at")]
+    line = {"session_id": session_id, "recorded_at": time.time(),
+            "started_at": min(starts) if starts else None,
+            "project": os.path.basename(os.path.dirname(records[0].get("transcript") or "")),
+            "runs": len(records), "tokens_total": sum(a["tokens_total"] for a in agents.values()),
+            "agents": agents}
+    hp = _history_path()
+    kept = []
+    if os.path.exists(hp):
+        with open(hp, encoding="utf-8") as fh:
+            kept = [ln for ln in fh if ln.strip() and json.loads(ln).get("session_id") != session_id]
+    tmp = hp + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as fh:
+        fh.writelines(kept)
+        fh.write(json.dumps(line, sort_keys=True) + "\n")
+    os.replace(tmp, hp)
+    return line
+
+
 def run_after_session(transcript_path: Optional[str]) -> dict:
-    """Hook entry: ingest this session, update posteriors, apply if configured."""
+    """SessionEnd: ingest this session, update posteriors and record its history line.
+
+    Values are applied at the next session start (``start_of_session``) unless ``apply_on`` is
+    'session_end'.
+    """
     cfg = load_config()
     if not cfg.get("enabled", True):
         return {"skipped": "learning disabled"}
     n = ingest_transcript(transcript_path) if transcript_path else 0
     rep = update()
-    changes = apply() if cfg.get("auto_apply", True) else []
-    return {"ingested": n, "agents": len(rep["agents"]), "changes": changes}
+    sid = None
+    if transcript_path:
+        sid = os.path.splitext(os.path.basename(transcript_path))[0]
+    line = record_session(sid) if sid else None
+    changes = apply() if apply_on(cfg) == "session_end" else []
+    return {"ingested": n, "agents": len(rep["agents"]), "recorded": bool(line), "changes": changes}
+
+
+def start_of_session() -> List[dict]:
+    """SessionStart: write the pending recommendations into agent frontmatter."""
+    return apply() if apply_on() == "session_start" else []
+
+
+def history(agent: Optional[str] = None, since_days: float = 0.0, by: str = "week") -> Dict[str, List[dict]]:
+    """Per-agent trend rows from history.jsonl, one per period ('week', 'day' or 'session')."""
+    hp = _history_path()
+    if not os.path.exists(hp):
+        return {}
+    cutoff = time.time() - since_days * 86400 if since_days else 0
+    with open(hp, encoding="utf-8") as fh:
+        lines = [json.loads(ln) for ln in fh if ln.strip()]
+    lines = sorted((ln for ln in lines if (ln.get("started_at") or ln.get("recorded_at") or 0) >= cutoff),
+                   key=lambda ln: ln.get("started_at") or ln.get("recorded_at") or 0)
+    fmt = {"week": "%G-W%V", "day": "%Y-%m-%d"}.get(by)
+    buckets: Dict[str, Dict[str, dict]] = {}
+    for ln in lines:
+        ts = ln.get("started_at") or ln.get("recorded_at") or 0
+        period = time.strftime(fmt, time.localtime(ts)) if fmt else ln["session_id"][:8]
+        for name, a in ln.get("agents", {}).items():
+            if agent and name != agent:
+                continue
+            b = buckets.setdefault(name, {}).setdefault(period, {
+                "period": period, "sessions": 0, "runs": 0, "capped": 0, "tool_errors": 0, "tokens_total": 0,
+                "turns_median": [], "turns_max": 0, "effort": {}, "maxTurns": None, "effort_setting": None})
+            b["sessions"] += 1
+            b["runs"] += a.get("runs", 0)
+            b["capped"] += a.get("capped", 0)
+            b["tool_errors"] += a.get("tool_errors", 0)
+            b["tokens_total"] += a.get("tokens_total", 0)
+            b["turns_median"].append(a.get("turns_median", 0))
+            b["turns_max"] = max(b["turns_max"], a.get("turns_max", 0))
+            for k, v in (a.get("effort") or {}).items():
+                b["effort"][k] = b["effort"].get(k, 0) + v
+            b["maxTurns"] = a.get("maxTurns") or b["maxTurns"]
+            b["effort_setting"] = a.get("effort_setting") or b["effort_setting"]
+    out: Dict[str, List[dict]] = {}
+    for name, periods in sorted(buckets.items()):
+        rows = []
+        for b in periods.values():
+            b["turns_median"] = round(statistics.median(b["turns_median"]), 1) if b["turns_median"] else 0
+            b["cap_rate"] = round(b["capped"] / b["runs"], 3) if b["runs"] else 0.0
+            b["tokens_per_run"] = int(b["tokens_total"] / b["runs"]) if b["runs"] else 0
+            rows.append(b)
+        out[name] = rows
+    return out

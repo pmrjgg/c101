@@ -318,9 +318,7 @@ def subagent_stop(inp: dict) -> Optional[dict]:
         interval = float(_policy().get("midsession_update_minutes", 30)) * 60
         last = os.path.getmtime(stamp) if os.path.exists(stamp) else 0
         if time.time() - last > interval:
-            engine.update()
-            if engine.load_config().get("auto_apply", True):
-                engine.apply()
+            engine.update()  # recommendations only: agent files change at the next session start
             open(stamp, "w").close()
     return None
 
@@ -339,13 +337,36 @@ def _missing_keys(want: Optional[list] = None) -> list:
     return envfile.missing(want)
 
 
+def _apply_learned() -> list:
+    """Write pending recommendations into agent files (Claude Code hot-reloads them, so this session's
+    next delegation already uses the new values). Skipped while another learner run holds the lock."""
+    try:
+        from .learn import engine
+        if engine.apply_on() != "session_start":
+            return []
+        os.makedirs(paths.data_dir(), exist_ok=True)
+        with open(os.path.join(paths.data_dir(), "learn.lock"), "w") as lock:
+            try:
+                fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except OSError:
+                return []  # a previous session's SessionEnd run is still writing; apply next time
+            return engine.start_of_session()
+    except Exception as exc:  # never block a session start
+        _log_error("session-start apply", exc)
+        return []
+
+
 def session_start(inp: dict) -> Optional[dict]:
     parts = ["Agent stack active: max delegation depth %d." % max_depth()]
     miss = _missing_keys()
     if miss:
         parts.append("Missing keys in ~/.claude/stack.env: %s (those MCP servers run anonymous or fail)." % ", ".join(miss))
+    applied = _apply_learned()
+    if applied:
+        parts.append("Applied learned values at session start: " + "; ".join(
+            "%s %s" % (c["agent"], ",".join("%s=%s" % kv for kv in c["updates"].items())) for c in applied) + ".")
     ch = os.path.join(paths.data_dir(), "changes.jsonl")
-    if os.path.exists(ch) and time.time() - os.path.getmtime(ch) < 7 * 86400:
+    if not applied and os.path.exists(ch) and time.time() - os.path.getmtime(ch) < 7 * 86400:
         try:
             with open(ch, encoding="utf-8") as fh:
                 last = [json.loads(x) for x in fh.readlines()[-5:]]

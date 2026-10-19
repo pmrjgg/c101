@@ -9,7 +9,9 @@
     stack learn update [--agent A ...]
     stack learn apply [--dry-run] [--agent A ...]
     stack learn report [--agent A] [--json]
-    stack learn run --transcript P              ingest + update + apply (SessionEnd hook)
+    stack learn run --transcript P              ingest + update + record history (SessionEnd hook)
+    stack learn start                           apply pending learned values (SessionStart hook)
+    stack learn history [--agent A] [--since-days N] [--by week|day|session] [--json]   trends over time
     stack hook <pre-agent|subagent-stop|session-start|session-end>
     stack depth [SESSION_ID]                    spawn statistics recorded by the depth guard
     stack mcp list | enable NAME | disable NAME  manage optional MCP servers (config/mcp.optional.json)
@@ -193,8 +195,31 @@ def cmd_learn(a) -> int:
         if not ch:
             print("no changes")
     elif a.action == "run":
-        res = engine.run_after_session(a.transcript)
+        import fcntl
+        os.makedirs(paths.data_dir(), exist_ok=True)
+        with open(os.path.join(paths.data_dir(), "learn.lock"), "w") as lock:
+            fcntl.flock(lock, fcntl.LOCK_EX)  # detached SessionEnd run: wait for any other learner run
+            res = engine.run_after_session(a.transcript)
         print(json.dumps(res, indent=2))
+    elif a.action == "start":
+        for c in engine.start_of_session():
+            print("set %-28s %s" % (c["agent"], " ".join("%s=%s" % kv for kv in c["updates"].items())))
+    elif a.action == "history":
+        rows = engine.history(agent=(a.agent or [None])[0], since_days=a.since_days or 0, by=a.by)
+        if a.json:
+            print(json.dumps(rows, indent=2))
+        elif not rows:
+            print("no history yet (%s)" % os.path.join(paths.data_dir(), "history.jsonl"))
+        else:
+            print("%-24s %-10s %4s %5s %8s %7s %8s %7s  %-14s %s" % (
+                "agent", a.by, "sess", "runs", "turns50", "turnsmx", "cap_rate", "errors", "maxTurns", "effort"))
+            for name, periods in rows.items():
+                for b in periods:
+                    mt, ef = b.get("maxTurns") or {}, b.get("effort_setting") or {}
+                    print("%-24s %-10s %4d %5d %8s %7d %8.3f %7d  %-14s %s" % (
+                        name, b["period"], b["sessions"], b["runs"], b["turns_median"], b["turns_max"],
+                        b["cap_rate"], b["tool_errors"], "%s->%s" % (mt.get("current"), mt.get("recommended")),
+                        "%s->%s" % (ef.get("current"), ef.get("recommended"))))
     elif a.action == "report":
         p = os.path.join(paths.data_dir(), "recommendations.json")
         if not os.path.exists(p):
@@ -370,13 +395,14 @@ def main(argv=None) -> int:
     k.set_defaults(fn=cmd_keys)
 
     le = sub.add_parser("learn")
-    le.add_argument("action", choices=["ingest", "update", "apply", "report", "run"])
+    le.add_argument("action", choices=["ingest", "update", "apply", "report", "run", "start", "history"])
     le.add_argument("--transcript")
     le.add_argument("--all", action="store_true")
     le.add_argument("--since-days", type=float)
     le.add_argument("--agent", action="append")
     le.add_argument("--dry-run", action="store_true")
     le.add_argument("--json", action="store_true")
+    le.add_argument("--by", choices=["week", "day", "session"], default="week")
     le.set_defaults(fn=cmd_learn)
 
     h = sub.add_parser("hook")
