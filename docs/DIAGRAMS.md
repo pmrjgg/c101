@@ -242,12 +242,13 @@ flowchart TB
 ## 3. Request lifecycle
 
 One request from start to finish, with the hook handlers in `stack/hooks.py` (run as `bin/stack hook <name>`) as
-the control plane. `SessionStart` adds a status line and `UserPromptSubmit` adds the whole-tree token-budget note.
+the control plane. `SessionStart` applies the values the learner recommended at the end of the previous session and
+adds a status line; `UserPromptSubmit` adds the whole-tree token-budget note.
 Every Agent call passes `pre-agent` (diagram 4), which prepends the `<stack-context>` header to the child's brief.
 A subagent at depth n that reads the web passes `post-web` and `pre-tool` (diagram 5). The child returns the
 five-section output contract and keeps long output in `.stack/out/<agent>/`. `SubagentStop` runs asynchronously,
 records the effort that was in effect and ingests the session at most once a minute; `SessionEnd` detaches the
-learner (diagram 6). Every handler fails open: an error inside a hook never blocks the session, only deliberate
+learner (diagram 6), which updates the posteriors and records the session in `history.jsonl` without touching agent files. Every handler fails open: an error inside a hook never blocks the session, only deliberate
 deny or ask decisions do. The `PreModelSwitch` guard, which keeps the main thread on its tier model, is left out.
 Source: [Lifecycle of one request](reference/overview.md#lifecycle-of-one-request), [Hook wiring](reference/hooks.md#hook-wiring).
 
@@ -262,7 +263,8 @@ sequenceDiagram
     participant L as learner
 
     U->>H: bin/claude-stack starts<br/>SessionStart
-    H-->>D: status line: max depth 8,<br/>missing keys, recent tuning
+    H->>L: apply pending values:<br/>maxTurns and effort in the<br/>frontmatter, changes.jsonl
+    H-->>D: status line: max depth 8,<br/>missing keys, applied tuning
     U->>H: prompt<br/>UserPromptSubmit
     H-->>D: prompt + budget note:<br/>session of 10B, soft 7.5B,<br/>prompt up to 400M, soft 300M
     D->>D: classify, pick the<br/>cheapest adequate route
@@ -281,12 +283,12 @@ sequenceDiagram
         H-->>S: web agent: risky Bash or write<br/>denied, tainted: any risky<br/>action denied
         S-->>D: Result, Evidence, Files,<br/>Open doubts, Confidence
         S-)H: SubagentStop, async
-        H-)L: record effort, ingest at most<br/>once a minute, update every 30 min
+        H-)L: record effort, ingest at most<br/>once a minute, update every<br/>30 min, no apply
     end
     D-->>U: answer in the five-section<br/>output contract
     U->>H: session ends<br/>SessionEnd
     H-)L: detached learn run
-    L->>L: ingest, update, apply:<br/>maxTurns and effort in the<br/>frontmatter, changes.jsonl
+    L->>L: ingest, update, record<br/>history.jsonl; applied at<br/>the next SessionStart
 ```
 
 ## 4. Guard pipeline for one spawn
@@ -424,8 +426,9 @@ flowchart TB
 
 ## 6. Self-tuning loop
 
-After each session, and every 30 minutes during a long one, the learner moves each agent's `maxTurns` and
-`effort` toward what its runs actually needed. Ingest turns the transcripts into one record per agent run. Update
+After each session (and every 30 minutes during a long one) the learner updates what each agent's `maxTurns` and
+`effort` should be, given what its runs actually needed; the next session start writes it (`apply_on`), so agent
+files never change while a session runs. Ingest turns the transcripts into one record per agent run. Update
 fits per-agent posteriors: capped runs count as right-censored ("needed at least the cap"), so a cap that is too
 low cannot lock itself in, and old runs are down-weighted by a forgetting factor chosen per agent by prequential
 score. Apply writes a recommendation into the agent's frontmatter only with enough evidence and inside the bounds,
@@ -440,8 +443,8 @@ flowchart TB
     T[("transcripts:<br/>session.jsonl,<br/>subagents/agent-ID.jsonl")]:::store
 
     subgraph TR["triggers"]
-        T1["SubagentStop, async:<br/>ingest at most once<br/>a minute; update and<br/>apply every 30 min"]:::calc
-        T2["SessionEnd:<br/>detached learn run"]:::calc
+        T1["SubagentStop, async:<br/>ingest at most once<br/>a minute; update<br/>every 30 min"]:::calc
+        T2["SessionEnd:<br/>detached learn run:<br/>ingest, update, history"]:::calc
         T3["Agent SDK runner:<br/>run_after_session"]:::calc
     end
 
@@ -455,6 +458,8 @@ flowchart TB
     end
 
     R[("recommendations.json,<br/>budgets.json")]:::store
+    HJ[("history.jsonl:<br/>one line per session")]:::store
+    T4["next SessionStart<br/>or learn start"]:::calc
     A{{"apply within bounds:<br/>n_eff 3+, 5+ for effort;<br/>per-agent bounds;<br/>step x2 or one level;<br/>maxTurns change 10%+"}}:::calc
     F["agent frontmatter:<br/>maxTurns, effort"]:::out
     C[("changes.jsonl<br/>audit log")]:::store
@@ -474,10 +479,12 @@ flowchart TB
     P3 --> R
     P2 --> R
     P1 --> R
+    R --> HJ
     R --> A
+    T4 --> A
     A --> F
     A --> C
-    F -->|"next spawns use<br/>the new values"| S
+    F -->|"hot reload: the next<br/>delegation uses them"| S
 
     classDef entry fill:#b0bec5,stroke:#37474f,color:#111
     classDef calc fill:#a5d6a7,stroke:#2e7d32,color:#111

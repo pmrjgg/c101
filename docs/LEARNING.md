@@ -7,11 +7,17 @@ toward what the evidence supports. Code: `stack/learn/` (stdlib only). Config: `
 ## Data flow
 
 ```
-SubagentStop (async, debounced)  ─┐
-SessionEnd (detached background) ─┴─> bin/stack learn ingest   transcripts -> ~/.claude/stack-data/obs/<session>.json
-                                      bin/stack learn update   posteriors  -> recommendations.json, budgets.json
-                                      bin/stack learn apply    frontmatter <- maxTurns/effort (bounded, audited in changes.jsonl)
+SubagentStop (async, debounced)  ──> bin/stack learn ingest + update   (recommendations only; agent files untouched)
+SessionEnd (detached background) ──> bin/stack learn run    transcripts -> ~/.claude/stack-data/obs/<session>.json
+                                                            posteriors  -> recommendations.json, budgets.json
+                                                            one line per session -> history.jsonl
+SessionStart (next session)      ──> bin/stack learn start  frontmatter <- maxTurns/effort (bounded, audited in changes.jsonl)
 ```
+
+Agent files never change while a session runs. The values learned at the end of one session are
+written at the start of the next (`apply_on: "session_start"`); Claude Code hot-reloads agent files, so
+they take effect from that session's next delegation without a restart. If the previous session's
+SessionEnd run still holds `learn.lock`, nothing is applied and it happens next time.
 
 ### What is observed (per agent run)
 
@@ -95,9 +101,12 @@ bin/stack learn report                  # table: n, gamma, maxTurns cur->rec, ef
 bin/stack learn report --agent rust-expert --json
 bin/stack learn apply --dry-run         # what would change
 bin/stack learn apply                   # write frontmatter (audited in ~/.claude/stack-data/changes.jsonl)
+bin/stack learn start                   # apply pending values now (what SessionStart does)
+bin/stack learn history --by week       # per-agent trends from history.jsonl: turns, cap rate, errors, tokens
 ```
 
-Set `"auto_apply": false` in `config/learning.json` to review changes before they land, or
-`"enabled": false` to stop learning. Per-agent bounds live under `"agents"`; set `"learn": false`
+Set `"auto_apply": false` (or `"apply_on": "never"`) in `config/learning.json` to review changes before
+they land, `"apply_on": "session_end"` to write them as soon as a session ends, or `"enabled": false` to
+stop learning. Per-agent bounds live under `"agents"`; set `"learn": false`
 there to freeze an agent. Changes are ordinary edits to tracked files, so `git diff .claude/agents`
 shows exactly what the learner did.

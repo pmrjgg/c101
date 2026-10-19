@@ -270,7 +270,9 @@ installed as the `stack` script (`[project.scripts]` in `pyproject.toml`).
 | `learn update` | `--agent A` (repeatable) | recompute posteriors into `recommendations.json` and `budgets.json` | 0 |
 | `learn apply` | `--dry-run`, `--agent A` | write recommended `maxTurns`, `effort`, `autoCompactWindow` into managed agents; log to `changes.jsonl` | 0 |
 | `learn report` | `--agent A`, `--json` | table: agent, n, gamma, maxTurns cur->rec, effort cur->rec, P(fail), output tokens [min..max] | 1 if no recommendations yet |
-| `learn run` | `--transcript P` | ingest + update + apply (when `auto_apply`); the SessionEnd job; prints JSON | 0 |
+| `learn run` | `--transcript P` | ingest + update + record the session in `history.jsonl` under `learn.lock` (waits); applies only with `apply_on: "session_end"`; the SessionEnd job; prints JSON | 0 |
+| `learn start` | | apply pending learned values now (what the SessionStart hook does when `apply_on` is `"session_start"`) | 0 |
+| `learn history` | `--agent A`, `--since-days N`, `--by week\|day\|session`, `--json` | per-agent trend rows per period: sessions, runs, turns50, max turns, cap rate, tool errors, maxTurns and effort cur->rec; `--json` adds tokens per run | 0 |
 | `hook NAME` | | run a hook handler on the JSON read from stdin: `pre-agent`, `subagent-stop`, `session-start`, `session-end`, `prompt-submit`, `model-switch`; fail-open | 0; `model-switch` exits 2 to block |
 | `depth` | `[SESSION_ID]` (prefix) | spawn statistics of the last 10 sessions: spawns, max depth, spawns per depth | 0 |
 | `packs list` | | name, skill count, agent count, extra requirements, description | 0 |
@@ -390,7 +392,7 @@ the `<stack-context>` header and the tier rules.
 |---|---|---|
 | `max_spawns_per_session` | `128` | subagent spawns per session before new spawns are denied (runaway fan-out guard); `0` disables |
 | `inject_context` | `true` | prepend `<stack-context depth max_depth parent remaining_depth spawns_this_session budget prompt_tokens session_tokens out_dir/>` to every child prompt |
-| `midsession_update_minutes` | `30` | minimum interval between posterior updates (and auto-apply) triggered from `SubagentStop` |
+| `midsession_update_minutes` | `30` | minimum interval between posterior updates triggered from `SubagentStop` (recommendations only; never applies) |
 | `ingest_debounce_seconds` | `60` | minimum interval between transcript ingests from `SubagentStop`; SessionEnd always does a full ingest |
 | `expected_keys` | `EXA_API_KEY`, `JINA_API_KEY`, `SPIDER_API_KEY` | reported by `bin/stack keys` and, when missing, in the SessionStart context |
 | `optional_keys` | `IMAGE_<OP>_URL/_KEY/_MODEL` for `GEN`, `REF`, `EDIT`, `TRANSPARENT`, `SEGMENT`, `BG_REMOVAL`, `UPSCALE`, `VECTOR`, `TRACE`; `CONTEXT7_API_KEY`, `FIRECRAWL_API_KEY`, `TAVILY_API_KEY`, `BRAVE_API_KEY` | reported by `bin/stack keys` under `optional:` |
@@ -417,9 +419,10 @@ The token accounting, the levels and the raise-only learned limits are in [Token
 Bayesian self-tuning (`stack/learn/`).
 
 Every key, its default and meaning, and the per-agent bounds are in
-[Learner configuration reference](learning.md#learner-configuration-reference). Note that `enabled` is checked only by
-`learn run` (SessionEnd and `stack-sdk run`) while the `SubagentStop` path checks only `auto_apply`, so set both to
-`false` to stop all changes; `learn: false` in an agent's bounds freezes that agent.
+[Learner configuration reference](learning.md#learner-configuration-reference). `apply_on` (`"session_start"`, the
+default, `"session_end"` or `"never"`) sets when learned values are written; agent files never change mid-session.
+`"auto_apply": false` or `"enabled": false` stops all changes (`enabled: false` also makes `learn run` a no-op);
+`learn: false` in an agent's bounds freezes that agent.
 
 ### `config/packs.json`
 
@@ -447,10 +450,10 @@ Every key, its default and meaning, and the per-agent bounds are in
 | `enabledMcpjsonServers` | `[]` | `.mcp.json` servers approved without a prompt (catalog servers are not `.mcp.json` servers); maintained by `bin/stack mcp enable/disable` |
 | `permissions.allow` | `Bash(bin/stack *)`, `Bash(./bin/stack *)`, `mcp__exa`, `mcp__jina`, `mcp__spider`, `mcp__image`, `mcp__context7`, `mcp__fetch`, `mcp__neural-memory`, and `Workflow(<name>)` for `swarm-run`, `fanout`, `mediate`, `expert-panel`, `research-sweep`, `review-verify`, `plan-tournament` and `visual-iterate` | pre-approved tools (Playwright tools still ask) |
 | `permissions.deny` | `Read(~/.claude/stack.env)`, `Bash(cat ~/.claude/stack.env*)` | keep secrets out of every context |
-| `hooks.SessionStart` | `bin/stack hook session-start`, timeout 10 | status line: depth, missing keys, recent self-tuning |
+| `hooks.SessionStart` | `bin/stack hook session-start`, timeout 10 | apply pending learned values; status line: depth, missing keys, applied or recent self-tuning |
 | `hooks.PreToolUse` (matcher `Agent\|Task`) | `bin/stack hook pre-agent`, timeout 10 | depth guard, spawn rules, budgets, context header, tier enforcement |
 | `hooks.SubagentStop` | `bin/stack hook subagent-stop`, `async: true`, timeout 120 | record effort, debounced ingest, periodic update |
-| `hooks.SessionEnd` | `bin/stack hook session-end`, timeout 5 | detach `bin/stack learn run` in the background |
+| `hooks.SessionEnd` | `bin/stack hook session-end`, timeout 5 | detach `bin/stack learn run` (ingest, update, history) in the background |
 | `hooks.UserPromptSubmit` | `bin/stack hook prompt-submit`, timeout 20 | token-budget note for the main thread |
 | `hooks.PreModelSwitch` | `bin/stack hook model-switch`, timeout 10 | block switches to non-tier models (and away from the main agent's tier model) |
 
@@ -509,7 +512,7 @@ under `~/.claude`.
 | `.stack/calibration/ledger.jsonl` | synthesis and aggregation agents | resolved forecasts used for calibration weights |
 | `~/.claude/stack` | installer | symlink to the repo |
 | `~/.claude/stack.env` | you | API keys and image endpoints (mode 0600; denied to Read) |
-| `~/.claude/stack-data/` (`obs/`, `recommendations.json`, `budgets.json`, `changes.jsonl`, `stops/`, `sessions/`, `last_ingest`, `last_update`, `learn.lock`, `learn.log`, `hook-errors.log`) | learner and hooks | described file by file in [Files in `~/.claude/stack-data/`](learning.md#files-in-claudestack-data) |
+| `~/.claude/stack-data/` (`obs/`, `recommendations.json`, `budgets.json`, `history.jsonl`, `changes.jsonl`, `stops/`, `sessions/`, `last_ingest`, `last_update`, `learn.lock`, `learn.log`, `hook-errors.log`) | learner and hooks | described file by file in [Files in `~/.claude/stack-data/`](learning.md#files-in-claudestack-data) |
 | `~/.claude/projects/<project>/<session>.jsonl`, `<session>/subagents/**/agent-<id>.jsonl` + `.meta.json` | Claude Code | transcripts the learner and the budget scanner read (`spawnDepth`, `agentType`) |
 | `~/.claude/settings.json` (+ `.bak-<unix-seconds>`) | installer with `--user`, `--main-agent`, `--no-main-agent` | merged env and hooks; optional model allowlist and `agent` |
 | `~/.claude/agents/stack/`, `~/.claude/skills/<name>`, `~/.claude/workflows/<name>.js` | installer with `--user` | symlinks into the repo |
@@ -622,7 +625,7 @@ causes and fixes are in `.claude/skills/stack-authoring/references/doctor-errors
 | `the <agent> main thread must run at effort <level>` | `/effort` changed the main thread's effort (hooks cannot block it) | run the `/effort` command the note names |
 | a new model id set through `ADVANCED_MODEL` is rejected interactively | `availableModels` in `.claude/settings.json` is an exact list | add the id there as well |
 | hooks seem to do nothing | they fail open on internal errors | `tail ~/.claude/stack-data/hook-errors.log` |
-| learner changes nothing | `auto_apply`/`enabled` false, fewer than 3 (turns) or 5 (effort) effective runs, `learn: false`, or inside the hysteresis band | `bin/stack learn report` shows the reason per agent |
+| learner changes nothing | `auto_apply`/`enabled` false, `apply_on: "never"`, no new session started since the update, fewer than 3 (turns) or 5 (effort) effective runs, `learn: false`, or inside the hysteresis band | `bin/stack learn report` shows the reason per agent |
 | `no recommendations yet` | nothing ingested | `bin/stack learn ingest --all && bin/stack learn update` |
 | `ingested 0 agent runs` with `--transcript` | relative path resolved against the repo (`bin/stack` runs from there) | pass an absolute path |
 | skills still listed after `packs apply` | skill list cached by the session | `/reload-skills` or restart |

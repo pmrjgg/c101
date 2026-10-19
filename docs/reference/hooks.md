@@ -15,7 +15,7 @@ All hooks are `type: "command"` hooks that call one entry point, `"$CLAUDE_PROJE
 
 | Event | Matcher | Handler | Timeout (s) | Async | Emits |
 |---|---|---|---|---|---|
-| `SessionStart` | (all) | `session-start` → `session_start()` | 10 | no | `additionalContext` status line |
+| `SessionStart` | (all) | `session-start` → `session_start()` | 10 | no | `additionalContext` status line; applies pending learned values |
 | `PreToolUse` | `Agent\|Task` | `pre-agent` → `pre_agent()` | 10 | no | `permissionDecision` `deny`, or `allow` + `updatedInput` (+ `additionalContext`) |
 | `SubagentStop` | (all) | `subagent-stop` → `subagent_stop()` | 120 | **yes** | nothing (side effects only) |
 | `SessionEnd` | (all) | `session-end` → `session_end()` | 5 | no | nothing (detaches the learner) |
@@ -164,10 +164,18 @@ with the reaction the protocol requires, in [The pre-agent hook](delegation.md#t
 4. `engine.ingest_transcript(transcript_path)` (main transcript plus all subagent transcripts), then touches
    `last_ingest`.
 5. If `<data>/last_update` is older than `midsession_update_minutes` (`30`), runs `engine.update()` (posteriors,
-   `budgets.json`, learned global budgets) and, when `config/learning.json` `auto_apply` is `true`, `engine.apply()`
-   (frontmatter edits), then touches `last_update`.
+   `budgets.json`, learned global budgets), then touches `last_update`. It never applies: agent files do not change
+   while a session runs; the recommendations are written at the next session start.
 
 ## `session-start`: status line
+
+First applies pending learned values (`_apply_learned`): when `engine.apply_on()` is `"session_start"` (the default;
+`"never"` when `config/learning.json` `enabled` or `auto_apply` is `false`) it takes `<data>/learn.lock` with
+`LOCK_EX | LOCK_NB` and runs `engine.start_of_session()` (`engine.apply()`). If a previous session's detached
+`learn run` still holds the lock, nothing is applied and it happens next time. Exceptions go to `hook-errors.log` and
+never block the start. Claude Code hot-reloads agent files ("the next delegation uses the updated definition, with
+no restart needed", [sub-agents](https://code.claude.com/docs/en/sub-agents)), so the values take effect from this
+session's next delegation.
 
 Returns `additionalContext` built from up to three parts:
 
@@ -175,16 +183,19 @@ Returns `additionalContext` built from up to three parts:
 - `Missing keys in ~/.claude/stack.env: <names> (those MCP servers run anonymous or fail).` — the names in
   `policy.json` `expected_keys` (`EXA_API_KEY`, `JINA_API_KEY`, `SPIDER_API_KEY`) whose value is empty or absent.
   `stack/envfile.py` parses the file without executing it; only key names are ever reported.
+- `Applied learned values at session start: <agent> maxTurns=..,effort=..; ...` — the changes just applied; otherwise
 - `Recently self-tuned: <agent> key=value,...; ...` — the last 5 entries of `<data>/changes.jsonl`, only if that file
   was modified within the last 7 days.
 
 ## `session-end`: detached learner
 
-`SessionEnd` hooks get a very short window (the handler's docstring budgets for 1.5 s), so the handler only starts
+`SessionEnd` hooks share a 1.5 s budget, so the handler only starts
 `<python> -m stack.cli learn run --transcript <transcript_path>` with `start_new_session=True`, stdin from
 `/dev/null`, stdout and stderr appended to `<data>/learn.log`, working directory `$REPO`, and returns at once.
-`learn run` (`engine.run_after_session`) does nothing if `config/learning.json` `enabled` is `false`; otherwise it
-ingests the session, updates posteriors and applies changes when `auto_apply` is `true`.
+`learn run` waits for `<data>/learn.lock`, then `engine.run_after_session` does nothing if `config/learning.json`
+`enabled` is `false`; otherwise it ingests the session, updates posteriors and records the session's summary line in
+`<data>/history.jsonl` (`engine.record_session`). It applies only when `apply_on` is `"session_end"`; by default the
+next `session-start` applies.
 
 ## `prompt-submit`: per-prompt budget note
 
@@ -203,8 +214,8 @@ use `budget.fmt()`: three significant digits with `k`, `M` or `B` (`3B`, `2.25B`
 
 Hooks keep their state under `<data>`: the spawn counter (`sessions/<session_id>.json`, written by `pre-agent`), the
 budget scan state (`sessions/<session_id>.usage.json`, written by `pre-agent` and `prompt-submit`), the effort in
-effect per finished subagent (`stops/<session_id>.jsonl`), the ingest lock and debounce stamps (`learn.lock`,
-`last_ingest`, `last_update`), `learn.log` from the detached learner, `hook-errors.log`, and the learner's outputs.
+effect per finished subagent (`stops/<session_id>.jsonl`), the learner lock and debounce stamps (`learn.lock`,
+`last_ingest`, `last_update`), `learn.log` from the detached learner, the per-session history (`history.jsonl`), `hook-errors.log`, and the learner's outputs.
 Each file is described in [Files in `~/.claude/stack-data/`](learning.md#files-in-claudestack-data). All JSON state is written
 to a `.tmp` file and moved into place with `os.replace`, and the per-session files are guarded by `.lock` files, so a
 reader never sees a partial file.
