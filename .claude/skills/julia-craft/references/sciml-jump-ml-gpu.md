@@ -73,7 +73,12 @@ function facility_location(c, f, d, C)          # c[i,j] cost, f[j] fixed, d[i] 
     @constraint(model, cap[j=1:m], sum(x[i, j] for i in 1:n) <= C[j] * y[j])
     @objective(model, Min, sum(c .* x) + sum(f .* y))
     optimize!(model)
-    assert_is_solved_and_feasible(model)         # errors on infeasible/unbounded/no solution
+    # assert_is_solved_and_feasible would throw on TIME_LIMIT even with a good incumbent: branch instead
+    st = termination_status(model)
+    if !(st == OPTIMAL || (st == TIME_LIMIT && primal_status(model) == FEASIBLE_POINT))
+        error("facility_location: $(st), primal status $(primal_status(model))")
+    end
+    st == TIME_LIMIT && @warn "time limit hit; returning the best incumbent" relative_gap(model)
     return value.(x), value.(y), objective_value(model)
 end
 ```

@@ -265,4 +265,19 @@ A skill whose pack is not enabled in this install is off: work from this hub and
 
 | skill | load when |
 |---|---|
+| `cirq-workflows` | writing, simulating or porting Cirq code |
+| `cudaq-gpu-kernels` | writing CUDA-Q kernels or scaling circuit simulation on GPUs |
+| `hamiltonian-simulation-methods` | implementing or costing time evolution, or when choosing a simulation method |
+| `pennylane-differentiable` | building trainable QNodes or VQE/QAOA in PennyLane |
+| `qiskit-primitives-runtime` | running circuits through primitives locally or on IBM hardware |
+| `qiskit-transpilation` | compiling circuits to ISA form or minimising 2q count and depth after routing |
+| `quantum-algorithm-primitives` | designing, implementing or debugging these algorithms |
+| `quantum-chemistry-mapping` | turning a molecule or lattice model into qubit operators |
+| `quantum-circuit-decomposition` | building, decomposing or hand-costing a circuit |
+| `quantum-circuit-simulators` | picking a simulator, scaling a simulation, or proving a simulator result is right |
+| `quantum-measurement-estimation` | choosing shots, estimating observables or judging whether a histogram matches theory |
+| `quantum-noise-mitigation` | results come from noisy hardware or a noisy simulation |
+| `quantum-resource-estimation` | asked how many qubits or how much time an algorithm needs |
+| `stabilizer-codes-surface-code` | choosing, analysing or explaining QEC codes |
+| `stim-qec-decoding` | logical error rates or thresholds must be produced numerically |
 | `variational-quantum-algorithms` | proposing, debugging or reviewing VQE, QAOA or QML training |

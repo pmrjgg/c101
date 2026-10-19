@@ -216,7 +216,17 @@ A skill whose pack is not enabled in this install is off: work from this hub and
 | skill | load when |
 |---|---|
 | `dimensional-analysis-units` | Dimensions, units and magnitudes: Buckingham pi and nondimensionalisation, regime-deciding dimensionless numbers, scaling laws, Fermi estimates, limiting cas... |
+| `em-field-solvers-fdtd-fem` | Electromagnetics problem solving and field solvers: Maxwell in media, interface conditions, skin depth, waveguide and cavity formulas, SI/Gaussian translatio... |
+| `fluid-dynamics-cfd` | modelling a flow or heat-transfer problem or setting up or reviewing a CFD case |
 | `lagrangian-hamiltonian-mechanics` | deriving or checking classical dynamics |
+| `molecular-dynamics-setup` | building, running or reviewing an MD simulation |
+| `optics-wave-propagation` | designing, estimating or simulating an optical system or wave field |
+| `pde-discretization-stability` | building or debugging a grid-based PDE solver |
+| `physics-ode-integrators` | writing or debugging a time integrator |
+| `quantum-mechanics-methods` | solving or checking a QM problem by hand or with SymPy |
+| `relativity-calculations` | doing relativistic kinematics or general-relativity computations |
 | `schrodinger-numerics` | a QM problem needs a computer |
 | `simulation-verification-validation` | Verification and validation of physics simulations: code verification by manufactured solutions and observed order, solution verification by Richardson extra... |
+| `statmech-monte-carlo` | sampling a physical system or judging MC error bars |
+| `tight-binding-band-structure` | building or interpreting band structures or topological lattice models |
 | `uncertainty-propagation-fitting` | a result needs an error bar or a model must be fit to data |

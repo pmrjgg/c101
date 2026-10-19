@@ -198,7 +198,7 @@ Claude Code 2.1.29x or later.
 
 ## Overview and request lifecycle
 
-Under the hood, one session becomes a hierarchical multi-agent system. The repository contains 55 subagents in eight groups (`.claude/agents/<group>/<name>.md`), 144 skills
+Under the hood, one session becomes a hierarchical multi-agent system. The repository contains 55 subagents in eight groups (`.claude/agents/<group>/<name>.md`), 225 skills
 (`.claude/skills/<name>/SKILL.md`), eight saved workflows (`.claude/workflows/<name>.js`), six hooks wired in
 `.claude/settings.json`, project MCP servers (`.mcp.json`), and the stdlib-only Python tooling that the hooks run
 (`stack/`, CPython 3.13 via uv). No code in this repository answers a request itself. The code sets the rules
@@ -4745,30 +4745,31 @@ listed by name only, so they cost almost no context until used. Each skill is `.
 | `typescript` | `coding-core` | | TypeScript/Node/Bun: strict typing, tsconfig, testing, runtime patterns |
 | `devops` | `coding-core` | | containers, CI/CD, shell robustness, observability |
 
-Granular skills shipped today (88, including the `coding-general` hub). Each hub ends with a "Granular skills"
-routing table naming them; a hub keeps its full original text, so a domain without granular skills yet loses
-nothing.
+Granular skills shipped today (168, plus the `coding-general` hub). Each hub ends with a "Granular skills"
+routing table naming them; hubs keep their full original text.
 
 | Hub | Granular skills |
 |---|---|
-| `coding-general` | `git-advanced-workflows`, `refactoring-playbook`, `codemod-automation`, `api-contract-design`, `sql-query-tuning`, `zero-downtime-migrations`, `regex-engineering`, `resilience-patterns`, `dependency-upgrades`, `docs-and-adr-writing`; Python: `python-uv-packaging`, `python-typing`, `python-asyncio`, `pytest-patterns`, `fastapi-pydantic-services`, `python-performance-profiling`; TypeScript: `typescript-strict-types`, `typescript-build-config`, `typescript-testing-vitest`, `node-runtime-patterns`, `react-typescript-components`; DevOps: `ci-pipelines`, `container-images`, `shell-scripting`, `observability-instrumentation` |
+| `coding-general` | `git-advanced-workflows`, `refactoring-playbook`, `codemod-automation`, `api-contract-design`, `sql-query-tuning`, `zero-downtime-migrations`, `regex-engineering`, `resilience-patterns`, `dependency-upgrades`, `docs-and-adr-writing`, `ci-pipelines`, `container-images`, `shell-scripting`, `observability-instrumentation`, `python-uv-packaging`, `python-typing`, `python-asyncio`, `pytest-patterns`, `fastapi-pydantic-services`, `python-performance-profiling`, `typescript-strict-types`, `typescript-build-config`, `typescript-testing-vitest`, `node-runtime-patterns`, `react-typescript-components` |
 | `rust-craft` | `rust-ownership-lifetimes`, `rust-traits-generics`, `rust-error-handling`, `rust-async-tokio`, `rust-unsafe-soundness`, `rust-ffi-bindings`, `rust-performance`, `rust-testing-fuzzing`, `cargo-workspaces-features`, `rust-axum-services` |
 | `cpp-craft` | `cpp-memory-raii`, `cpp-templates-concepts`, `cpp-concurrency-atomics`, `cpp-ub-sanitizers`, `cmake-presets`, `cpp-simd-performance`, `cpp-testing-fuzzing` |
 | `go-craft` | `go-concurrency-context`, `go-interfaces-generics`, `go-error-handling`, `go-profiling-pprof`, `go-testing-fuzzing`, `go-http-services`, `go-modules-tooling` |
-| `haskell-craft` | `haskell-type-level`, `haskell-effects`, `haskell-concurrency-stm` |
-| `julia-craft` | `julia-type-stability`, `julia-performance-allocations`, `julia-sciml-diffeq` |
-| `java-craft` | `java-modern-language`, `java-virtual-threads`, `java-jvm-tuning-jfr` |
+| `haskell-craft` | `haskell-type-level`, `haskell-effects`, `haskell-concurrency-stm`, `haskell-testing-properties`, `haskell-cabal-builds`, `haskell-performance-space-leaks` |
+| `julia-craft` | `julia-type-stability`, `julia-performance-allocations`, `julia-sciml-diffeq`, `julia-optimization-jump`, `julia-gpu`, `julia-packages-environments`, `julia-ml-flux-lux` |
+| `java-craft` | `java-modern-language`, `java-virtual-threads`, `java-jvm-tuning-jfr`, `java-build-maven-gradle`, `java-testing-junit`, `java-spring-boot`, `java-quarkus` |
 | `kotlin-craft` | `kotlin-multiplatform`, `kotlin-compose`, `kotlin-gradle-builds`, `kotlin-testing`, `kotlin-java-interop`, `kotlin-coroutines-flow` |
-| `graphic-design` | `logo-design-process`, `type-scale-systems`, `oklch-palette-ramps`, `icon-system-design`, `design-tokens-dtcg`, `ui-mockup-hifi`, `layout-grids-posters-editorial`, `social-asset-kit`, `image-brief-writing` |
-| `vector-art` / `image-editing` | `svg-hand-authoring` / `photo-retouch-composite` |
-| `mathematics-toolkit` | `inequality-proving`, `matrix-decompositions-conditioning`, `probability-distributions-limits`, `statistical-inference-bayesian`, `number-theory-modular`, `real-complex-analysis` |
-| `physics-toolkit` | `lagrangian-hamiltonian-mechanics`, `schrodinger-numerics`, `uncertainty-propagation-fitting`, `simulation-verification-validation`, `dimensional-analysis-units` |
-| `quantum-computing` | `variational-quantum-algorithms` |
-| `computer-graphics`, `cs-foundations` | none yet (the hubs carry the full domain text) |
+| `graphic-design` | `logo-design-process`, `type-scale-systems`, `oklch-palette-ramps`, `icon-system-design`, `brand-guidelines-system`, `design-tokens-dtcg`, `ui-mockup-hifi`, `chart-design-encoding`, `print-prepress-pdfx`, `visual-accessibility-audit`, `layout-grids-posters-editorial`, `social-asset-kit`, `image-brief-writing` |
+| `vector-art` | `svg-hand-authoring` |
+| `image-editing` | `photo-retouch-composite` |
+| `mathematics-toolkit` | `inequality-proving`, `matrix-decompositions-conditioning`, `probability-distributions-limits`, `statistical-inference-bayesian`, `combinatorics-generating-functions`, `number-theory-modular`, `real-complex-analysis`, `ode-pde-analytic-methods`, `numerical-error-analysis`, `optimization-convex-nonconvex`, `sympy-symbolic-verification`, `lean4-mathlib-formalization`, `proof-techniques-and-writing`, `graph-theory-probabilistic-method` |
+| `physics-toolkit` | `lagrangian-hamiltonian-mechanics`, `physics-ode-integrators`, `pde-discretization-stability`, `em-field-solvers-fdtd-fem`, `quantum-mechanics-methods`, `schrodinger-numerics`, `statmech-monte-carlo`, `molecular-dynamics-setup`, `fluid-dynamics-cfd`, `optics-wave-propagation`, `uncertainty-propagation-fitting`, `simulation-verification-validation`, `dimensional-analysis-units`, `tight-binding-band-structure`, `relativity-calculations` |
+| `quantum-computing` | `quantum-circuit-decomposition`, `qiskit-transpilation`, `qiskit-primitives-runtime`, `pennylane-differentiable`, `quantum-algorithm-primitives`, `variational-quantum-algorithms`, `quantum-measurement-estimation`, `stabilizer-codes-surface-code`, `stim-qec-decoding`, `quantum-noise-mitigation`, `quantum-resource-estimation`, `quantum-chemistry-mapping`, `quantum-circuit-simulators`, `hamiltonian-simulation-methods`, `cudaq-gpu-kernels`, `cirq-workflows` |
+| `computer-graphics` | `pbr-microfacet-brdf`, `importance-sampling-mis-restir`, `path-tracer-implementation`, `bvh-build-traversal`, `raster-pipeline-architecture`, `realtime-shadows`, `realtime-global-illumination`, `vulkan-setup-synchronization`, `webgpu-wgsl`, `metal-apple-gpu`, `gpu-debugging-profiling`, `mesh-processing`, `sdf-modeling-raymarching`, `color-pipeline-tonemapping`, `gpu-compute-patterns`, `denoising-taa-upscaling`, `skeletal-animation-skinning` |
+| `cs-foundations` | `algorithm-design-paradigms`, `dynamic-programming-patterns`, `graph-algorithms`, `string-algorithms`, `data-structure-selection`, `np-hardness-reductions`, `amortized-recurrence-analysis`, `randomized-algorithms-sketches`, `concurrent-data-structures`, `distributed-consensus-consistency`, `compiler-construction`, `type-systems-inference`, `formal-verification-tla-dafny`, `caching-and-system-tradeoffs`, `database-transactions-isolation`, `automata-regular-languages` |
 
-The complete taxonomy (160 granular skills with full outlines, packs and hubs) is in `config/skill-taxonomy.json`;
-the 73 not yet written can be generated from it later. The granular skills were checked by
-their writers (doctor, fact checks against docs) but have not had the independent verification pass.
+The complete taxonomy (168 granular skills with outlines, packs and hubs, including the eight topics first
+dropped and later restored) is in `config/skill-taxonomy.json`. All 168 skills of the taxonomy are written. The skills were checked by their
+writers (doctor, targeted fact checks) but have not had the independent verification pass.
 
 <details>
 <summary>Contents of <code>core</code></summary>

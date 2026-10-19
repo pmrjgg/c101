@@ -282,6 +282,10 @@ A skill whose pack is not enabled in this install is off: work from this hub and
 
 | skill | load when |
 |---|---|
+| `java-build-maven-gradle` | creating, fixing, speeding up or upgrading a Java build |
 | `java-jvm-tuning-jfr` | JVM performance and memory diagnosis: choosing a GC by latency SLO, container memory flags and native-memory budgets, OOMKilled triage with NMT, reading G1/Z... |
 | `java-modern-language` | writing or reviewing Java domain code, or modernizing pre-17 code |
+| `java-quarkus` | building, testing or natively compiling a Quarkus application |
+| `java-spring-boot` | building, debugging or upgrading a Spring Boot service |
+| `java-testing-junit` | writing or restructuring Java tests, or stabilizing a flaky suite |
 | `java-virtual-threads` | migrating to virtual threads or debugging Java concurrency |

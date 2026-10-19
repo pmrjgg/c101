@@ -277,3 +277,28 @@ LPT greedy gives a 4/3 - 1/(3m) approximation; exact DP when S is small.
 - [ ] Distributed designs state quorum sizes, fault tolerance f, and the consistency model provided.
 - [ ] Concurrency claims backed by a memory-model argument, a tool run, or a model-checked spec
       (with bounds).
+
+## Granular skills
+
+Deeper, task-specific playbooks. Load one with the Skill tool by name when the task matches; they are
+listed by name only (to keep every session's context lean), so this table is their description.
+A skill whose pack is not enabled in this install is off: work from this hub and say so.
+
+| skill | load when |
+|---|---|
+| `algorithm-design-paradigms` | designing an algorithm or judging whether a proposed approach is correct |
+| `amortized-recurrence-analysis` | deriving, proving or disputing a complexity bound |
+| `automata-regular-languages` | proving (non)regularity, building lexers or matchers, or reasoning about regex engine behaviour |
+| `caching-and-system-tradeoffs` | adding or debugging a cache or justifying a design trade-off quantitatively |
+| `compiler-construction` | writing a parser, DSL, interpreter or compiler pass, or explaining surprising codegen |
+| `concurrent-data-structures` | building, reviewing or debugging concurrent code |
+| `data-structure-selection` | picking, reviewing or replacing a container, index or in-memory structure |
+| `database-transactions-isolation` | concurrent transactions misbehave, picking an isolation level, or reasoning about storage engines (query tuning lives in sql-query-tuning) |
+| `distributed-consensus-consistency` | designing, reviewing or debugging replicated state or a consistency claim |
+| `dynamic-programming-patterns` | a problem has overlapping subproblems or an existing DP is too slow or too large |
+| `formal-verification-tla-dafny` | a protocol, design or function must be shown correct beyond testing |
+| `graph-algorithms` | Graph modelling and algorithm choice: representations, traversal and ordering (BFS, DFS, topological sort, SCC, bridges, 2-SAT), shortest paths (0-1 BFS, Dij... |
+| `np-hardness-reductions` | Hardness and lower bounds done right: class map, reduction procedure (direction, both implications, size and number magnitude), source catalogue and gadget c... |
+| `randomized-algorithms-sketches` | designing with randomness, sizing a sketch, or bounding a failure probability |
+| `string-algorithms` | searching, indexing, deduplicating or comparing text, logs or sequences |
+| `type-systems-inference` | designing a checker, writing inference, judging soundness, or untangling a type error |

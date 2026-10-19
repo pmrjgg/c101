@@ -333,3 +333,29 @@ metrics, and the remaining known bias (none) or clamp (none).
 - [ ] Validation layers clean; no NaN in a NaN-view capture.
 - [ ] Color spaces stated for every texture input and render target.
 - [ ] Perf claims include GPU, driver, resolution, timing method and run count.
+
+## Granular skills
+
+Deeper, task-specific playbooks. Load one with the Skill tool by name when the task matches; they are
+listed by name only (to keep every session's context lean), so this table is their description.
+A skill whose pack is not enabled in this install is off: work from this hub and say so.
+
+| skill | load when |
+|---|---|
+| `bvh-build-traversal` | building, tuning or debugging a BVH or acceleration structure |
+| `color-pipeline-tonemapping` | images look washed out, too dark, hue-shifted or banded, or wrong on HDR displays |
+| `denoising-taa-upscaling` | renders are noisy, edges crawl, TAA ghosts or blurs, or a denoiser or upscaler is being integrated |
+| `gpu-compute-patterns` | writing or optimizing a compute kernel or porting one between APIs |
+| `gpu-debugging-profiling` | a frame is wrong, a GPU hangs or crashes, or a pass is too slow; general method lives in debugging-method and performance-optimization |
+| `importance-sampling-mis-restir` | noise, fireflies or bias trace back to how samples and weights are chosen |
+| `mesh-processing` | importing, cleaning, decimating, remeshing or exporting meshes |
+| `metal-apple-gpu` | writing, porting or profiling Metal or metal-cpp code |
+| `path-tracer-implementation` | writing or fixing an offline or interactive path tracer |
+| `pbr-microfacet-brdf` | writing, porting or debugging a physically based material |
+| `raster-pipeline-architecture` | designing, extending or debugging a raster frame |
+| `realtime-global-illumination` | choosing, implementing or debugging GI, AO or reflections in a real-time renderer |
+| `realtime-shadows` | fixing shadow acne, peter-panning, shimmering or light leaks, or when shadows cost too much |
+| `sdf-modeling-raymarching` | Signed distance fields for modeling and rendering: exact 2D/3D primitives and operators, smooth blends, domain repetition and deformation with Lipschitz boun... |
+| `skeletal-animation-skinning` | implementing or debugging character animation |
+| `vulkan-setup-synchronization` | writing Vulkan host code or fixing validation errors, flicker or device-lost |
+| `webgpu-wgsl` | WebGPU and WGSL in browsers (Chrome, Firefox, Safari) and natively (wgpu, Dawn): adapter limits and features, WGSL alignment rules, bind-group design, render... |

@@ -43,7 +43,7 @@ accounted for. You produce resource estimates with stated error budgets, not hea
 - **SDKs**: Qiskit 1.x/2.x (primitives V2, `StatevectorSampler`/`StatevectorEstimator`,
   preset pass managers, `qiskit.quantum_info.Operator`, `qiskit-aer`), Cirq (simulators, noise
   models), PennyLane (`qml.qnode`, `default.qubit`, `lightning.qubit`, parameter-shift
-  gradients), Q# with the modern QDK `qsharp` package, CUDA-Q (`cudaq.kernel`, `cudaq.sample`,
+  gradients), Q# with the modern QDK (`qdk` package; the older `qsharp` package is deprecated), CUDA-Q (`cudaq.kernel`, `cudaq.sample`,
   `cudaq.observe`, GPU targets), Stim + Sinter, PyMatching, QuTiP for open systems, OpenQASM 3.
 
 Pitfalls you guard against: qubit ordering (Qiskit is little-endian: qubit 0 is the rightmost

@@ -179,8 +179,11 @@
       "hub": "haskell-craft",
       "skills": [
         "haskell-craft",
+        "haskell-cabal-builds",
         "haskell-concurrency-stm",
         "haskell-effects",
+        "haskell-performance-space-leaks",
+        "haskell-testing-properties",
         "haskell-type-level"
       ],
       "agents": [
@@ -195,6 +198,10 @@
       "hub": "julia-craft",
       "skills": [
         "julia-craft",
+        "julia-gpu",
+        "julia-ml-flux-lux",
+        "julia-optimization-jump",
+        "julia-packages-environments",
         "julia-performance-allocations",
         "julia-sciml-diffeq",
         "julia-type-stability"
@@ -211,8 +218,12 @@
       "hub": "java-craft",
       "skills": [
         "java-craft",
+        "java-build-maven-gradle",
         "java-jvm-tuning-jfr",
         "java-modern-language",
+        "java-quarkus",
+        "java-spring-boot",
+        "java-testing-junit",
         "java-virtual-threads"
       ],
       "agents": [
@@ -245,7 +256,24 @@
       ],
       "hub": "computer-graphics",
       "skills": [
-        "computer-graphics"
+        "computer-graphics",
+        "bvh-build-traversal",
+        "color-pipeline-tonemapping",
+        "denoising-taa-upscaling",
+        "gpu-compute-patterns",
+        "gpu-debugging-profiling",
+        "importance-sampling-mis-restir",
+        "mesh-processing",
+        "metal-apple-gpu",
+        "path-tracer-implementation",
+        "pbr-microfacet-brdf",
+        "raster-pipeline-architecture",
+        "realtime-global-illumination",
+        "realtime-shadows",
+        "sdf-modeling-raymarching",
+        "skeletal-animation-skinning",
+        "vulkan-setup-synchronization",
+        "webgpu-wgsl"
       ],
       "agents": [
         "computer-graphics-expert"
@@ -258,7 +286,23 @@
       ],
       "hub": "cs-foundations",
       "skills": [
-        "cs-foundations"
+        "cs-foundations",
+        "algorithm-design-paradigms",
+        "amortized-recurrence-analysis",
+        "automata-regular-languages",
+        "caching-and-system-tradeoffs",
+        "compiler-construction",
+        "concurrent-data-structures",
+        "data-structure-selection",
+        "database-transactions-isolation",
+        "distributed-consensus-consistency",
+        "dynamic-programming-patterns",
+        "formal-verification-tla-dafny",
+        "graph-algorithms",
+        "np-hardness-reductions",
+        "randomized-algorithms-sketches",
+        "string-algorithms",
+        "type-systems-inference"
       ],
       "agents": [
         "computer-science-expert"
@@ -272,6 +316,21 @@
       "hub": "quantum-computing",
       "skills": [
         "quantum-computing",
+        "cirq-workflows",
+        "cudaq-gpu-kernels",
+        "hamiltonian-simulation-methods",
+        "pennylane-differentiable",
+        "qiskit-primitives-runtime",
+        "qiskit-transpilation",
+        "quantum-algorithm-primitives",
+        "quantum-chemistry-mapping",
+        "quantum-circuit-decomposition",
+        "quantum-circuit-simulators",
+        "quantum-measurement-estimation",
+        "quantum-noise-mitigation",
+        "quantum-resource-estimation",
+        "stabilizer-codes-surface-code",
+        "stim-qec-decoding",
         "variational-quantum-algorithms"
       ],
       "agents": [
@@ -286,12 +345,20 @@
       "hub": "mathematics-toolkit",
       "skills": [
         "mathematics-toolkit",
+        "combinatorics-generating-functions",
+        "graph-theory-probabilistic-method",
         "inequality-proving",
+        "lean4-mathlib-formalization",
         "matrix-decompositions-conditioning",
         "number-theory-modular",
+        "numerical-error-analysis",
+        "ode-pde-analytic-methods",
+        "optimization-convex-nonconvex",
         "probability-distributions-limits",
+        "proof-techniques-and-writing",
         "real-complex-analysis",
-        "statistical-inference-bayesian"
+        "statistical-inference-bayesian",
+        "sympy-symbolic-verification"
       ],
       "agents": [
         "mathematics-expert"
@@ -306,9 +373,19 @@
       "skills": [
         "physics-toolkit",
         "dimensional-analysis-units",
+        "em-field-solvers-fdtd-fem",
+        "fluid-dynamics-cfd",
         "lagrangian-hamiltonian-mechanics",
+        "molecular-dynamics-setup",
+        "optics-wave-propagation",
+        "pde-discretization-stability",
+        "physics-ode-integrators",
+        "quantum-mechanics-methods",
+        "relativity-calculations",
         "schrodinger-numerics",
         "simulation-verification-validation",
+        "statmech-monte-carlo",
+        "tight-binding-band-structure",
         "uncertainty-propagation-fitting"
       ],
       "agents": [
@@ -324,14 +401,18 @@
       "hub": "graphic-design",
       "skills": [
         "graphic-design",
+        "brand-guidelines-system",
+        "chart-design-encoding",
         "design-tokens-dtcg",
         "icon-system-design",
         "layout-grids-posters-editorial",
         "logo-design-process",
         "oklch-palette-ramps",
+        "print-prepress-pdfx",
         "svg-hand-authoring",
         "type-scale-systems",
-        "ui-mockup-hifi"
+        "ui-mockup-hifi",
+        "visual-accessibility-audit"
       ],
       "agents": [
         "graphic-design-expert"

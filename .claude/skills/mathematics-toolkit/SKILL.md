@@ -264,9 +264,17 @@ A skill whose pack is not enabled in this install is off: work from this hub and
 
 | skill | load when |
 |---|---|
+| `combinatorics-generating-functions` | counting objects, solving or guessing a recurrence, or proving an enumeration identity |
+| `graph-theory-probabilistic-method` | Graph theory and the probabilistic method for proofs and counterexamples: core theorems with exact hypotheses, extremal and Ramsey results, spectral graph th... |
 | `inequality-proving` | proving, refuting, sharpening or auditing any bound, estimate or inequality |
+| `lean4-mathlib-formalization` | a proof should be machine-checked or a Lean file must compile |
 | `matrix-decompositions-conditioning` | solving, factorising, or deciding whether to trust a matrix computation |
 | `number-theory-modular` | solving congruences or integer equations, or when writing or reviewing modular-arithmetic code |
+| `numerical-error-analysis` | a computed number must be trusted or a numerical bug is suspected |
+| `ode-pde-analytic-methods` | an ODE or PDE needs an analytic solution or a qualitative guarantee |
+| `optimization-convex-nonconvex` | anything is minimised, fitted, allocated or scheduled |
 | `probability-distributions-limits` | deriving, bounding or checking any probability, expectation, distribution or limit |
+| `proof-techniques-and-writing` | Choosing a proof technique from the statement's shape and writing or auditing the proof rigorously: restating with quantifiers, induction variants, contradic... |
 | `real-complex-analysis` | a proof or derivation involves limits, series, integrals, analytic estimates or contour integrals |
 | `statistical-inference-bayesian` | data must support a claim or an experiment must be designed |
+| `sympy-symbolic-verification` | deriving, simplifying or machine-checking a formula |

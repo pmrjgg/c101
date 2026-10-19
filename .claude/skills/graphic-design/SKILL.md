@@ -240,7 +240,7 @@ total out of 30, and the top three fixes ordered by impact. A design ships at �
 Critique format, one line per issue: **observation** (where, measured) → **principle** → **fix**.
 Example: "CTA text #FFFFFF on #E94560 at 16 px regular measures 3.83:1 → 1.4.3 needs 4.5:1 for
 text under 18.66 px bold → darken the button fill to OKLCH L ≤ 0.59 at the same hue and chroma
-(#D63151 gives 4.76:1), or set the label ≥ 18.66 px bold (3:1 suffices)."
+(#D63151 gives 4.75:1), or set the label ≥ 18.66 px bold (3:1 suffices)."
 
 ## 10. Image briefs and generator direction
 
@@ -295,7 +295,7 @@ columns); type: Inter, scale 1.333 from 18 px → 18 / 24 / 32 / 43 / 57 / 76; h
 -2% tracking, 2 lines max, balanced; date 32 px; CTA 24 px bold in a 56 px tall button.
 Palette: background #1A1A2E, text #FFFFFF (17.06:1). Brand pink #E94560 (OKLCH 0.633 0.199 15.7)
 cannot serve both roles: as text on the navy it needs L ≥ 0.64 (#EC4862, 4.59:1), as a button fill
-behind white text it needs L ≤ 0.59 (#D63151, 4.76:1). Ship two semantic tokens
+behind white text it needs L ≤ 0.59 (#D63151, 4.75:1). Ship two semantic tokens
 (`accent-on-dark`, `accent-fill`) from one primitive hue. Image: generated abstract network
 illustration, right 55% of canvas, left 45% kept empty for copy; brief compiled per section 10 with
 `aspect_ratio: "4:5"`, n = 4, fixed seed for reproducibility. Critique round 1 scored 21/30
@@ -319,12 +319,16 @@ A skill whose pack is not enabled in this install is off: work from this hub and
 
 | skill | load when |
 |---|---|
+| `brand-guidelines-system` | writing, auditing or applying brand guidelines |
+| `chart-design-encoding` | Data-visualisation design: chart form chosen by question, perceptual encoding ranking, categorical/sequential/diverging colour, axis/label/annotation rules, ... |
 | `design-tokens-dtcg` | creating, migrating, validating or releasing a token set |
 | `icon-system-design` | designing, extending or auditing an icon set |
 | `image-brief-writing` | directing image-generator, image-editor or vector-artist, or when writing image prompts yourself |
 | `layout-grids-posters-editorial` | composing, critiquing or producing any layout |
 | `logo-design-process` | creating, refining or auditing a logo, monogram or wordmark |
 | `oklch-palette-ramps` | building, extending or fixing a palette |
+| `print-prepress-pdfx` | Print preparation: printer-spec intake, bleed and safe zones, effective-ppi checks, ICC CMYK conversion (PSO Coated v3/FOGRA51, GRACoL 2013), rich black and ... |
 | `social-asset-kit` | producing a multi-format campaign, ad set or launch kit |
 | `type-scale-systems` | defining, implementing or auditing a type system for screen or print |
 | `ui-mockup-hifi` | designing, presenting or reviewing app or web screens |
+| `visual-accessibility-audit` | designing or auditing visuals that must meet AA or AAA |

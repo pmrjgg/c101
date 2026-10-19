@@ -45,7 +45,7 @@
 | Meta | `stack-tuner`, `agent-architect` | operate the learner; extend the stack |
 
 Every agent preloads three protocol skills — `delegation-protocol`, `doubt-escalation`,
-`output-contract` — plus at most three role skills. 144 skills in total (hubs and method skills plus 87 granular
+`output-contract` — plus at most three role skills. 225 skills in total (hubs and method skills plus 168 granular
 playbooks, grouped into install packs in `config/packs.json`); see `docs/AGENTS.md`.
 
 ## Combining experts (higher-level problems)

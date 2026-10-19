@@ -59,6 +59,8 @@ print(tqc.count_ops(), tqc.depth(lambda inst: inst.operation.num_qubits == 2))
 Hardware through IBM Runtime (primitives V2, ISA circuits):
 
 ```python
+# qiskit-ibm-runtime >= 0.50 deprecates SamplerV2/EstimatorV2 in favour of the executor-based Sampler,
+# Estimator and Executor; they still work. See the qiskit-primitives-runtime skill before new code.
 from qiskit_ibm_runtime import QiskitRuntimeService, SamplerV2 as Sampler, EstimatorV2 as Estimator
 
 service = QiskitRuntimeService()                       # uses a saved account

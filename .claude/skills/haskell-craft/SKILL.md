@@ -331,6 +331,9 @@ A skill whose pack is not enabled in this install is off: work from this hub and
 
 | skill | load when |
 |---|---|
+| `haskell-cabal-builds` | a Haskell build will not resolve, a GHC upgrade is planned, or CI and tooling need setting up |
 | `haskell-concurrency-stm` | writing threaded Haskell, sharing state through STM, or debugging blocked or killed threads |
 | `haskell-effects` | designing an app's architecture, migrating an effect stack, or making business logic testable without IO |
+| `haskell-performance-space-leaks` | Haskell code is slow, allocation-heavy or its memory keeps growing |
+| `haskell-testing-properties` | writing or improving Haskell tests, or designing properties for a new abstraction |
 | `haskell-type-level` | modelling a domain in types or debugging type-level code |

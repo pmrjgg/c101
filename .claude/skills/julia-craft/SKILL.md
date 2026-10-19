@@ -277,6 +277,10 @@ A skill whose pack is not enabled in this install is off: work from this hub and
 
 | skill | load when |
 |---|---|
+| `julia-gpu` | moving Julia array code to a GPU, or writing or optimizing GPU kernels |
+| `julia-ml-flux-lux` | building, training or debugging ML models in Julia |
+| `julia-optimization-jump` | formulating or debugging LP, MILP, QP, conic or NLP models in Julia |
+| `julia-packages-environments` | creating, releasing or maintaining a Julia package or reproducible project |
 | `julia-performance-allocations` | Julia code needs measured speedups or fewer allocations |
 | `julia-sciml-diffeq` | simulating ODE, SDE, DAE or DDE models, or fitting model parameters in Julia |
 | `julia-type-stability` | Julia code is slow, allocates unexpectedly, or JET reports runtime dispatch |

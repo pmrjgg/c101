@@ -128,5 +128,5 @@ replacement for the WCAG 2.x ratio when conformance is required.
 |---|---|---|---|---|---|
 | #FFFFFF / #1A1A2E | body text | 18 px 400 | 17.06 | 4.5 | yes |
 | #EC4862 / #1A1A2E | accent text | 18 px 600 | 4.59 | 4.5 | yes |
-| #FFFFFF / #D63151 | button label | 16 px 600 | 4.76 | 4.5 | yes |
+| #FFFFFF / #D63151 | button label | 16 px 600 | 4.75 | 4.5 | yes |
 | #9CA3AF / #FFFFFF | input border | 1 px | 2.54 | 3.0 | no → use #6B7280 (4.83) |
