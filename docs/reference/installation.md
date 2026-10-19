@@ -498,7 +498,7 @@ under `~/.claude`.
 ## Repository layout
 
 ```
-claude101/
+c101/
 ├── install.sh              installer: uv bootstrap, then python -m stack.install
 ├── pyproject.toml uv.lock  Python 3.13 project and locked dependencies   .python-version  3.13
 ├── CLAUDE.md               project memory: conventions, test commands, secret rules
@@ -565,6 +565,7 @@ connectivity or key values (use `/mcp` and `bin/stack keys`).
 | workflows (`.claude/workflows/*.js`) | first statement not `export const meta`; `Date.now()`, `Math.random()` or `new Date()`; any import; `model:` literal not a tier alias or id; unknown `agentType` literal; with `node`: meta not a pure literal (no templates, spreads or calls) or not evaluable, body not parsable as an async function, missing `name`/`description`, duplicate name, name `deep-research` (bundled) or equal to a skill name | `phase()` title missing from `meta.phases`; `node` not found (syntax check skipped) |
 | MCP (`.mcp.json`) | unreadable; remote server without `url`; `bin/mcp-headers` or `bin/mcp-run` not executable; stdio without `command`; a `${CLAUDE_PROJECT_DIR:-.}/` argument pointing at a missing file; unknown `type` | |
 | settings | unreadable `.claude/settings.json`; a `bin/stack hook <name>` with no handler | the two depth variables differ; `config/learning.json` bounds for an unknown agent |
+| auth | | `ANTHROPIC_API_KEY` or `ANTHROPIC_AUTH_TOKEN` set in the environment, or an `apiKeyHelper` / `env.ANTHROPIC_API_KEY` in project, local or user settings: Claude Code would bill the API instead of your subscription |
 
 The summary line reads `N error(s), M warning(s); A agents, S skills, W workflows, P MCP servers`. Message-by-message
 causes and fixes are in `.claude/skills/stack-authoring/references/doctor-errors.md`.

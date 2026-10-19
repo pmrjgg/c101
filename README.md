@@ -2,7 +2,7 @@
   <img src="blackcat.jpg" alt="A black cat grooming itself in the middle of an isometric city of small robots stacking blocks, wiring pipelines and checking off tasks" width="720">
 </p>
 
-<h1 align="center">claude101</h1>
+<h1 align="center">c101</h1>
 
 <p align="center">
   <b>A self-tuning, multi-agent stack for Claude Code and the Claude Agent SDK.</b><br>
@@ -21,7 +21,7 @@
 
 ## What it is
 
-claude101 is a complete Claude Code configuration (agents, skills, saved workflows, hooks, MCP servers and Python
+c101 is a complete Claude Code configuration (agents, skills, saved workflows, hooks, MCP servers and Python
 tooling) that turns a single session into a coordinated team:
 
 - **Orchestration.** A main-thread `delegator` routes every request to the cheapest adequate route: a single expert,
@@ -66,7 +66,7 @@ tooling) that turns a single session into a coordinated team:
 ## Quick start
 
 ```bash
-git clone <this repo> claude101 && cd claude101
+git clone <this repo> c101 && cd c101
 ./install.sh                    # uv installs Python 3.13 + deps; creates ~/.claude/stack.env (mode 600)
 $EDITOR ~/.claude/stack.env     # add your keys and image endpoints (see below)
 bin/stack keys                  # which keys are set (names only)

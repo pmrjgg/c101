@@ -414,9 +414,29 @@ def check_settings(rep: Report) -> None:
             rep.warn("config/learning.json", "bounds for unknown agent %r" % a)
 
 
+def check_auth(rep: Report) -> None:
+    """The stack runs on a Claude subscription; an API credential makes Claude Code bill the API instead."""
+    for var in ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN"):
+        if os.environ.get(var):
+            rep.warn("environment", "%s is set: Claude Code will bill the API instead of your subscription "
+                     "(unset it to use your claude.ai login)" % var)
+    for p in (os.path.join(paths.REPO, ".claude", "settings.json"),
+              os.path.join(paths.REPO, ".claude", "settings.local.json"),
+              os.path.expanduser("~/.claude/settings.json")):
+        try:
+            data = json.load(open(p, encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if data.get("apiKeyHelper") or (data.get("env") or {}).get("ANTHROPIC_API_KEY"):
+            rep.warn(p.replace(os.path.expanduser("~"), "~"),
+                     "configures an API key (apiKeyHelper or env.ANTHROPIC_API_KEY): Claude Code will bill the API "
+                     "instead of your subscription")
+
+
 def run() -> Report:
     rep = Report()
-    for fn in (check_agents, check_tiers, check_packs, check_skills, check_workflows, check_mcp, check_settings):
+    for fn in (check_agents, check_tiers, check_packs, check_skills, check_workflows, check_mcp, check_settings,
+               check_auth):
         try:
             fn(rep)
         except Exception as e:  # report, don't crash

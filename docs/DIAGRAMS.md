@@ -1,6 +1,6 @@
 # Diagrams
 
-Mermaid diagrams of the claude101 agent stack: the saved workflows, the system as a whole, the life of one
+Mermaid diagrams of the c101 agent stack: the saved workflows, the system as a whole, the life of one
 request, the guard on every spawn, web-content safety, the self-tuning loop and the image pipeline. GitHub
 renders them in place; they use only `flowchart`, `sequenceDiagram` and `stateDiagram-v2`. Rendered SVG copies
 of diagrams 1 and 2, [all-workflows.svg](diagrams/all-workflows.svg) and

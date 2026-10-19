@@ -66,8 +66,15 @@ def _cmd_mcp(_a) -> int:
 
 
 # Set by a parent Claude Code session (e.g. bin/stack-sdk run from Bash inside a session). The child CLI would
-# adopt the parent's session id, so hooks would share its spawn count, token budget and taint state.
-PARENT_SESSION_VARS = ("CLAUDE_CODE_SESSION_ID", "CLAUDE_CODE_CHILD_SESSION")
+# adopt the parent's session id, so hooks would share its spawn count, token budget and taint state. In a
+# claude.ai cloud session the remote/ingress variables also attach the child to the parent's remote session.
+# Proxy and egress variables are left alone: the child still needs them to reach the API.
+PARENT_SESSION_VARS = (
+    "CLAUDE_CODE_SESSION_ID", "CLAUDE_CODE_CHILD_SESSION", "CLAUDE_CODE_SESSION_ATTENDED",
+    "CLAUDE_CODE_REMOTE_SESSION_ID", "CLAUDE_CODE_REMOTE_SDK_URL", "CLAUDE_CODE_REMOTE_SEND_KEEPALIVES",
+    "SESSION_INGRESS_URL", "CLAUDE_SESSION_INGRESS_TOKEN_FILE", "CLAUDE_CODE_POST_FOR_SESSION_INGRESS_V2",
+    "CLAUDE_CODE_SYNC_SESSION_REFS",
+)
 
 
 async def _run(a) -> int:

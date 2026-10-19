@@ -1,4 +1,4 @@
-# claude101 — Claude Code agent stack
+# c101 — Claude Code agent stack
 
 This repository *is* a Claude Code configuration: 55 subagents (`.claude/agents/<group>/`), 225 skills
 (`.claude/skills/`: hubs, method skills and granular playbooks; see `config/packs.json`), 8 saved workflows (`.claude/workflows/`), hooks and MCP servers, plus Python tooling

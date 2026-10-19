@@ -54,5 +54,24 @@ class TierTests(unittest.TestCase):
         self.assertEqual(tiers.main_thread("delegator"), {"model": "claude-opus-5-5", "effort": "high"})
 
 
+class DoctorAuthTests(unittest.TestCase):
+    def _env_warnings(self):
+        rep = doctor.Report()
+        doctor.check_auth(rep)
+        return [w for w in rep.warnings if w.startswith("environment:")]
+
+    def test_api_credential_in_env_warns(self):
+        saved = os.environ.pop("ANTHROPIC_API_KEY", None)
+        try:
+            self.assertEqual(self._env_warnings(), [])
+            os.environ["ANTHROPIC_API_KEY"] = "x"
+            self.assertEqual(len(self._env_warnings()), 1)
+            self.assertIn("instead of your subscription", self._env_warnings()[0])
+        finally:
+            os.environ.pop("ANTHROPIC_API_KEY", None)
+            if saved is not None:
+                os.environ["ANTHROPIC_API_KEY"] = saved
+
+
 if __name__ == "__main__":
     unittest.main()

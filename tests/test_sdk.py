@@ -151,7 +151,7 @@ class SdkOptionsTests(unittest.TestCase):
             yield
 
         saved = {v: os.environ.get(v) for v in cli.PARENT_SESSION_VARS}
-        os.environ.update(CLAUDE_CODE_SESSION_ID="parent-session", CLAUDE_CODE_CHILD_SESSION="1")
+        os.environ.update({v: "parent-value" for v in cli.PARENT_SESSION_VARS})
         real = claude_agent_sdk.query
         claude_agent_sdk.query = fake_query
         try:

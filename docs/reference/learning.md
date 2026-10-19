@@ -438,7 +438,7 @@ change is an ordinary edit to a tracked file and shows up in `git diff .claude/a
 is also appended to `changes.jsonl`:
 
 ```json
-{"agent": "debugger", "path": "/Users/you/claude101/.claude/agents/quality/debugger.md",
+{"agent": "debugger", "path": "/Users/you/c101/.claude/agents/quality/debugger.md",
  "updates": {"maxTurns": "80", "effort": "xhigh"}, "ts": 1792416079.7,
  "reasons": {"maxTurns": "q95 of predictive x 1.15 margin", "effort": "escalate: P(fail)=0.33"}, "n_eff": 10.0}
 ```

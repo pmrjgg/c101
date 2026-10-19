@@ -95,3 +95,5 @@ reported as `<checker>: checker crashed: ...` and the others still run.
 | warn `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH and CLAUDE_STACK_MAX_DEPTH differ` | Depth env vars out of sync | Set both to the same value |
 | `unknown hook handler '...'` | A `bin/stack hook <name>` command for a handler that does not exist | Use one of pre-agent, subagent-stop, session-start, session-end, prompt-submit, model-switch (`stack/hooks.py` HANDLERS) |
 | warn `config/learning.json: bounds for unknown agent '...'` | Bounds for a renamed or removed agent | Remove or rename the entry |
+| warn `environment: ANTHROPIC_API_KEY is set: ...` (or `ANTHROPIC_AUTH_TOKEN`) | An API credential in the shell overrides the claude.ai subscription login | `unset ANTHROPIC_API_KEY` (and remove it from shell profiles) |
+| warn `<settings file>: configures an API key ...` | `apiKeyHelper` or `env.ANTHROPIC_API_KEY` in a settings file | Remove it so Claude Code uses the subscription login |

@@ -173,7 +173,7 @@ receive its children's results.
 | `env` | settings `env` + stack variables (below) | `options.py` | Depth, concurrency and runner flags reach the CLI and every hook and MCP server it starts |
 | `settings` | `{"availableModels": [...], "availableModelsMatch": "exact", "enforceAvailableModels": true}` | `tiers.allowed_models()` | Same tier allowlist Claude Code enforces from project settings, also when they are not loaded |
 | `task_budget` | `{"total": max_prompt_tokens}` = `{"total": 400000000}` | `budget.limits()` | API task budget as a pacing hint; the hooks enforce the hard limits |
-| `max_budget_usd` | `None` | `--max-budget-usd` | Optional USD hard stop on top of the token budgets |
+| `max_budget_usd` | `None` | `--max-budget-usd` | Optional stop at an estimated cost in USD, on top of the token budgets. On a Claude subscription nothing is billed per call: the figure is a list-price estimate of usage, not a charge |
 | `max_turns` | `None` | Python only | Optional turn cap for the main thread |
 | `model`, `effort` | the main agent's tier model and effort | `tiers.main_thread()` | See the next subsection |
 
@@ -412,7 +412,7 @@ agent, next to an SDK smoke run with `bin/stack-sdk run --agent <name> --max-bud
 | `cli` | `"system"` | `"system"` or `"bundled"` |
 | `model` | `None` | only with `main_agent=None`; must be a tier model |
 | `effort` | `None` | only with `main_agent=None` |
-| `max_budget_usd` | `None` | USD hard stop |
+| `max_budget_usd` | `None` | stop at an estimated USD cost (a usage estimate on a subscription) |
 | `task_budget_tokens` | `None` → `max_prompt_tokens` | API task budget |
 | `max_turns` | `None` | main-thread turn cap |
 | `extra_allowed_tools` | `[]` | appended to the allow-list |
