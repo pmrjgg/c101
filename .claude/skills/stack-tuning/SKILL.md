@@ -19,14 +19,20 @@ Code: `stack/learn/` (`ingest.py`, `bayes.py`, `model.py`, `engine.py`). Config:
 
 ```
 SubagentStop hook (async; appends the effort in effect to stops/<session>.jsonl; ingest
-                   debounced 60 s; update+apply at most every 30 min)
-SessionEnd hook (detached `bin/stack learn run --transcript <main transcript>`); under the SDK
-                   `bin/stack-sdk run` runs the same learn run itself after the result (no SessionEnd)
+                   debounced 60 s; update at most every 30 min; never applies)
+SessionEnd hook (detached `bin/stack learn run --transcript <main transcript>`, waits for learn.lock);
+                   under the SDK `bin/stack-sdk run` runs the same learn run itself after the result
    -> ingest:  transcripts -> $CLAUDE_STACK_DATA/obs/<session>.json (one record per agent run)
    -> update:  posteriors  -> recommendations.json, budgets.json
+   -> record:  one summary line per session -> history.jsonl
+SessionStart hook of the next session (`bin/stack learn start`; skipped if learn.lock is held)
    -> apply:   frontmatter maxTurns/effort (bounded) and autoCompactWindow (raise-only) of managed
-               agents + changes.jsonl audit line
+               agents + changes.jsonl audit line; "Applied learned values at session start: ..."
 ```
+
+`apply_on` in `config/learning.json` picks when apply runs: `"session_start"` (default), `"session_end"`
+(inside `learn run`) or `"never"`. Agent files never change mid-session; Claude Code hot-reloads them, so
+values applied at session start are used from that session's next delegation.
 
 `$CLAUDE_STACK_DATA` defaults to `~/.claude/stack-data`. Debounce and interval come from
 `config/policy.json` (`ingest_debounce_seconds`, `midsession_update_minutes`).
@@ -41,7 +47,9 @@ SessionEnd hook (detached `bin/stack learn run --transcript <main transcript>`);
 | `bin/stack learn report [--agent A] [--json]` | Table or JSON of the latest recommendations | nothing |
 | `bin/stack learn apply --dry-run [--agent A]` | Show what would change | nothing |
 | `bin/stack learn apply [--agent A]` | Write recommended values into agent frontmatter | agent `.md`, `changes.jsonl` |
-| `bin/stack learn run --transcript P` | ingest + update + apply-if-auto_apply (what SessionEnd runs) | all of the above |
+| `bin/stack learn run --transcript P` | ingest + update + record history; applies only with `apply_on: "session_end"` (what SessionEnd runs) | `obs/`, `recommendations.json`, `budgets.json`, `history.jsonl` |
+| `bin/stack learn start` | Apply pending values now (what SessionStart runs) | agent `.md`, `changes.jsonl` |
+| `bin/stack learn history [--agent A] [--since-days N] [--by week\|day\|session] [--json]` | Per-agent trends per period: sessions, runs, turns50, max turns, cap_rate, tool errors, maxTurns and effort cur->rec (`--json` adds tokens_per_run) | nothing |
 | `bin/stack agents list [--json]` | Current model / effort / maxTurns per agent | nothing |
 | `bin/stack agents set A maxTurns=N effort=E` | Manual frontmatter edit, re-validated by doctor (`tier=<TIER>` moves the agent to another model tier) | agent `.md` (`config/models.json` for tier) |
 | `bin/stack agents tiers [--apply]` | Dry run / render tier model ids into frontmatter; fills missing effort/maxTurns from `config/models.json` | agent `.md` |
@@ -212,8 +220,9 @@ Global knobs (change rarely; preview with `whatif --set key=value` first):
 
 | Goal | Do this | Note |
 |---|---|---|
-| Review before anything lands | `"auto_apply": false` | Both hooks honour it; recommendations still update |
-| Stop learning at session end | `"enabled": false` | Only stops the SessionEnd run. The SubagentStop hook still ingests and, with `auto_apply` true, still updates and applies every 30 min. To freeze frontmatter, set `auto_apply: false` |
+| Review before anything lands | `"auto_apply": false` or `"apply_on": "never"` | Nothing is applied automatically; recommendations still update |
+| Apply right after each session | `"apply_on": "session_end"` | The detached `learn run` applies after update |
+| Stop learning at session end | `"enabled": false` | Stops the SessionEnd run and all applying. The SubagentStop hook still ingests and updates recommendations every 30 min |
 | Hand-set one agent permanently | `bin/stack agents set A maxTurns=N` and pin N in bounds (or `learn: false`) | Without a pin the next update moves it again (and the new value becomes the prior centre) |
 | Temporary experiment | `python3 "$T" snapshot`, then `bin/stack agents set A effort=E maxTurns=N` (or the env var ADVANCED_MODEL / MEDIUM_MODEL / LOW_MODEL to trial a model id for a whole tier); revert from the snapshot afterwards | Per-call overrides are stripped by the pre-agent hook; experiment runs are ingested like any run |
 | Roll back the last change | `python3 "$T" revert-plan --agent A` then run the printed `bin/stack agents set` and pin | `changes.jsonl` stores new values only; the value before the first learned change comes from a snapshot or `git log -p -- <agent file>` |

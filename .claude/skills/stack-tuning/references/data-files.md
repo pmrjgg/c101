@@ -8,11 +8,12 @@ Read with `jq`; never edit by hand to steer recommendations.
 | `obs/<session-id>.json` | `learn ingest` (idempotent: rewritten per session) | `{agent_id: record}` for the main thread and every subagent of one session |
 | `recommendations.json` | `learn update` | `{generated_at, agents: {name: recommendation}}` |
 | `budgets.json` | `learn update` | `{name: {max_output_tokens, recommend_1m_context, autoCompactWindow?, tokens}, "_global": {n_sessions, n_prompts, session, prompt, recommended, applied}}` |
-| `changes.jsonl` | `learn apply` | One line per applied frontmatter edit |
+| `history.jsonl` | `learn run` (SessionEnd) | One line per session (re-recording replaces it): `session_id`, `recorded_at`, `started_at`, `project`, `runs`, `tokens_total`, `agents: {type: {runs, capped, tool_errors, tokens_total, output_tokens, duration_s, effort, models, turns_median/max, tool_rounds_median/max, maxTurns, effort_setting}}`; read by `learn history` |
+| `changes.jsonl` | `learn apply` (session-start hook, `learn start`) | One line per applied frontmatter edit |
 | `stops/<session-id>.jsonl` | `subagent-stop` hook | `{agent_id, agent_type, effort, ts}` per finished subagent; the effort in effect, authoritative over the transcript |
 | `sessions/<session-id>.json` | `pre-agent` hook | Spawn counts: `spawns`, `by_depth`, `by_type`, `max_depth_seen` |
 | `last_ingest`, `last_update` | `subagent-stop` hook | Timestamps (mtime) for debounce and the 30-min update interval |
-| `learn.lock` | `subagent-stop` hook | flock; a held lock makes concurrent hooks skip |
+| `learn.lock` | `subagent-stop`, `session-start` hooks, `learn run` | flock; a held lock makes the hooks skip, `learn run` waits |
 | `learn.log` | `session-end` hook (detached run) | stdout/stderr of `learn run` |
 | `hook-errors.log` | any hook | Exceptions swallowed by fail-open hooks |
 

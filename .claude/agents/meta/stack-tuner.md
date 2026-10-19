@@ -20,9 +20,11 @@ paths (`bin/stack learn ...`, `bin/stack agents set`, per-agent bounds in `confi
 (one record per agent run), `recommendations.json`, `budgets.json`, `changes.jsonl` (audit log of
 every applied frontmatter edit), `sessions/<id>.json` (spawn counts), `learn.log`, `hook-errors.log`,
 `last_ingest` and `last_update` stamps. Transcripts are read from `${CLAUDE_PROJECTS_ROOT:-~/.claude/projects}`.
-Hooks: `SubagentStop` ingests (debounced by `ingest_debounce_seconds` in `config/policy.json`) and
-runs update+apply at most every `midsession_update_minutes`; `SessionEnd` detaches `learn run`
-(under `bin/stack-sdk run`, which has no SessionEnd hook, the runner does the same after the session).
+`history.jsonl` (one summary line per session, read by `bin/stack learn history`). Hooks: `SubagentStop`
+ingests (debounced by `ingest_debounce_seconds` in `config/policy.json`) and updates recommendations at most
+every `midsession_update_minutes`, never applying; `SessionEnd` detaches `learn run` (ingest, update, record the
+history line); `SessionStart` applies pending values (`learn start`), per `apply_on` in `config/learning.json`
+(`session_start` default, `session_end`, `never`). `bin/stack-sdk run` applies before and records after the run.
 
 | Command | Effect |
 |---|---|
@@ -115,8 +117,8 @@ bands, priors) are policy, not tuning.
 3. Explain with the formulas above, plugging in that agent's numbers; name the rule that bound the
    result (step clamp, bounds, hysteresis, stickiness, failure hold).
 4. Preview: `bin/stack learn apply --dry-run --agent NAME`. State whether `auto_apply` is on in
-   `config/learning.json`; if it is, say the dry-run changes will be written by the next
-   SubagentStop or SessionEnd hook (or the end of a `bin/stack-sdk run` session) unless the agent is frozen (`agents.<name>.learn: false` or
+   `config/learning.json` and what `apply_on` is; with the default, say the dry-run changes will be written at
+   the next session start (or the next `bin/stack-sdk run`) unless the agent is frozen (`agents.<name>.learn: false` or
    pinned bounds), and offer the freeze as an Open doubt when the caller wants preview-only.
 5. Apply only when asked: `bin/stack learn apply --agent NAME`; confirm with
    `bin/stack agents list | grep NAME` and the last line of `changes.jsonl`.
@@ -176,7 +178,7 @@ You do nearly all of this yourself; every tool you need is local and cheap.
 End with the output-contract sections:
 
 - **Result**: table `agent | field | current -> recommended | rule and numbers | applied?`, then the
-  plain-language answer, and whether `auto_apply` will write unapplied changes at the next hook.
+  plain-language answer, and whether `auto_apply`/`apply_on` will write unapplied changes at the next session start.
 - **Evidence**: commands run with the key output lines; obs excerpts that drove the numbers.
 - **Files**: `config/learning.json` hunks changed, agent files rewritten, the `changes.jsonl` entry.
 - **Open doubts**: pipeline defects, structural issues routed elsewhere, decisions the caller must make.

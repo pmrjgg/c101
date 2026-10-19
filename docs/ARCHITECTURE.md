@@ -91,5 +91,5 @@ in Agent calls are stripped by the `pre-agent` hook: the tier is authoritative.
 | `.stack/blackboard/<task>/` | mesh-router blackboards |
 | `.stack/images/<date>/` | image router outputs + sidecars |
 | `.stack/playwright/` | screenshots, PDFs, traces |
-| `~/.claude/stack-data/` | learning observations, posteriors, budgets, change log, spawn stats |
+| `~/.claude/stack-data/` | learning observations, posteriors, budgets, per-session history, change log, spawn stats |
 | `~/.claude/stack.env` | API keys (never in the repo) |

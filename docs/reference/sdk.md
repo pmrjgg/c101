@@ -288,8 +288,8 @@ def python_hooks(timeout: float = 30.0) -> dict[str, list[HookMatcher]]:
 | `PreToolUse` `Agent\|Task`, 10 s | `pre-agent` | `pre_agent` (30 s) | depth guard, spawn rules, token budgets, spawn budget, `<stack-context>` header, strips `model`/`effort`, forces foreground |
 | `SubagentStop`, async, 120 s | `subagent-stop` | `subagent_stop` (120 s) | records the effort in effect, debounced and lock-protected ingest for the learner |
 | `UserPromptSubmit`, 20 s | `prompt-submit` | `prompt_submit` (30 s) | adds the session and prompt token-budget note as context |
-| `SessionStart`, 10 s | `session-start` | none | status line (missing keys, recent self-tuning); no SDK event |
-| `SessionEnd`, 5 s | `session-end` | none; the runner calls `_learn_after` | final ingest and posterior update |
+| `SessionStart`, 10 s | `session-start` | none | applies pending learned values; status line (missing keys, recent self-tuning); no SDK event |
+| `SessionEnd`, 5 s | `session-end` | none; the runner calls `_learn_after` | final ingest, posterior update and `history.jsonl` line |
 | `PreToolUse` Bash/writes/web forms, 10 s | `pre-tool` | `pre_tool` (30 s) | narrow tools for web agents, taint guard |
 | `PostToolUse` web tools, 10 s | `post-web` | `post_web` (30 s) | prompt-injection scan, warning, taint |
 | `PreModelSwitch`, 10 s | `model-switch` | none; the model is pinned in the options | keeps the main thread on its tier model |
@@ -329,7 +329,7 @@ learner synchronously:
 ```
 transcript = <projects_root>/<project_key_for_directory(cwd)>/<session_id>.jsonl
 projects_root = $CLAUDE_PROJECTS_ROOT or ~/.claude/projects
-stack.learn.engine.run_after_session(transcript)   # ingest -> update posteriors -> apply if auto_apply (config/learning.json)
+stack.learn.engine.run_after_session(transcript)   # ingest -> update posteriors -> record history.jsonl (apply only if apply_on is session_end)
 ```
 
 `project_key_for_directory` comes from `claude_agent_sdk`, so the path matches what the CLI wrote.
@@ -340,7 +340,8 @@ safe, where the `SessionEnd` command hook also detaches `bin/stack learn run --t
 During the run, `subagent-stop` ingests at most once per `ingest_debounce_seconds` (60) and refreshes
 posteriors every `midsession_update_minutes` (30). A Python program that calls `query()` itself
 does not get this step; it can make the same `run_after_session` call, or run
-`bin/stack learn run --transcript <path>`, after the result.
+`bin/stack learn run --transcript <path>`, after the result. SDK runs have no `SessionStart` hook, so the
+recommended values are applied at the next interactive session start, or by `bin/stack learn start`.
 
 ## Command-line interface
 

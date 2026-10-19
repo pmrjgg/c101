@@ -165,7 +165,7 @@ session; only deliberate `deny` decisions from `pre-agent` and exit 2 from `mode
 
 | Hook | Role in a request | Details |
 |---|---|---|
-| `session-start` | status line: depth limit, missing keys, recent self-tuning | [session-start](hooks.md#session-start-status-line) |
+| `session-start` | applies pending learned values; status line: depth limit, missing keys, applied or recent self-tuning | [session-start](hooks.md#session-start-status-line) |
 | `prompt-submit` | per-prompt token-budget note for the main thread | [prompt-submit](hooks.md#prompt-submit-per-prompt-budget-note) |
 | `pre-agent` | depth guard, spawn rules, token and spawn budgets, `<stack-context>` header, tier stripping, foreground forcing | [pre-agent](hooks.md#pre-agent-depth-guard-spawn-rules-budgets-and-tier-stripping), [The stack-context header](delegation.md#the-stack-context-header) |
 | `model-switch` | keeps the main thread on its tier model | [PreModelSwitch guard](hooks.md#5-premodelswitch-guard) |
@@ -547,9 +547,9 @@ recent sessions.
 While the run is in progress, each `SubagentStop` has already recorded the effort in effect and fed the debounced
 ingester. When the session ends, `session-end` detaches a full `learn run`. Under the SDK, `_learn_after()` calls
 `engine.run_after_session()` with `~/.claude/projects/<project-key>/<session_id>.jsonl` instead. The learner
-updates per-agent posteriors in `~/.claude/stack-data/` and may rewrite `maxTurns`/`effort` in agent frontmatter,
-within the bounds in `config/learning.json` ([Bayesian self-tuning](learning.md#bayesian-self-tuning)). The next session's
-`SessionStart` note lists those changes.
+updates per-agent posteriors in `~/.claude/stack-data/` and records the session in `history.jsonl`. The next session's
+`SessionStart` hook may then rewrite `maxTurns`/`effort` in agent frontmatter, within the bounds in
+`config/learning.json` ([Bayesian self-tuning](learning.md#bayesian-self-tuning)), and its note lists those changes.
 
 ## Depth map of the example
 

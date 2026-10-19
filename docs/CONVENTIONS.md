@@ -181,8 +181,9 @@ when_to_use: Optional extra trigger guidance.
 
 ## 9. Self-tuning
 
-`SessionEnd`/`SubagentStop` hooks ingest transcripts into `~/.claude/stack-data/`, update Bayesian
-posteriors per agent type, and (if `auto_apply`) rewrite `maxTurns`/`effort` within bounds.
+`SessionEnd`/`SubagentStop` hooks ingest transcripts into `~/.claude/stack-data/` and update Bayesian
+posteriors per agent type; the next `SessionStart` (if `auto_apply`, `apply_on: "session_start"`) rewrites
+`maxTurns`/`effort` within bounds, so agent files never change mid-session.
 Learned token windows go to `~/.claude/stack-data/budgets.json`. See `docs/LEARNING.md`.
 
 ## 10. Token budgets and context policy

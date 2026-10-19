@@ -159,6 +159,8 @@ class SdkOptionsTests(unittest.TestCase):
             yield
 
         saved = {v: os.environ.get(v) for v in cli.PARENT_SESSION_VARS}
+        saved["CLAUDE_STACK_DATA"] = os.environ.get("CLAUDE_STACK_DATA")
+        os.environ["CLAUDE_STACK_DATA"] = tempfile.mkdtemp()  # the run applies learned values first: keep it off real data
         os.environ.update({v: "parent-value" for v in cli.PARENT_SESSION_VARS})
         real = claude_agent_sdk.query
         claude_agent_sdk.query = fake_query

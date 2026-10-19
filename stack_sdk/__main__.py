@@ -83,6 +83,7 @@ async def _run(a) -> int:
     from .options import StackRunConfig, build_options
     for var in PARENT_SESSION_VARS:
         os.environ.pop(var, None)
+    _learn_before()
     cfg = StackRunConfig(cwd=a.cwd, main_agent=None if a.agent == "none" else a.agent, agents_source=a.agents_source,
                          hooks=a.hooks, permission_mode=a.permission_mode, model=a.model, effort=a.effort,
                          max_budget_usd=a.max_budget_usd, task_budget_tokens=a.task_budget,
@@ -116,6 +117,17 @@ async def _run(a) -> int:
                                                        result.total_cost_usd, result.session_id), file=sys.stderr)
     _learn_after(opts, result.session_id)
     return 1 if result.is_error else 0
+
+
+def _learn_before() -> None:
+    """SDK sessions may run without the SessionStart hook: apply pending learned values first."""
+    try:
+        from stack import hooks
+        for c in hooks._apply_learned():
+            print("applied learned values: %s %s" % (c["agent"], " ".join("%s=%s" % kv for kv in c["updates"].items())),
+                  file=sys.stderr)
+    except Exception as exc:  # learning must never fail a run
+        print("learning skipped: %r" % exc, file=sys.stderr)
 
 
 def _learn_after(opts, session_id: str) -> None:

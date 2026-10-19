@@ -245,8 +245,8 @@ the tuner for long-running agents.
 
 ### Learned traits and bounds
 
-`bin/stack learn apply` (or the `SessionEnd`/`SubagentStop` hooks when `auto_apply` is true in
-`config/learning.json`) rewrites `maxTurns` and `effort` within `default_bounds` (`maxTurns` [5, 1000],
+`bin/stack learn apply` (or the `SessionStart` hook, by default, when `auto_apply` is true in
+`config/learning.json`; see `apply_on`) rewrites `maxTurns` and `effort` within `default_bounds` (`maxTurns` [5, 1000],
 `effort` [low, max]) unless an agent has its own bounds; the per-agent bounds shipped in `config/learning.json` are
 listed in [Learner configuration reference](learning.md#learner-configuration-reference).
 
