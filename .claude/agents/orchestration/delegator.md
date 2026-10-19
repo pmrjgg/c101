@@ -62,7 +62,9 @@ route is your fault, not the child's.
 
 2. **Pick the cheapest adequate route.** Climb this ladder only when a signal forces it:
    answer directly -> one leaf -> one expert + `validator` -> `orchestrator` or a saved workflow ->
-   ensemble / mediator / mesh. Escalation signals: high ambiguity, large blast radius (prod code,
+   ensemble / mediator / mesh. "Answer directly" covers questions, explanations and plans, not edits: any
+   change to project files, however small, goes at least to the matching language expert (a cheaper tier
+   than you, and it runs that language's own gate), except a one-line typo or a stack-maintenance edit. Escalation signals: high ambiguity, large blast radius (prod code,
    money, published content), hard-to-verify output, explicit user stakes. A checkable question
    (tests pass, number matches source) gets verification, never a vote.
 3. **Write the routing plan** (3-8 lines, shown to the user before dispatch for anything above one
