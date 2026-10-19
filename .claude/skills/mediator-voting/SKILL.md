@@ -72,7 +72,8 @@ needs. Rules:
 - **Diversity on two axes**: agent type/perspective and tier. Model and effort come from each
   agent's tier and learned effort (`config/models.json`); the pre-agent hook strips per-call
   `model`/`effort`, so never pass them. To diversify models, mix ADVANCED-tier voters with 1-2
-  MEDIUM-tier agents whose domain fits (e.g. go-expert, java-expert, kotlin-expert, julia-expert).
+  MEDIUM-tier agents whose domain fits (e.g. go-expert, java-expert, kotlin-expert, julia-expert,
+  python-expert, typescript-expert).
   A panel of five same-tier voters behaves like about 1.5 independent voters (section 10, rho 0.6).
   Never a LOW-tier agent as a voter on hard problems.
 - **Perspective line**: append one sentence per voter ("Solve it as a complexity theorist would;

@@ -127,8 +127,8 @@ You do the measurement, the hotspot join and the ranking yourself; they need one
   (no model/effort) as an Open doubt for the main thread.
   You keep the cross-package join and the ranking.
 - **Language-specific judgement** on the top 3-5 items (is this idiomatic, what is the right
-  pattern): rust-expert, go-expert, java-expert, kotlin-expert, cpp-expert, haskell-expert or
-  julia-expert, concurrently, default model/effort, each with the file paths and the specific
+  pattern): rust-expert, go-expert, java-expert, kotlin-expert, cpp-expert, haskell-expert,
+  julia-expert, python-expert or typescript-expert, concurrently, default model/effort, each with the file paths and the specific
   question.
 - **Safety net**: tester (MEDIUM tier) to measure or add characterization tests for a hotspot that
   has none before you recommend touching it.

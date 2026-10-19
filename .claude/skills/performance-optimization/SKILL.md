@@ -225,7 +225,7 @@ high (0.85) - 20 runs per variant, CI excludes 1; drops if production inputs dif
 |---|---|
 | Correctness suite and repeated benchmark runs | `tester` |
 | Algorithmic lower bounds, data-structure choice | `computer-science-expert` |
-| Language/runtime specifics (GC tuning, unsafe SIMD, allocator behaviour) | `rust-expert`, `cpp-expert`, `go-expert`, `java-expert`, `kotlin-expert`, `julia-expert`, `haskell-expert` |
+| Language/runtime specifics (GC tuning, unsafe SIMD, allocator behaviour) | `rust-expert`, `cpp-expert`, `go-expert`, `java-expert`, `kotlin-expert`, `julia-expert`, `haskell-expert`, `python-expert`, `typescript-expert` |
 | Unexplained regression between two revisions | `debugger` (bisect with the benchmark as the predicate) |
 | GPU / rendering performance | `computer-graphics-expert` |
 

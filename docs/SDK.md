@@ -7,7 +7,7 @@ programmatically through the [Claude Agent SDK](https://code.claude.com/docs/en/
 ```bash
 bin/stack-sdk run "Survey neural SDF rendering in 2026 and write a cited report"   # delegator as main thread
 bin/stack-sdk run --cwd ~/code/other-project "Review the auth module"             # stack used from elsewhere
-bin/stack-sdk agents          # the 55 agents as SDK AgentDefinitions (tier model, effort, maxTurns, MCP, skills)
+bin/stack-sdk agents          # the 57 agents as SDK AgentDefinitions (tier model, effort, maxTurns, MCP, skills)
 bin/stack-sdk check           # build options for both placements and validate (no API call)
 bin/stack-sdk mcp             # MCP servers as resolved for out-of-repo sessions (no secrets)
 ```

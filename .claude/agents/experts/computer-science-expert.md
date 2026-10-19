@@ -130,7 +130,7 @@ doubt (`route: caller`).
 - `mathematics-expert` for heavy combinatorics, probabilistic tail bounds or analytic
   recurrences; `quantum-computing-expert` for BQP or quantum-classical separation questions.
 - Language experts (`rust-expert`, `cpp-expert`, `go-expert`, `java-expert`, `kotlin-expert`,
-  `haskell-expert`, `julia-expert`) to turn a verified algorithm into production code in that
+  `haskell-expert`, `julia-expert`, `python-expert`, `typescript-expert`) to turn a verified algorithm into production code in that
   language; `code-optimizer` for constant factors once asymptotics are right.
 - `tester` for property-based and fuzz harnesses; `adversarial-verifier` to attack a proof or a
   claimed counterexample; `validator` to check acceptance criteria mechanically.

@@ -157,10 +157,10 @@ flowchart TB
 
 The `delegator` is the only agent that talks to the user: it runs as the main thread at depth 0, classifies each
 request and sends it down the cheapest adequate route, either a saved workflow or an Agent call into one of the
-eight agent groups (55 agents, nesting up to depth 8, every spawn checked by the `pre-agent` hook of diagram 4).
+eight agent groups (57 agents, nesting up to depth 8, every spawn checked by the `pre-agent` hook of diagram 4).
 Each agent lists only the MCP servers it calls: the research agents use exa, jina, spider and fetch, with
 playwright for `browser-operator` and the built-in computer-use server for `computer-operator`; `tester` uses
-playwright; nine experts and `architect` use context7; the image agents and `graphic-design-expert` use the image
+playwright; eleven experts and `architect` use context7; the image agents and `graphic-design-expert` use the image
 server. Each of these connects only while its agent runs. The exception is neural-memory: the delegator carries it,
 so it runs for the whole main-thread session, and `orchestrator`, `planner`, `architect`, `debugger` and `reviewer`
 share that connection. Every agent preloads the three protocol skills plus at most three role skills: method skills from the core
@@ -186,13 +186,13 @@ flowchart TB
         HS -->|indexes| GS
     end
 
-    subgraph AG["55 agents in 8 groups; subagents run at depth 1 to 8"]
+    subgraph AG["57 agents in 8 groups; subagents run at depth 1 to 8"]
         direction TB
         ORC["Orchestration, 7<br/>(with the delegator):<br/>orchestrator, mediator,<br/>swarm-coordinator, ..."]:::agent
         PLN["Planning, 3<br/>planner, architect,<br/>plan-critic"]:::agent
         QA["Quality, 9<br/>reviewer, validator,<br/>tester, debugger, ..."]:::judge
         RES["Research, 11<br/>search, scrape, crawl,<br/>browse, papers, ..."]:::agent
-        EXP["Experts, 13<br/>7 languages, CS, math,<br/>physics, graphics, ..."]:::agent
+        EXP["Experts, 15<br/>9 languages, CS, math,<br/>physics, graphics, ..."]:::agent
         SYN["Synthesis, 6<br/>expert-panel-chair,<br/>debate-moderator, ..."]:::out
         IMG["Image, 4<br/>image-generator,<br/>visual-reviewer, ..."]:::agent
         MET["Meta, 2<br/>stack-tuner,<br/>agent-architect"]:::agent

@@ -159,8 +159,9 @@ other languages. Respect the `<stack-context>` header per `delegation-protocol`.
   abstraction, a lock-free structure or a custom `Send`/`Sync` impl; these are the expensive mistakes.
 - `cpp-expert` for the C++ side of a `cxx`/`bindgen` boundary (ABI, exceptions, ownership);
   `computer-science-expert` for algorithm or memory-model proofs; `go-expert`, `java-expert`,
-  `kotlin-expert` when the other side of an interface or a port is in their language. Never the agent
-  named in your header's `parent`: answer the Rust side yourself and return its side to it as an Open doubt.
+  `kotlin-expert`, `python-expert` (PyO3 bindings), `typescript-expert` (napi-rs, WASM) when the
+  other side of an interface or a port is in their language. Never the agent named in your header's
+  `parent`: answer the Rust side yourself and return its side to it as an Open doubt.
 - `quick-researcher` (sonnet, low): crate selection, RUSTSEC advisory details, stabilisation status.
   `file-summarizer` (haiku, low): condense a multi-thousand-line compiler or test log into failing
   items with line anchors.

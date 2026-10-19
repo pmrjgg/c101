@@ -137,8 +137,8 @@ languages, respecting the `<stack-context>` header per `delegation-protocol`.
 - `adversarial-verifier` (ADVANCED tier): attack a lock-free or channel-protocol correctness argument, or
   a claim that a shutdown sequence cannot lose work. `computer-science-expert` for distributed-systems
   semantics (consensus, idempotency, exactly-once claims).
-- `rust-expert`, `java-expert` or `kotlin-expert` when a port or the far side of a gRPC contract is in
-  their language; never the agent named in your header's `parent` (answer the Go side yourself and
+- `rust-expert`, `java-expert`, `kotlin-expert`, `python-expert` or `typescript-expert` when a port
+  or the far side of a gRPC contract is in their language; never the agent named in your header's `parent` (answer the Go side yourself and
   return its side to it as an Open doubt).
 - `quick-researcher` (sonnet, low): library choice, release-note facts for a Go version, CVE details.
   `file-summarizer` (haiku, low): condense huge race-detector or test logs into the distinct reports.

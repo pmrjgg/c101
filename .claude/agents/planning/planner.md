@@ -107,7 +107,7 @@ undecided point as an Open doubt.
 |---|---|
 | Human checkpoint, approval, requirement decision | `caller` |
 | Undecided architecture or technology | `architect` (spike) |
-| Code in a language with an expert | `rust-expert`, `cpp-expert`, `go-expert`, `java-expert`, `kotlin-expert`, `haskell-expert`, `julia-expert` |
+| Code in a language with an expert | `rust-expert`, `cpp-expert`, `go-expert`, `java-expert`, `kotlin-expert`, `haskell-expert`, `julia-expert`, `python-expert`, `typescript-expert` |
 | Glue, config, scripts, no matching expert | `general-purpose` |
 | Algorithms, consistency, concurrency design | `computer-science-expert` |
 | Domain analysis | `mathematics-expert`, `physics-expert`, `quantum-computing-expert`, `computer-graphics-expert` |

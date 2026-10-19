@@ -17,12 +17,12 @@ and all eight workflows): [DIAGRAMS.md](DIAGRAMS.md).
                               waves → gates) roles, briefs)       vote, synth) /mediate /expert-panel
                     │              │              │                  │        /research-sweep
                     ▼              ▼              ▼                  ▼        /review-verify
-             web-searcher    planner/architect  13 domain experts  voters     /plan-tournament
+             web-searcher    planner/architect  15 domain experts  voters     /plan-tournament
                                                                              /visual-iterate
              web-scraper     swarm-coordinator  rust cpp go haskell (any
              web-crawler     mesh-router        julia java kotlin   agents)
-             browser-op      concurrent-        cg cs quantum math
-             computer-op     dispatcher         physics design
+             browser-op      concurrent-        python ts cg cs
+             computer-op     dispatcher         quantum math physics design
              paper-res.          │                   │
              fact-checker        ▼                   ▼
              summarizers    reviewers, testers,  cross-domain-synthesizer, expert-panel-chair,
@@ -43,13 +43,13 @@ and all eight workflows): [DIAGRAMS.md](DIAGRAMS.md).
 | Planning | `planner`, `architect`, `plan-critic` | task DAGs with acceptance criteria; design trade-offs; red-teaming |
 | Quality | `reviewer`, `adversarial-verifier`, `validator`, `tester`, `quality-control`, `code-quality-analyst`, `code-optimizer`, `security-auditor`, `debugger` | find → verify → gate |
 | Research | `quick-researcher`, `deep-researcher`, `web-searcher`, `web-scraper`, `web-crawler`, `browser-operator`, `computer-operator`, `paper-researcher`, `fact-checker`, `source-summarizer`, `file-summarizer` | Exa, Jina, Spider, Playwright, computer use |
-| Experts | 13 domain experts | each preloads its craft skill; context7 for live docs |
+| Experts | 15 domain experts | each preloads its craft skill; context7 for live docs |
 | Synthesis | `cross-domain-synthesizer`, `expert-panel-chair`, `debate-moderator`, `analogy-mapper`, `first-principles-decomposer`, `general-chat` | combine knowledge from several experts into a higher-level answer |
 | Image | `image-generator`, `image-editor`, `vector-artist`, `visual-reviewer` | the `image` MCP server (one configured endpoint per operation, tools listed only when configured); produce → `visual-reviewer` → revise until the rubric passes |
 | Meta | `stack-tuner`, `agent-architect` | operate the learner; extend the stack |
 
 Every agent preloads three protocol skills — `delegation-protocol`, `doubt-escalation`,
-`output-contract` — plus at most three role skills. 225 skills in total (hubs and method skills plus 168 granular
+`output-contract` — plus at most three role skills. 227 skills in total (hubs and method skills plus 168 granular
 playbooks, grouped into install packs in `config/packs.json`); see `docs/AGENTS.md`.
 
 ## Combining experts (higher-level problems)
@@ -66,7 +66,7 @@ playbooks, grouped into install packs in `config/packs.json`); see `docs/AGENTS.
 ## Models: tiers and enforcement
 
 Three tiers in `config/models.json` — `ADVANCED_MODEL`=claude-opus-5-5 (32 agents), `MEDIUM_MODEL`=claude-sonnet-5-5
-(18), `LOW_MODEL`=claude-haiku-5-5 (5) — are the only models allowed:
+(20), `LOW_MODEL`=claude-haiku-5-5 (5) — are the only models allowed:
 
 * frontmatter `model` is rendered from the tier (`bin/stack agents tiers --apply`); doctor errors on any other model;
 * `.claude/settings.json` sets `availableModels` (exact) + `enforceAvailableModels`, so Claude Code refuses others;

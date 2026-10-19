@@ -199,7 +199,7 @@ run (same suite, all green before and after).
 
 | Need | Agent |
 |---|---|
-| Executing a refactor from the list | language expert (`rust-expert`, `go-expert`, `java-expert`, `kotlin-expert`, `cpp-expert`, `haskell-expert`, `julia-expert`) or the caller |
+| Executing a refactor from the list | language expert (`rust-expert`, `go-expert`, `java-expert`, `kotlin-expert`, `cpp-expert`, `haskell-expert`, `julia-expert`, `python-expert`, `typescript-expert`) or the caller |
 | Characterization tests before refactoring | `tester` |
 | Judging whether a hotspot also hides defects | `reviewer` |
 | Performance side effects of a refactor | `code-optimizer` |

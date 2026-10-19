@@ -67,7 +67,7 @@ alternative; fix the brief or split the job instead. Re-tiering is stack-tuner's
 | Agent | Tier | Effort | maxTurns | Bounds (turns / effort) | Cheaper agent | Stronger agent |
 |---|---|---|---|---|---|---|
 | computer-graphics-expert | ADVANCED | high | 150 | default | quick-researcher (MEDIUM) for API lookups | mathematics-expert (ADVANCED) for sampling maths |
-| computer-science-expert | ADVANCED | xhigh | 150 | default | go/java/kotlin-expert (MEDIUM) to implement | mathematics-expert (ADVANCED) |
+| computer-science-expert | ADVANCED | xhigh | 150 | default | go/java/kotlin/python/typescript-expert (MEDIUM) to implement | mathematics-expert (ADVANCED) |
 | quantum-computing-expert | ADVANCED | xhigh | 150 | default | quick-researcher (MEDIUM) for SDK lookups | physics-expert (ADVANCED) or mathematics-expert (ADVANCED) |
 | rust-expert | ADVANCED | high | 180 | default | code-quality-analyst (MEDIUM) for lint triage | computer-science-expert (ADVANCED) |
 | cpp-expert | ADVANCED | high | 180 | default | code-quality-analyst (MEDIUM) for lint triage | computer-science-expert (ADVANCED) for memory-model questions |
@@ -76,6 +76,8 @@ alternative; fix the brief or split the job instead. Re-tiering is stack-tuner's
 | julia-expert | MEDIUM | high | 180 | default | - | computer-science-expert (ADVANCED) or physics-expert (ADVANCED) |
 | java-expert | MEDIUM | high | 180 | default | - | computer-science-expert (ADVANCED) |
 | kotlin-expert | MEDIUM | high | 180 | default | - | computer-science-expert (ADVANCED) |
+| python-expert | MEDIUM | high | 180 | default | - | computer-science-expert (ADVANCED) |
+| typescript-expert | MEDIUM | high | 180 | default | - | computer-science-expert (ADVANCED) |
 | mathematics-expert | ADVANCED | max | 180 | 40-600 / high-max | tester (MEDIUM) for a numeric sanity script | adversarial-verifier (ADVANCED) per proof step |
 | physics-expert | ADVANCED | xhigh | 150 | default | quick-researcher (MEDIUM) for constants and units | mathematics-expert (ADVANCED) |
 | graphic-design-expert | ADVANCED | high | 120 | default | image-generator (MEDIUM) to produce assets | - |

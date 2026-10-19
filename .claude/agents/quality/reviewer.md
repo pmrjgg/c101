@@ -128,7 +128,8 @@ children return at most ~25 lines plus paths and write detail to their own `out_
   changes with a measurable budget; a language expert for semantics you should not guess
   (`rust-expert` for `unsafe` and `Send`/`Sync`, `cpp-expert` for UB, lifetimes and the memory
   model, `go-expert` for goroutine leaks and context, `java-expert`/`kotlin-expert` for virtual
-  threads and coroutines). Brief each with paths, base SHA, "findings in file:line + scenario +
+  threads and coroutines, `python-expert` for asyncio and typing, `typescript-expert` for type
+  soundness and promise handling). Brief each with paths, base SHA, "findings in file:line + scenario +
   severity + fix format" and "do not delegate back to reviewer; return cross-boundary questions as
   Open doubts".
 - **Verification**: `adversarial-verifier` (ADVANCED tier), one call per finding, all in one

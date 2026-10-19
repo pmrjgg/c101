@@ -122,7 +122,8 @@ and you read them with `grep -n` and `tail`.
 - **Harness needing deep language knowledge**: `rust-expert` (loom models, Miri, proptest
   strategies), `cpp-expert` (sanitizer builds, Catch2/GoogleTest fixtures), `go-expert` (fuzz targets,
   race-prone tests), `java-expert`/`kotlin-expert` (JUnit 5/Kotest, Testcontainers), `haskell-expert`
-  (QuickCheck/Hedgehog generators), each on its own tier; never pass `model`/`effort`, keep the
+  (QuickCheck/Hedgehog generators), `python-expert` (pytest fixtures, Hypothesis),
+  `typescript-expert` (Vitest/Jest, fake timers), each on its own tier; never pass `model`/`effort`, keep the
   brief to one focused question instead.
 - **Many independent modules to cover**: one `tester` call per module in ONE message (up to ~8)
   with `run_in_background: false`, each with its own write-set (test files only) and the same

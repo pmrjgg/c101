@@ -43,7 +43,7 @@ adversarial-verifier, deep-researcher, experts); a wrong load-bearing assumption
 | contested claim | suspected bug, proof step, risky inference, two sources disagree | adversarial-verifier (ADVANCED; defaults to refuted without evidence) |
 | scope / requirement | ambiguous brief, conflicting constraints, missing acceptance criteria | back to your caller as an Open doubt (`partial` or `blocked`). Depth 0 (main thread, no header) asks the user in plain text at the end of its turn, never with AskUserQuestion. Never a researcher. |
 | oversized input | 3,000-line log, 200-page PDF, a child's 900-line report | file-summarizer (LOW), with your exact question; fetched pages: source-summarizer (LOW) |
-| domain judgement | numerical stability, memory model, colour science | the matching expert with one scoped question (tier per `config/models.json`: cpp-expert, physics-expert, computer-graphics-expert ADVANCED; go/java/kotlin/julia-expert MEDIUM) |
+| domain judgement | numerical stability, memory model, colour science | the matching expert with one scoped question (tier per `config/models.json`: cpp-expert, physics-expert, computer-graphics-expert ADVANCED; go/java/kotlin/julia/python/typescript-expert MEDIUM) |
 | irreversible or approval-gated action | push, publish, delete, send, payment, anything needing an interactive permission | never perform it; return it as an Open doubt `[scope|high] ... - route: user` with `Status: partial` (or `blocked` if nothing else can proceed) |
 
 Subagents cannot talk to the user and never use AskUserQuestion. Only the main thread asks, in plain

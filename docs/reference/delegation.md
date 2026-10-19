@@ -235,7 +235,7 @@ verification difficulty V, blast radius B, length L. `S = N + A + V + B + L` pic
 | S | Route to | Examples |
 |---|---|---|
 | 0-3 | LOW/MEDIUM leaf | file-summarizer, source-summarizer, web-scraper, quick-researcher |
-| 4-6 | MEDIUM worker | fact-checker, validator, tester, web-searcher, go/java/kotlin/julia-expert |
+| 4-6 | MEDIUM worker | fact-checker, validator, tester, web-searcher, go/java/kotlin/julia/python/typescript-expert |
 | 7-9 | ADVANCED agent at its learned effort | reviewer, debugger, deep-researcher, rust/cpp/haskell-expert |
 | 10-15 | ADVANCED agent shipped at xhigh/max plus an independent ADVANCED verifier | architect, mathematics-expert, physics-expert; checked by adversarial-verifier or quality-control |
 

@@ -2,8 +2,8 @@
 
 Traps that recur in production code review, grouped by language. Each line is a check you can grep for
 or reason about directly. For deep language questions, delegate to the matching expert agent
-(`rust-expert`, `cpp-expert`, `go-expert`, `java-expert`, `kotlin-expert`, `haskell-expert`,
-`julia-expert`).
+(`python-expert`, `typescript-expert`, `rust-expert`, `cpp-expert`, `go-expert`, `java-expert`,
+`kotlin-expert`, `haskell-expert`, `julia-expert`).
 
 ## Python
 - Mutable default arguments: `def f(x=[])` shares the list across calls. Use `None` and create inside.

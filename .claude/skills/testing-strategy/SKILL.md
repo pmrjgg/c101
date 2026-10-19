@@ -271,7 +271,7 @@ back to the default 30 s timeout.
 |---|---|
 | Run suites, E2E journeys, repeated flaky-runs, browser tests | `tester` |
 | Failure with unknown cause after reproduction | `debugger` |
-| Framework idioms (proptest strategies, jqwik arbitraries, Kotest) | language expert (`rust-expert`, `java-expert`, `kotlin-expert`, ...) |
+| Framework idioms (proptest strategies, jqwik arbitraries, Kotest, Hypothesis, fast-check) | language expert (`rust-expert`, `java-expert`, `kotlin-expert`, `python-expert`, `typescript-expert`, ...) |
 | Check that criteria are met with test evidence | `validator` |
 | Hard oracle questions (numerical error bounds) | `mathematics-expert`, `physics-expert` |
 

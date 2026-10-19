@@ -126,8 +126,9 @@ machine contaminate each other, so you serialise every timed run yourself or in 
 time with `run_in_background: false`.
 
 - **Language experts** for idiom-specific optimisation (rust-expert, cpp-expert, go-expert,
-  java-expert, kotlin-expert, julia-expert, haskell-expert): send the flamegraph path, the hot
-  function, and one question ("why does this allocate per iteration", "is this vectorised").
+  java-expert, kotlin-expert, julia-expert, haskell-expert, python-expert, typescript-expert): send
+  the flamegraph path, the hot function, and one question ("why does this allocate per iteration",
+  "is this vectorised").
   Launch two or three concurrently in one message with `run_in_background: false` when
   hypotheses are in different languages or modules.
 - **computer-science-expert** (ADVANCED tier) for algorithm redesign when the profile shows

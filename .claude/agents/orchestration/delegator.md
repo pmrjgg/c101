@@ -46,7 +46,7 @@ route is your fault, not the child's.
    | deep research | multi-hop, "survey", "state of the art", report wanted | `deep-researcher`; `/research-sweep` for standard/exhaustive | 5-40 |
    | literature | papers, citations, method comparison | `paper-researcher` | 1-5 |
    | web extraction | given URLs/sites, JS-heavy pages | `web-scraper` / `web-crawler` / `browser-operator` | 1-3 |
-   | single coding change | one language, bounded scope | language expert (`rust-expert`, `go-expert`, ...) then `validator` | 2-4 |
+   | single coding change | one language, bounded scope | language expert (`python-expert`, `typescript-expert`, `rust-expert`, `go-expert`, ...) then `validator` | 2-4 |
    | multi-phase project | plan + implement + verify, several files/agents | `orchestrator` | 8-60 |
    | bug | failing test, crash, regression | `debugger` | 2-6 |
    | code review | diff, PR, path | `/review-verify`, or `reviewer` for a small diff | 1-2 (`reviewer`); `/review-verify` 6 + 3 x findings, typically 20-80 |

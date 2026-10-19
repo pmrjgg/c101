@@ -67,7 +67,7 @@ results within 1e-8 relative error of the reference, 1 kHz control loop":
 | Quantum algorithms, error correction, resource estimates | `quantum-computing-expert` | opus / xhigh |
 | Rendering, GPU, geometry | `computer-graphics-expert` | opus / high |
 | Visual design, typography, colour | `graphic-design-expert` | opus / high |
-| Language craft | `rust-expert`, `cpp-expert`, `haskell-expert` (opus / high); `go-expert`, `julia-expert`, `java-expert`, `kotlin-expert` (sonnet / high) | as listed |
+| Language craft | `rust-expert`, `cpp-expert`, `haskell-expert` (opus / high); `go-expert`, `julia-expert`, `java-expert`, `kotlin-expert`, `python-expert`, `typescript-expert` (sonnet / high) | as listed |
 | System architecture and trade-offs | `architect` | opus / xhigh |
 | Security | `security-auditor` | opus / high |
 | Performance engineering | `code-optimizer` | opus / high |

@@ -240,7 +240,7 @@ False-positive traps:
 | Deep security path (auth, crypto, deserialization) | `security-auditor` | file:line list, threat question |
 | Speed or memory claim needs numbers | `code-optimizer` | the code path, the workload, the claim |
 | Need a test executed or written to confirm | `tester` | exact test to write, command to run, expected red/green |
-| Language semantics question (UB, lifetimes, memory model) | `rust-expert`, `cpp-expert`, `go-expert`, `java-expert`, `kotlin-expert`, `haskell-expert`, `julia-expert` | the snippet path and the precise question |
+| Language semantics question (UB, lifetimes, memory model) | `rust-expert`, `cpp-expert`, `go-expert`, `java-expert`, `kotlin-expert`, `haskell-expert`, `julia-expert`, `python-expert`, `typescript-expert` | the snippet path and the precise question |
 | Independent refutation of an S0/S1 | `adversarial-verifier` | the finding in the format above |
 | Complexity or duplication across the module | `code-quality-analyst` | paths, metric needed |
 

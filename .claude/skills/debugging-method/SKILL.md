@@ -225,7 +225,7 @@ Siblings:     other locations with the same pattern and their status
 |---|---|
 | Run a repro loop N times, write the regression test, CI-like environment | `tester` |
 | Exact error string, known upstream issue, changelog of a dependency | `quick-researcher` |
-| Language/runtime semantics (UB, memory model, GC, async runtime behaviour) | `rust-expert`, `cpp-expert`, `go-expert`, `java-expert`, `kotlin-expert`, `haskell-expert`, `julia-expert` |
+| Language/runtime semantics (UB, memory model, GC, async runtime behaviour) | `rust-expert`, `cpp-expert`, `go-expert`, `java-expert`, `kotlin-expert`, `haskell-expert`, `julia-expert`, `python-expert`, `typescript-expert` |
 | The bug looks exploitable (memory corruption from input, auth bypass) | `security-auditor` |
 | Performance regression analysis | `code-optimizer` |
 | Independent check that the root cause explains all observations | `adversarial-verifier` |

@@ -1,6 +1,6 @@
 # Agents
 
-The stack ships 55 subagents in eight groups under `.claude/agents/<group>/<name>.md`. Claude Code scans the
+The stack ships 57 subagents in eight groups under `.claude/agents/<group>/<name>.md`. Claude Code scans the
 directory recursively, so the group directories only organise the files; the agent's identity is its `name`.
 Under the Agent SDK, `stack_sdk/agents.py` loads the same files into `AgentDefinition` objects (body as
 `prompt`, list fields `tools`, `disallowedTools`, `skills`, `mcpServers` normalised, keys the SDK does not
@@ -25,10 +25,10 @@ agent) from the files themselves. How to read the tables below:
 | Tier key | Model id | Alias | Agents | Used for |
 |---|---|---|---|---|
 | `ADVANCED_MODEL` | `claude-opus-5-5` | `opus` | 32 | routing, orchestration, design, proofs, security, verification, judgement |
-| `MEDIUM_MODEL` | `claude-sonnet-5-5` | `sonnet` | 18 | lookups, checks, operators (browser, desktop, image), well-trodden languages |
+| `MEDIUM_MODEL` | `claude-sonnet-5-5` | `sonnet` | 20 | lookups, checks, operators (browser, desktop, image), well-trodden languages |
 | `LOW_MODEL` | `claude-haiku-5-5` | `haiku` | 5 | mechanical fan-out, extraction, summarising |
 
-Initial effort distribution: `low` 6, `medium` 13, `high` 28, `xhigh` 7, `max` 1 (`mathematics-expert`, "the
+Initial effort distribution: `low` 6, `medium` 13, `high` 30, `xhigh` 7, `max` 1 (`mathematics-expert`, "the
 one place max effort pays"). The env vars `ADVANCED_MODEL`, `MEDIUM_MODEL` and `LOW_MODEL` override the model
 ids (for example to trial a new release); `bin/stack agents set NAME tier=MEDIUM_MODEL` re-tiers one agent.
 Callers never pass a per-call `model` or `effort`: the `pre-agent` hook strips both (`enforce_tiers: true`
@@ -119,7 +119,7 @@ hard maximum.
 ## Experts (`.claude/agents/experts/`)
 
 Each expert is installed by its own domain pack in `config/packs.json` (`rust`, `cpp`, `go`, `haskell`,
-`julia`, `java`, `kotlin`, `computer-graphics`, `computer-science`, `quantum`, `mathematics`, `physics`,
+`julia`, `java`, `kotlin`, `python`, `typescript`, `computer-graphics`, `computer-science`, `quantum`, `mathematics`, `physics`,
 `graphic-design`). The preloaded role skill is the pack's `hub` skill; the pack's granular skills are
 installed beside it and listed by name only (`granular_listing: "name-only"`), so they cost context only when
 loaded with Skill. Every expert body has a `## Expertise` section after the mission.
@@ -132,6 +132,8 @@ loaded with Skill. Every expert body has a `## Expertise` section after the miss
 | `haskell-expert` | ADVANCED / `claude-opus-5-5` | high | 180 | `context7` | `haskell-craft` | Models the domain in types, writes a strictness decision per data structure, builds with `-Wall -Wcompat ...`, tests laws as properties, proves absence of space leaks with heap profiles (`-rtsopts`), reads Core on hot paths, benchmarks with tasty-bench or criterion. Gate: `cabal build all`, `cabal test all`, hlint. |
 | `java-expert` | MEDIUM / `claude-sonnet-5-5` | high | 180 | `context7` | `java-craft` | Records, sealed hierarchies and pattern matching, `-Xlint:all` clean, an explicitly chosen concurrency model, GC logs and JFR before tuning flags, JMH (`-f 2 -wi 5 -i 10`, `-prof gc`). Gate: `./mvnw -B -ntp verify` or `./gradlew build` plus the configured Error Prone/SpotBugs/Checkstyle. |
 | `kotlin-expert` | MEDIUM / `claude-sonnet-5-5` | high | 180 | `context7` | `kotlin-craft` | Structured concurrency with scope, owner, dispatcher and cancellation written down per coroutine; sealed states and value classes; no `!!` or `GlobalScope`; `runTest` with injected dispatchers; `DebugProbes` for hangs. Gate: `./gradlew :<module>:check` (and `allTests` for KMP targets). |
+| `python-expert` | MEDIUM / `claude-sonnet-5-5` | high | 180 | `context7` | `python-craft` | Matches the declared `requires-python`; data parsed once at the boundary into dataclasses or pydantic v2 models; narrow exceptions chained with `from`; asyncio with `TaskGroup` and owned tasks; uv with a committed lockfile; py-spy or `cProfile` profiles and `pyperf compare_to` before/after. Gate: `ruff check`, `ruff format --check`, the project's type checker (mypy or pyright), `pytest`, `uv lock --check` when pyproject changed. |
+| `typescript-expert` | MEDIUM / `claude-sonnet-5-5` | high | 180 | `context7` | `typescript-craft` | Types describe runtime: `unknown` at the edges until validated, discriminated unions, no unjustified casts, every promise owned (AbortSignal); module settings matched to the repo (ESM/CJS, `exports`, `moduleResolution`) and verified at runtime; a failing test first for every bug. Gate: `tsc --noEmit`, the project linter and formatter, Vitest, Jest or `node:test`, build, and for libraries attw and publint, via the lockfile's package manager. |
 | `julia-expert` | MEDIUM / `claude-sonnet-5-5` | high | 180 | `context7` | `julia-craft` | Type-stable generic code, a performance ladder with a measurement per rung, ODE solver choice verified against a tighter-tolerance reference, JuMP solver by problem class (HiGHS, Ipopt, Clarabel/SCS), `isapprox` tests with explicit `rtol`/`atol`, BenchmarkTools with `$` interpolation. Gate: `Pkg.test()`, Aqua. |
 | `computer-science-expert` | ADVANCED / `claude-opus-5-5` | xhigh | 150 | none | `cs-foundations` | Formalises the problem and model of computation, reduces to canonical problems before inventing, proves (invariants, exchange arguments, reductions) and checks mechanically (brute-force differential tests, TLA+ with TLC or Apalache, SMT, Lean); writes isolation anomalies as concrete interleaved histories; labels results proved, checked up to a bound, or believed. |
 | `mathematics-expert` | ADVANCED / `claude-opus-5-5` | max | 180 | none | `mathematics-toolkit` | Formalises with explicit quantifiers, experiments first with exact arithmetic, picks a proof strategy by structure, writes numbered lemmas with checked hypotheses, verifies independently by computation, attacks its own proof, and labels every claim Proved, Verified numerically, Conjectured or Known. |

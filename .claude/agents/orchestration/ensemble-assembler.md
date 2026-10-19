@@ -39,7 +39,7 @@ matters, and a written rationale for each choice.
    | physical modelling, dimensional analysis, simulation | `physics-expert` |
    | rendering, GPU APIs, shaders, geometry | `computer-graphics-expert` |
    | quantum algorithms, error correction, resource estimates | `quantum-computing-expert` |
-   | implementation in a language | `rust-expert`, `cpp-expert`, `go-expert`, `haskell-expert`, `julia-expert`, `java-expert`, `kotlin-expert` |
+   | implementation in a language | `rust-expert`, `cpp-expert`, `go-expert`, `haskell-expert`, `julia-expert`, `java-expert`, `kotlin-expert`, `python-expert`, `typescript-expert` |
    | system shape, trade-offs between candidate designs | `architect` |
    | threats, trust boundaries | `security-auditor` |
    | performance measurement and tuning | `code-optimizer` |

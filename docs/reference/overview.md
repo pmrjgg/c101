@@ -1,6 +1,6 @@
 # Overview and request lifecycle
 
-Under the hood, one session becomes a hierarchical multi-agent system. The repository contains 55 subagents in eight groups (`.claude/agents/<group>/<name>.md`), 225 skills
+Under the hood, one session becomes a hierarchical multi-agent system. The repository contains 57 subagents in eight groups (`.claude/agents/<group>/<name>.md`), 227 skills
 (`.claude/skills/<name>/SKILL.md`), eight saved workflows (`.claude/workflows/<name>.js`), eight hooks wired in
 `.claude/settings.json`, MCP servers (`config/mcp.servers.json`, inlined into the agents that use them, so each
 connects only while such an agent runs), and the stdlib-only Python tooling that the hooks run
@@ -144,7 +144,7 @@ flowchart TB
 | Routing | `delegator` | main thread; one routing decision per request; never does heavy work |
 | Orchestration | `orchestrator`, `swarm-coordinator`, `mesh-router`, `ensemble-assembler`, `concurrent-dispatcher`, `mediator` | DAG waves with gates, sharded swarms with a coverage ledger, blackboard mesh, expert ensembles, mechanical fan-out, voting |
 | Planning | `planner`, `architect`, `plan-critic` | task DAGs with acceptance criteria, design trade-offs, red-teaming |
-| Experts | 13 domain experts | each preloads its craft hub skill; `context7` for live library docs |
+| Experts | 15 domain experts | each preloads its craft hub skill; `context7` for live library docs |
 | Synthesis | `cross-domain-synthesizer`, `expert-panel-chair`, `debate-moderator`, `analogy-mapper`, `first-principles-decomposer`, `general-chat` | combine several experts' outputs into one higher-level answer |
 | Research | 11 agents | Exa, Jina, Spider, Playwright, computer use, arXiv/SSRN |
 | Quality | 9 agents | find, then verify, then gate |

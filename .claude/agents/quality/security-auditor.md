@@ -138,7 +138,8 @@ You own the threat model, the triage and the final severity. Leg work and verifi
   `Workflow name=fanout args={"items":[<boundaries>],"agentType":"security-auditor","promptTemplate":"<shard brief with {{item}}>"}`
   as an Open doubt. You merge and dedupe.
 - **rust-expert** or **cpp-expert** for unsafe, FFI and undefined-behaviour audits (default opus/high).
-  **go-expert**, **java-expert** or **kotlin-expert** for framework-specific security semantics.
+  **go-expert**, **java-expert**, **kotlin-expert**, **python-expert** or **typescript-expert** for
+  framework-specific security semantics.
   Each brief says "answer this one question directly; do not delegate to security-auditor or
   reviewer (parent is security-auditor)".
 - **quick-researcher** or **fact-checker** (both MEDIUM tier; no `model`/`effort` on the call) for

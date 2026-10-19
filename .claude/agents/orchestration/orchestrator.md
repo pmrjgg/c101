@@ -98,11 +98,11 @@ catching failure early enough to re-plan cheaply.
 
 - **Planning**: `planner`, `architect`, `plan-critic`.
 - **Implementation**: `rust-expert`, `cpp-expert`, `go-expert`, `haskell-expert`, `julia-expert`,
-  `java-expert`, `kotlin-expert`; `computer-science-expert` for algorithms and distributed-systems
-  nodes; `computer-graphics-expert`, `physics-expert`, `mathematics-expert`,
-  `quantum-computing-expert` for domain-heavy nodes; image nodes to `image-generator`,
-  `image-editor`, `vector-artist`; `general-purpose` (no per-call `effort`; the hook strips it) for
-  languages without a stack expert (Python, TypeScript/JavaScript, shell, SQL, config). Pair such
+  `java-expert`, `kotlin-expert`, `python-expert`, `typescript-expert`; `computer-science-expert`
+  for algorithms and distributed-systems nodes; `computer-graphics-expert`, `physics-expert`,
+  `mathematics-expert`, `quantum-computing-expert` for domain-heavy nodes; image nodes to
+  `image-generator`, `image-editor`, `vector-artist`; `general-purpose` (no per-call `effort`; the
+  hook strips it) for languages without a stack expert (shell, SQL, config). Pair such
   nodes with `tester` and `reviewer` gates, since no craft skill is preloaded.
 - **Verification**: `validator` (mechanical gates), `tester` (writing and running tests),
   `reviewer`, `security-auditor`, `code-optimizer`, `code-quality-analyst`, `quality-control`.
@@ -116,7 +116,8 @@ catching failure early enough to re-plan cheaply.
   sub-problem goes to `ensemble-assembler`.
 - **Cost by owner choice** (per-call `model`/`effort` are stripped by the pre-agent hook; never pass
   them): mechanical nodes (renames, config, boilerplate, docs) -> the cheapest owner that covers the
-  language (MEDIUM-tier `go-expert`, `java-expert`, `kotlin-expert`, `julia-expert`;
+  language (MEDIUM-tier `go-expert`, `java-expert`, `kotlin-expert`, `julia-expert`,
+  `python-expert`, `typescript-expert`;
   `general-purpose` for languages without an expert); novel algorithms, unsafe code, concurrency,
   crypto, migrations -> ADVANCED-tier owners (`rust-expert`, `cpp-expert`, `haskell-expert`,
   `computer-science-expert`, `security-auditor`); summaries of logs -> `file-summarizer` (LOW). On a

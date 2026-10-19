@@ -464,7 +464,7 @@
     {
       "name": "python-uv-packaging",
       "pack": "python",
-      "hub": "coding-general",
+      "hub": "python-craft",
       "kind": "new",
       "description": "Python project and environment management with uv: project lifecycle (init, add, lock, sync, run), --locked vs --frozen, pyproject.toml anatomy (PEP 621, PEP 735 dependency groups, build backends, entry points), workspaces, custom indexes such as PyTorch CPU/CUDA, PEP 723 single-file scripts, uvx tools, Python version management, migration from pip/Poetry, building and trusted publishing, CI and Docker usage; load when creating, configuring, packaging or fixing a Python project's dependencies or environment.",
       "outline": [
@@ -482,6 +482,7 @@
         "Worked example: requirements.txt Flask app -> uv project with dev and docs groups, src layout, ruff + mypy via uv run, PyTorch CPU index for one dependency, CI uv sync --locked restoring from cache in ~2 s, library wheel published via trusted publishing."
       ],
       "agents": [
+        "python-expert",
         "tester",
         "validator",
         "debugger",
@@ -494,7 +495,7 @@
     {
       "name": "python-typing",
       "pack": "python",
-      "hub": "coding-general",
+      "hub": "python-craft",
       "kind": "new",
       "description": "Static typing for Python that catches real bugs: checker choice and strict configuration (mypy, pyright/basedpyright, Pyrefly 1.x, pre-1.0 ty), gradual adoption with ratchets, modern syntax through 3.14/3.15 (PEP 604/695/696, TypeIs, ReadOnly, override, deprecated, deferred annotations), choosing dataclass vs TypedDict vs Protocol vs pydantic, generics and variance, overloads, ParamSpec decorators, exhaustiveness and narrowing, plus an error-code-to-fix table; load when adding or fixing type hints, configuring a type checker, or reviewing typed Python.",
       "outline": [
@@ -511,6 +512,7 @@
         "Worked example: bring billing/ to strict: 312 errors baselined; fix order = public API annotations, Optional narrowing, TypedDict for webhook payloads, Protocol for the payment gateway, overloads for parse_amount, assert_never on PaymentStatus; ends at 0 errors and 97% typed expressions."
       ],
       "agents": [
+        "python-expert",
         "reviewer",
         "code-quality-analyst",
         "tester",
@@ -521,7 +523,7 @@
     {
       "name": "python-asyncio",
       "pack": "python",
-      "hub": "coding-general",
+      "hub": "python-craft",
       "kind": "new",
       "description": "Correct and fast asyncio code: choosing async vs threads vs processes (including free-threaded builds), structured concurrency with TaskGroup and asyncio.timeout, cancellation semantics, bounded concurrency with semaphores and worker queues, offloading blocking calls, task lifetime, sync/async bridges, anyio/trio, testing with pytest-asyncio 1.x, and debugging hangs and slow callbacks; load when writing, reviewing or debugging async Python.",
       "outline": [
@@ -539,6 +541,7 @@
         "Worked example: fetch 20k URLs: TaskGroup + Semaphore(64), shared httpx.AsyncClient with limits and timeouts, tenacity retry with jitter on 5xx, results streamed to a bounded writer queue, clean cancellation on SIGINT; 41 min sequential -> 3.5 min with no leaked tasks under -X dev."
       ],
       "agents": [
+        "python-expert",
         "debugger",
         "code-optimizer",
         "reviewer",
@@ -548,7 +551,7 @@
     {
       "name": "pytest-patterns",
       "pack": "python",
-      "hub": "coding-general",
+      "hub": "python-craft",
       "kind": "split",
       "description": "Productive pytest: strict configuration (pytest 9 native [tool.pytest] TOML), conftest layout, fixture scopes, factories and teardown, parametrize with ids and marks, built-in helpers, autospec mocking and where to patch, HTTP and time fakes, async and database tests, snapshot testing, xdist/randomly for speed and isolation, and debugging flags; load when writing, organising, speeding up or debugging a Python test suite.",
       "outline": [
@@ -566,6 +569,7 @@
         "Worked example: 1,200-test suite from 14 min to 3 min: conftest consolidation, session Postgres container with per-test rollback, factories replacing JSON fixtures, xdist 8 workers with loadgroup for S3-fake tests, randomly exposing 3 order-dependent tests (fixed), strict config flushing 41 unregistered markers."
       ],
       "agents": [
+        "python-expert",
         "tester",
         "debugger",
         "validator",
@@ -575,7 +579,7 @@
     {
       "name": "fastapi-pydantic-services",
       "pack": "python",
-      "hub": "coding-general",
+      "hub": "python-craft",
       "kind": "new",
       "description": "Building Python HTTP services with FastAPI and pydantic v2: layout separating schemas, ORM models and services, pydantic validators, strictness and settings, Annotated dependency injection, lifespan-managed clients, async vs sync endpoints, SQLAlchemy 2.0 async sessions, problem+json error handlers, background work, testing with httpx ASGITransport and dependency overrides, and deployment flags; load when building, reviewing or debugging a FastAPI service.",
       "outline": [
@@ -593,6 +597,7 @@
         "Pitfalls and worked example: pitfalls - sync DB driver in async endpoints, per-request client creation, returning ORM objects without response_model (leaking password_hash), mutable defaults in models, unbounded list endpoints; example - orders service with Create/Read schemas, SessionDep, problem+json handler, keyset pagination, ASGITransport tests with rollback; p99 230 ms -> 35 ms after removing a blocking requests call."
       ],
       "agents": [
+        "python-expert",
         "tester",
         "reviewer",
         "security-auditor",
@@ -603,7 +608,7 @@
     {
       "name": "python-performance-profiling",
       "pack": "python",
-      "hub": "coding-general",
+      "hub": "python-craft",
       "kind": "new",
       "description": "Speeding up Python with evidence: pyperf benchmarks, py-spy/Scalene/cProfile CPU profiles, memray and tracemalloc memory profiles, a symptom-to-fix table, NumPy/Polars vectorisation, Numba/Cython/mypyc/PyO3 kernels, free-threaded and multi-process parallelism. Load when Python code is slow or memory-hungry.",
       "outline": [
@@ -620,6 +625,7 @@
         "Worked example: 95 s CSV aggregation where py-spy shows iterrows; Polars lazy group_by brings it to ~3 s, streaming cuts the memray peak from 6 GB to 900 MB, a custom scoring loop moves to Numba; pyperf before/after table."
       ],
       "agents": [
+        "python-expert",
         "code-optimizer",
         "debugger",
         "reviewer",
@@ -629,7 +635,7 @@
     {
       "name": "typescript-strict-types",
       "pack": "typescript",
-      "hub": "coding-general",
+      "hub": "typescript-craft",
       "kind": "new",
       "description": "Type-safe TypeScript (6.x and the native 7.x compiler): strictness flags and adoption order, modelling with discriminated unions, branded types, as const and satisfies, exhaustive switches, generics with const type parameters and NoInfer, narrowing and type predicates, runtime validation at boundaries (zod 4, valibot, Standard Schema), escape-hatch lint policy, a compiler-error-to-fix table and type tests; load when writing, reviewing or fixing TypeScript types.",
       "outline": [
@@ -647,6 +653,7 @@
         "Worked example: payments module: status: string + optional fields replaced by a discriminated union, zod schema at the webhook boundary, branded PaymentId, exhaustive switch catches a missing 'refunded' case at compile time; any count 47 -> 0 with a lint gate."
       ],
       "agents": [
+        "typescript-expert",
         "reviewer",
         "code-quality-analyst",
         "tester",
@@ -657,7 +664,7 @@
     {
       "name": "typescript-build-config",
       "pack": "typescript",
-      "hub": "coding-general",
+      "hub": "typescript-craft",
       "kind": "new",
       "description": "Configuring TypeScript projects and builds in the TS 6/7 era: tsconfig decision matrix for bundled apps, Node services and published libraries, removed legacy options, ESM/CJS and package.json exports with types-first conditions, monorepos with pnpm workspaces and project references, running TS directly (Node type stripping, tsx, Bun, Deno), build tools (tsc, tsdown, esbuild, Vite), lint/format setup and type-check performance; load when creating or fixing tsconfig, module-resolution errors, package publishing or TS build pipelines.",
       "outline": [
@@ -675,6 +682,7 @@
         "Worked example: publish @acme/retry ESM-only: tsconfig nodenext + isolatedDeclarations, tsdown build, types-first exports map, attw and publint clean, consumed by a Vite app (bundler resolution) and a Node 24 CJS service via require(esm); CI matrix Node 24/26 + Bun."
       ],
       "agents": [
+        "typescript-expert",
         "reviewer",
         "validator",
         "debugger",
@@ -685,7 +693,7 @@
     {
       "name": "typescript-testing-vitest",
       "pack": "typescript",
-      "hub": "coding-general",
+      "hub": "typescript-craft",
       "kind": "new",
       "description": "Testing TypeScript/JavaScript with Vitest 4 (plus node:test and bun test equivalents): config and projects, module mocking with vi.mock and vi.hoisted, spies, fake timers and dates, HTTP mocking with MSW 2, DOM and component tests with Testing Library and stable browser mode, type tests with expectTypeOf, snapshots, coverage thresholds, sharding and Jest migration; load when writing, fixing or speeding up TS/JS unit and component tests.",
       "outline": [
@@ -703,6 +711,7 @@
         "Worked example: useOrders hook and OrdersTable component: MSW handlers for success/500/empty, fake timers for 30 s polling, role-based queries, expectTypeOf on the hook's return type, 92% branch coverage, suite 41 s -> 9 s with threads pool and 4 shards."
       ],
       "agents": [
+        "typescript-expert",
         "tester",
         "debugger",
         "validator",
@@ -712,7 +721,7 @@
     {
       "name": "node-runtime-patterns",
       "pack": "typescript",
-      "hub": "coding-general",
+      "hub": "typescript-craft",
       "kind": "new",
       "description": "Writing production Node.js (and Bun) services and CLIs: LTS selection under the new annual release model, built-ins that replace dependencies, event-loop health and offloading CPU to worker threads, AbortSignal cancellation, stream pipelines with backpressure, HTTP server timeouts and graceful shutdown, heap-snapshot leak diagnosis, safe child processes, config validation and packaging; load when building, reviewing or debugging Node/Bun runtime code.",
       "outline": [
@@ -730,6 +739,7 @@
         "Worked example: CSV import service stalling under load: event-loop delay p99 1.8 s from sync JSON.parse + zlib.gunzipSync; rebuilt as a stream pipeline (gunzip -> csv-parse -> batched inserts) with backpressure, piscina for row validation, AbortSignal per request, keepAliveTimeout 65 s; p99 2.4 s -> 120 ms and no 502s."
       ],
       "agents": [
+        "typescript-expert",
         "debugger",
         "code-optimizer",
         "reviewer",
@@ -740,7 +750,7 @@
     {
       "name": "react-typescript-components",
       "pack": "typescript",
-      "hub": "coding-general",
+      "hub": "typescript-craft",
       "kind": "new",
       "description": "React 19.x with TypeScript for maintainable UIs: effect discipline ('you might not need an effect', useEffectEvent), state placement and server-state libraries, Actions with useActionState/useOptimistic, typed props and generic components, forms with schema validation, keys and identity, performance with the React Compiler and Profiler evidence, accessibility and behaviour-focused component tests; load when writing, reviewing or debugging React components or hooks.",
       "outline": [
@@ -758,6 +768,7 @@
         "Worked example: OrdersPage with 6 effects and duplicated state refactored: filters derived from the URL, TanStack Query with keyset pagination, useOptimistic for status toggles, discriminated Row props, compiler-enabled build; renders per keystroke 14 -> 2, one fetch race and two a11y violations removed, tests use role queries only."
       ],
       "agents": [
+        "typescript-expert",
         "tester",
         "reviewer",
         "debugger",

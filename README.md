@@ -28,7 +28,7 @@ tooling) that turns a single session into a coordinated team:
   an `orchestrator` running a plan DAG, a swarm over shards, a subagent mesh on a shared blackboard, an ensemble of
   experts, or a `mediator` where several agents solve the same problem independently and **vote** (Schulze, Borda,
   approval, plurality, logarithmic opinion pool).
-- **55 agents in eight groups** (orchestration, planning, quality, research, experts, synthesis, image, meta), each
+- **57 agents in eight groups** (orchestration, planning, quality, research, experts, synthesis, image, meta), each
   with a model tier, an effort level, a step budget, only the MCP servers it calls (connected only while it runs), and at most three role skills on
   top of the three protocol skills every agent preloads.
 - **Depth 8, bounded.** Native nested subagents are raised from 3 to 8 levels. The `pre-agent` hook gives every child
@@ -45,7 +45,7 @@ tooling) that turns a single session into a coordinated team:
   (Playwright), computer use, papers (arXiv/SSRN), fact checking, and summarizers, including a `file-summarizer`
   that keeps full output on disk and returns a compact digest.
 - **Experts and synthesis.** Computer graphics, computer science, quantum computing, Rust, C++, Go, Haskell, Julia,
-  Java, Kotlin, mathematics, physics and graphic design, each backed by a hub skill and granular skills, plus
+  Java, Kotlin, Python, TypeScript, mathematics, physics and graphic design, each backed by a hub skill and granular skills, plus
   synthesis agents that combine experts into higher-level answers (Delphi panels, debate, analogy, first principles).
 - **Saved workflows.** Eight deterministic JavaScript workflows (`/swarm-run`, `/fanout`, `/mediate`,
   `/expert-panel`, `/research-sweep`, `/review-verify`, `/plan-tournament`, `/visual-iterate`): agents produce the

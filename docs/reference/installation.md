@@ -168,8 +168,8 @@ listed by name only, so they cost almost no context until used. Each skill is `.
 | `physics` | | `physics-toolkit` | `physics-expert` |
 | `graphic-design` | `image` | `graphic-design` | `graphic-design-expert` |
 | `coding-core` | | `coding-general` | language-agnostic playbooks: git, refactoring, codemods, API contracts, SQL tuning, migrations, regex, resilience, dependency upgrades, docs/ADRs |
-| `python` | `coding-core` | | Python 3.13 with uv: packaging, typing, asyncio, pytest, performance |
-| `typescript` | `coding-core` | | TypeScript/Node/Bun: strict typing, tsconfig, testing, runtime patterns |
+| `python` | `coding-core` | `python-craft` | `python-expert` (Python 3.13 with uv: packaging, typing, asyncio, pytest, performance) |
+| `typescript` | `coding-core` | `typescript-craft` | `typescript-expert` (TypeScript/Node/Bun: strict typing, tsconfig, testing, runtime patterns) |
 | `devops` | `coding-core` | | containers, CI/CD, shell robustness, observability |
 
 Granular skills shipped today (168, plus the `coding-general` hub). Each hub ends with a "Granular skills"
@@ -177,7 +177,9 @@ routing table naming them; hubs keep their full original text.
 
 | Hub | Granular skills |
 |---|---|
-| `coding-general` | `git-advanced-workflows`, `refactoring-playbook`, `codemod-automation`, `api-contract-design`, `sql-query-tuning`, `zero-downtime-migrations`, `regex-engineering`, `resilience-patterns`, `dependency-upgrades`, `docs-and-adr-writing`, `ci-pipelines`, `container-images`, `shell-scripting`, `observability-instrumentation`, `python-uv-packaging`, `python-typing`, `python-asyncio`, `pytest-patterns`, `fastapi-pydantic-services`, `python-performance-profiling`, `typescript-strict-types`, `typescript-build-config`, `typescript-testing-vitest`, `node-runtime-patterns`, `react-typescript-components` |
+| `coding-general` | `git-advanced-workflows`, `refactoring-playbook`, `codemod-automation`, `api-contract-design`, `sql-query-tuning`, `zero-downtime-migrations`, `regex-engineering`, `resilience-patterns`, `dependency-upgrades`, `docs-and-adr-writing`, `ci-pipelines`, `container-images`, `shell-scripting`, `observability-instrumentation` |
+| `python-craft` | `python-uv-packaging`, `python-typing`, `python-asyncio`, `pytest-patterns`, `fastapi-pydantic-services`, `python-performance-profiling` |
+| `typescript-craft` | `typescript-strict-types`, `typescript-build-config`, `typescript-testing-vitest`, `node-runtime-patterns`, `react-typescript-components` |
 | `rust-craft` | `rust-ownership-lifetimes`, `rust-traits-generics`, `rust-error-handling`, `rust-async-tokio`, `rust-unsafe-soundness`, `rust-ffi-bindings`, `rust-performance`, `rust-testing-fuzzing`, `cargo-workspaces-features`, `rust-axum-services` |
 | `cpp-craft` | `cpp-memory-raii`, `cpp-templates-concepts`, `cpp-concurrency-atomics`, `cpp-ub-sanitizers`, `cmake-presets`, `cpp-simd-performance`, `cpp-testing-fuzzing` |
 | `go-craft` | `go-concurrency-context`, `go-interfaces-generics`, `go-error-handling`, `go-profiling-pprof`, `go-testing-fuzzing`, `go-http-services`, `go-modules-tooling` |

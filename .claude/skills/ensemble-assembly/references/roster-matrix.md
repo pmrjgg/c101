@@ -21,6 +21,8 @@ Model / effort / maxTurns are the initial values from `config/models.json` (`bin
 | `julia-expert` | sonnet / high | 180 | context7 | scientific Julia, DifferentialEquations.jl, JuMP, type stability, CUDA.jl | production service architecture |
 | `java-expert` | sonnet / high | 180 | context7 | modern Java, virtual threads, JVM GC and JFR, JMH | Kotlin coroutine semantics |
 | `kotlin-expert` | sonnet / high | 180 | context7 | coroutines and Flow, structured concurrency, Multiplatform, Compose | JVM GC tuning |
+| `python-expert` | sonnet / high | 180 | context7 | typed Python (mypy/pyright), asyncio with TaskGroup, uv packaging, pytest, FastAPI and pydantic v2, profiling | numeric kernels needing native code |
+| `typescript-expert` | sonnet / high | 180 | context7 | strict TypeScript, ESM/CJS and package exports, Node services, Vitest/Jest, React components | browser rendering performance, GPU |
 
 ## Cross-cutting members
 
