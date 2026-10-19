@@ -466,6 +466,7 @@ Every hook command is `"$CLAUDE_PROJECT_DIR"/bin/stack hook <name>`.
 | `config/mcp.optional.json` | `mcpServers.<name>` entries (`type`, `url`/`headersHelper` or `command`/`args`, `_note`) for `fal`, `fal-oauth`, `replicate`, `recraft`, `flux`, `runware`, `peekaboo`, `firecrawl`, `tavily`, `brave-search`, `markitdown` |
 | `config/image-ops.json` | per image operation: env names, tool, adapter request-mapping notes, default output format; no secrets and no model choices |
 | `config/stack.env.example` | template for `~/.claude/stack.env`: web keys (`EXA_API_KEY`, `JINA_API_KEY`, `SPIDER_API_KEY`, `CONTEXT7_API_KEY`), `IMAGE_<OP>_URL/_KEY/_MODEL` blocks (optional `_API`, `_PARAMS`), optional fallback keys |
+| `config/stack.env.fal.example` | alternative template when every image operation runs on fal: each op points at `https://queue.fal.run` with a verified fal endpoint (GEN `fal-ai/nano-banana-2.1`, REF/EDIT `fal-ai/nano-banana-2.1/edit`, TRANSPARENT `fal-ai/gpt-image-1/text-to-image`, SEGMENT `fal-ai/sam-3/image`, BG_REMOVAL `fal-ai/bria/background/remove`, UPSCALE `fal-ai/topaz/upscale/image`, VECTOR `fal-ai/recraft/v4.1/text-to-vector`, TRACE `fal-ai/recraft/vectorize`), the fal key repeated per op (no shared-key fallback), SVG manipulation left to `claude`. Copy it to `~/.claude/stack.env` (mode 600) and replace `your-fal-key` |
 | `pyproject.toml` | dependencies, scripts (`stack`, `image-router`, `stack-sdk`), `[tool.pytest.ini_options] testpaths = ["tests", "stack_mcp"]` |
 | `.python-version` | `3.13` |
 

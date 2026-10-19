@@ -1,6 +1,6 @@
 # MCP servers
 
-Keys live only in `~/.claude/stack.env` (template: `config/stack.env.example`, mode 600). Nothing
+Keys live only in `~/.claude/stack.env` (template: `config/stack.env.example`, or `config/stack.env.fal.example` when every image operation runs on fal; mode 600). Nothing
 secret is in `config/mcp.servers.json`, `.mcp.json` or settings. Two mechanisms deliver them:
 
 * **stdio servers** start through `bin/mcp-run`, which *parses* (never sources) the env file and
