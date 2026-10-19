@@ -1,0 +1,308 @@
+{
+ "swarm-run.js": [
+  {
+   "task": "Summarise the public API of each module",
+   "shards": [
+    "stack/cli.py",
+    "stack/hooks.py",
+    "stack/doctor.py"
+   ]
+  },
+  {
+   "task": "Check each URL for a pricing page",
+   "shards": [
+    {
+     "id": "a",
+     "brief": "https://example.com"
+    },
+    {
+     "id": "b",
+     "brief": "https://example.org"
+    }
+   ],
+   "agentType": "web-scraper",
+   "model": "sonnet",
+   "effort": "low"
+  }
+ ],
+ "fanout.js": [
+  {
+   "items": [
+    "rust",
+    "go",
+    "kotlin"
+   ],
+   "agentType": "quick-researcher",
+   "promptTemplate": "Latest stable version of {{item}} (item {{index}})?"
+  },
+  {
+   "items": [
+    {
+     "path": "a.py"
+    },
+    {
+     "path": "b.py"
+    }
+   ],
+   "agentType": "code-quality-analyst",
+   "promptTemplate": "Analyse {{item}}",
+   "schema": {
+    "type": "object",
+    "properties": {
+     "score": {
+      "type": "number"
+     }
+    },
+    "required": [
+     "score"
+    ]
+   },
+   "retry": 1
+  }
+ ],
+ "mediate.js": [
+  {
+   "problem": "Choose a consensus algorithm for a 5-node metadata store with 10ms RTT"
+  },
+  {
+   "problem": "Pick a colour palette for a dark-mode dashboard",
+   "method": "borda"
+  },
+  {
+   "problem": "Estimate the probability the migration finishes this quarter",
+   "method": "logpool"
+  },
+  {
+   "problem": "Approve one of these designs",
+   "method": "approval",
+   "voters": [
+    {
+     "agentType": "architect",
+     "perspective": "risk"
+    },
+    {
+     "agentType": "computer-science-expert",
+     "perspective": "theory"
+    },
+    {
+     "agentType": "general-purpose",
+     "perspective": "user"
+    }
+   ]
+  },
+  {
+   "problem": "Plurality check",
+   "method": "plurality"
+  },
+  {
+   "problem": "Schulze check",
+   "method": "schulze"
+  }
+ ],
+ "expert-panel.js": [
+  {
+   "question": "How many qubits are needed to factor RSA-2048 with surface codes at p=1e-3?",
+   "estimate": true
+  },
+  {
+   "question": "Best rendering approach for a mobile path tracer?",
+   "experts": [
+    "computer-graphics-expert",
+    "cpp-expert",
+    "physics-expert"
+   ],
+   "rounds": 2,
+   "force": true
+  },
+  {
+   "question": "Logical qubits needed for RSA-2048 at p=1e-3?",
+   "kind": "quantity",
+   "unit": "qubits",
+   "estimate": true,
+   "frame": false,
+   "force": true
+  },
+  {
+   "question": "Best mobile path-tracing approach?",
+   "kind": "choice",
+   "options": [
+    "ReSTIR",
+    "wavefront PT",
+    "hybrid raster+RT"
+   ],
+   "experts": [
+    "computer-graphics-expert",
+    "cpp-expert",
+    "physics-expert"
+   ],
+   "rounds": 2,
+   "frame": false
+  },
+  {
+   "question": "Probability the migration lands this quarter",
+   "kind": "probability",
+   "frame": false,
+   "force": true
+  },
+  {
+   "question": "Assess the risks of the new cache design",
+   "kind": "open",
+   "frame": false,
+   "rounds": 3,
+   "force": true
+  },
+  {
+   "question": "How many qubits are needed to factor RSA-2048 with surface codes at p=1e-3?",
+   "estimate": true,
+   "force": true
+  },
+  {
+   "question": "Probability the new cache cuts p99 latency by 20% this quarter",
+   "kind": "probability",
+   "frame": false,
+   "force": true,
+   "experts": [
+    {
+     "agentType": "general-purpose",
+     "model": "sonnet"
+    },
+    {
+     "agentType": "cpp-expert",
+     "model": "opus",
+     "effort": "max"
+    },
+    "physics-expert",
+    {
+     "agentType": "general-purpose",
+     "model": "fable"
+    }
+   ]
+  }
+ ],
+ "research-sweep.js": [
+  {
+   "question": "State of the art in neural SDF rendering 2026"
+  },
+  {
+   "question": "Compare uv and pip-tools",
+   "depth": "quick",
+   "outFile": ".stack/out/research-sweep/uv.md"
+  },
+  {
+   "question": "Survey quantum error-correction decoders",
+   "depth": "exhaustive"
+  },
+  {
+   "question": "Compare uv and pip-tools",
+   "depth": "quick",
+   "domains": [
+    "docs.astral.sh/uv"
+   ]
+  }
+ ],
+ "review-verify.js": [
+  {
+   "target": "stack/"
+  },
+  {
+   "target": "HEAD~3..HEAD",
+   "dimensions": [
+    "correctness",
+    "security"
+   ]
+  },
+  {
+   "target": "stack/",
+   "maxFinders": 1,
+   "minSeverity": "major"
+  }
+ ],
+ "plan-tournament.js": [
+  {
+   "goal": "Add OAuth login to the web app"
+  },
+  {
+   "goal": "Migrate the build to Bazel",
+   "angles": [
+    "mvp-first",
+    "risk-first"
+   ],
+   "judges": 2
+  },
+  {
+   "goal": "Migrate the build to Bazel",
+   "angles": [
+    "mvp-first",
+    "MVP first",
+    "risk_first",
+    "Risk-First"
+   ],
+   "judges": 7
+  }
+ ],
+ "visual-iterate.js": [
+  {
+   "brief": "16:9 hero image of a lighthouse at dusk, warm light, empty left third for a headline",
+   "kind": "image"
+  },
+  {
+   "brief": "Replace the overcast sky with a clear sunset; keep the harbour, boats and people unchanged",
+   "kind": "image",
+   "mode": "edit",
+   "source": "photos/harbour.png",
+   "output": {
+    "layered": true,
+    "pdf": true
+   },
+   "threshold": 8.5,
+   "maxRounds": 3,
+   "runTag": "sky"
+  },
+  {
+   "brief": "Flat two-colour fox logo for 'Kitsune Labs', geometric, works at 16px",
+   "kind": "vector",
+   "references": [
+    "brand/moodboard.png",
+    "brand/moodboard.png",
+    "brand/palette.png"
+   ],
+   "output": {
+    "layered": true,
+    "pdf": true
+   },
+   "maxRounds": 6
+  },
+  {
+   "brief": "Recolour the icon to the brand palette #0B3D91 and #F2A900",
+   "kind": "vector",
+   "mode": "edit",
+   "source": "icons/fox.svg",
+   "output": {
+    "pdf": true
+   },
+   "maxRounds": 1
+  },
+  {
+   "brief": "Trace the scanned logo into a crisp two-colour SVG",
+   "kind": "vector",
+   "source": "scans/logo.png",
+   "threshold": 12,
+   "maxRounds": 9,
+   "output": {
+    "layered": true,
+    "extra": 1
+   }
+  },
+  {
+   "brief": "Product shot of the mug on a transparent background, matching the reference angle",
+   "kind": "image",
+   "mode": "generate",
+   "source": "refs/mug.jpg",
+   "references": "refs/angle.png",
+   "output": {
+    "pdf": true
+   },
+   "maxRounds": 2
+  }
+ ]
+}
