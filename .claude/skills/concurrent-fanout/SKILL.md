@@ -179,7 +179,7 @@ Request: "For each of our 14 services, list the HTTP endpoints and flag unauthen
 
 1. Independence: read-only, one directory per item. Agent: `general-purpose` with `model: sonnet`,
    `effort: low` in the `/fanout` args (mechanical extraction; allowed only for general-purpose).
-   Budget: 14 + 3 = 17; `H = 400 - 61 = 339`, so 17 <= 169.
+   Budget: 14 + 3 = 17; `H = 128 - 61 = 67`, so 17 <= 33.
 2. N = 14 > 8 and you are the main thread (no `<stack-context>` header) -> `/fanout` with the call
    above (14 object items with `id` and `path`). As `concurrent-dispatcher` at remaining_depth 4 you
    would send 14 Agent calls in one message instead, each with `run_in_background: false` and no

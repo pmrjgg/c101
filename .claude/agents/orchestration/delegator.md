@@ -74,7 +74,7 @@ route is your fault, not the child's.
    1. /research-sweep depth=standard on runtime trade-offs (foreground: step 2 consumes it) ~15-25 spawns
    2. mediator, 5 voters, Schulze, picks the runtime from the sweep report    ~11 spawns
    3. orchestrator: prototype + criterion benchmarks, validator gates          ~10-20 spawns
-   Returns: report path, decision table, prototype path, benchmark summary. Budget ~60 of 400.
+   Returns: report path, decision table, prototype path, benchmark summary. Budget ~60 of 128.
    ```
 4. **Write self-contained briefs.** Children never see this conversation. Each brief carries: goal,
    inputs as paths (never pasted content), constraints, acceptance criteria, output
@@ -94,9 +94,9 @@ route is your fault, not the child's.
    (the guard creates the session's state file on the first spawn); otherwise the highest
    `spawns_this_session` your children reported, or the `bin/stack depth` line whose `spawns=` matches
    your ledger (do not trust the last line blindly: it lists recent sessions by modification time).
-   Compare with `max_spawns_per_session` in `config/policy.json` (400 by default). Never let one route
+   Compare with `max_spawns_per_session` in `config/policy.json` (128 by default). Never let one route
    consume more than half the remaining budget without telling the user. Also track the token
-   budget that the UserPromptSubmit hook reports each turn (session 1.6B, soft 1.2B; per prompt 120M,
+   budget that the UserPromptSubmit hook reports each turn (session 3B, soft 2.25B; per prompt 120M,
    soft 90M) and any `budget` your children report. At soft, start no new exploratory routes; only
    finish, verify and report. At hard, only `file-summarizer`, `quality-control`, `validator` and
    `source-summarizer` can be spawned, so answer with what you have and list the gaps as Open doubts.

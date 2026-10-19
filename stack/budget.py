@@ -36,9 +36,9 @@ FIELDS = ("input", "cache_creation", "cache_read", "output")
 
 DEFAULTS = {
     "cache_read_weight": 1.0,
-    "min_global_tokens": 400_000_000,
-    "soft_global_tokens": 1_200_000_000,
-    "max_global_tokens": 1_600_000_000,
+    "min_global_tokens": 750_000_000,
+    "soft_global_tokens": 2_250_000_000,
+    "max_global_tokens": 3_000_000_000,
     "min_prompt_tokens": 30_000_000,
     "soft_prompt_tokens": 90_000_000,
     "max_prompt_tokens": 120_000_000,

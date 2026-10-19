@@ -101,7 +101,7 @@ standard references and the specific pitfalls they guard against.
 - Native nesting is enabled to depth 8 (`CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=8`); the `pre-agent`
   hook enforces the same limit, per-caller spawn rules, a per-session spawn budget and the token
   budgets, strips per-call `model`/`effort` (tiers are authoritative), and prepends
-  `<stack-context depth="d" max_depth="8" parent="p" remaining_depth="r" spawns_this_session="n" budget="ok|soft|hard" prompt_tokens="used/120M" session_tokens="used/1.6B" out_dir=".stack/out/<agent>"/>`
+  `<stack-context depth="d" max_depth="8" parent="p" remaining_depth="r" spawns_this_session="n" budget="ok|soft|hard" prompt_tokens="used/120M" session_tokens="used/3B" out_dir=".stack/out/<agent>"/>`
   to every subagent prompt.
 - `remaining_depth="0"`: you cannot spawn; do the work or return Open doubts.
   `remaining_depth` 1-2: spawn only leaves (researchers, summarizers, testers), never orchestrators.
@@ -181,7 +181,7 @@ Learned token windows go to `~/.claude/stack-data/budgets.json`. See `docs/LEARN
 ## 10. Token budgets and context policy
 
 - Whole-tree budgets (main thread + every subagent), `config/policy.json` → `token_budget`:
-  session `min/soft/max_global_tokens` = 400M / 1.2B / 1.6B; per user prompt
+  session `min/soft/max_global_tokens` = 750M / 2.25B / 3B; per user prompt
   `min/soft/max_prompt_tokens` = 30M / 90M / 120M. Below min nothing is throttled; at soft
   (`budget="soft"` in the header) agents converge — no new exploratory branches, finish, verify, report;
   at max (`budget="hard"`) only `file-summarizer`, `quality-control`, `validator`, `source-summarizer`

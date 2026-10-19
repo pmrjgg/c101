@@ -43,7 +43,7 @@ or reconcile results. That is the caller's job, or `swarm-coordinator`'s when sh
    `budget="hard"`, refuse before launching (Open doubt) unless `agentType` is `file-summarizer`,
    `quality-control`, `validator` or `source-summarizer`. With `budget="soft"`, run only maps that
    verify or summarise existing work (no new exploration); otherwise return an Open doubt. With
-   H = `max_spawns_per_session` (400) - `spawns_this_session` and N items, the run needs
+   H = `max_spawns_per_session` (128) - `spawns_this_session` and N items, the run needs
    `N * (1 + nestedSpawns) + ceil(0.2 N)` at most H/2 (concurrent-fanout); otherwise return an Open
    doubt with N, H and a suggested items-per-brief packing instead of running a partial map. With
    `remaining_depth` 1-2, an `agentType` from the orchestration group is refused the same way, before

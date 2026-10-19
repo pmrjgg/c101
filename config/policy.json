@@ -1,6 +1,6 @@
 {
   "_doc": "Runtime policy enforced by the hooks in stack/hooks.py. See docs/DEPTH.md.",
-  "max_spawns_per_session": 400,
+  "max_spawns_per_session": 128,
   "inject_context": true,
   "midsession_update_minutes": 30,
   "expected_keys": [
@@ -136,9 +136,9 @@
   "token_budget": {
     "_doc": "Whole-tree token budgets (main thread + every subagent), see docs/DEPTH.md#token-budgets. Tokens = input + cache_creation + output + cache_read_weight * cache_read. Below min: never throttled. soft: agents converge (no new exploratory branches). max: new spawns denied except finishing_agents. Per prompt = one user prompt (promptId). Learned values may only RAISE these (stack learn update reports; apply with learn_global=apply).",
     "cache_read_weight": 1.0,
-    "min_global_tokens": 400000000,
-    "soft_global_tokens": 1200000000,
-    "max_global_tokens": 1600000000,
+    "min_global_tokens": 750000000,
+    "soft_global_tokens": 2250000000,
+    "max_global_tokens": 3000000000,
     "min_prompt_tokens": 30000000,
     "soft_prompt_tokens": 90000000,
     "max_prompt_tokens": 120000000,

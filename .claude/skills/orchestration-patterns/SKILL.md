@@ -106,7 +106,7 @@ Rules of thumb that hold in practice:
 ## 4. Preconditions: depth and spawn budget
 
 Read the header first: `<stack-context depth=".." max_depth="8" parent=".." remaining_depth=".."
-spawns_this_session=".." budget="ok|soft|hard" prompt_tokens="used/120M" session_tokens="used/1.6B"
+spawns_this_session=".." budget="ok|soft|hard" prompt_tokens="used/120M" session_tokens="used/3B"
 out_dir=".."/>`. No header means you are the main thread (the only caller that can launch workflows).
 
 | `remaining_depth` | What you may run |

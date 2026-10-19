@@ -118,7 +118,7 @@ Use one prompt per category; ask for the single most plausible failure story eac
   `disallowedTools` or a narrower agent.
 - **Runaway spawning or token burn**: recursion or fan-out exceeding depth, spawn rules or budgets
   (the pre-agent hook enforces depth 8, `spawn_rules` with `orchestrators_until_depth` 6,
-  `max_spawns_per_session` 400 and the token budgets: session 1.6B with soft at 1.2B, per prompt
+  `max_spawns_per_session` 400 and the token budgets: session 3B with soft at 2.25B, per prompt
   120M with soft at 90M, in `config/policy.json`); plans should estimate spawns and tokens per phase
   and say what happens at `budget="soft"`/`"hard"`.
 - **Interactive-only steps** (must work under `bin/stack-sdk run` too): a subagent step that

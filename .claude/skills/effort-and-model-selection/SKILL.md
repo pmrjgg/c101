@@ -153,7 +153,7 @@ doubt routed to stack-tuner instead of routing around it forever.
 
 ## 8. Token budgets
 
-Whole tree (`config/policy.json` `token_budget`): session 400M guaranteed / 1.2B soft / 1.6B max; per
+Whole tree (`config/policy.json` `token_budget`): session 750M guaranteed / 2.25B soft / 3B max; per
 prompt 30M / 90M / 120M. Header `budget="soft"`: converge, no new exploratory branches, finish,
 verify, report. `budget="hard"`: only file-summarizer, quality-control, validator and
 source-summarizer may be spawned; wrap up and list the gaps as Open doubts. Under soft, prefer the

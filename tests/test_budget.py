@@ -84,7 +84,9 @@ class BudgetTests(unittest.TestCase):
 
     def test_policy_values(self):
         lim = budget.limits()
-        self.assertEqual(lim["max_global_tokens"], 1_600_000_000)
+        self.assertEqual(lim["max_global_tokens"], 3_000_000_000)
+        self.assertEqual(lim["soft_global_tokens"], 2_250_000_000)
+        self.assertEqual(lim["min_global_tokens"], 750_000_000)
         self.assertEqual(lim["max_prompt_tokens"], 120_000_000)
         self.assertLess(lim["min_prompt_tokens"], lim["soft_prompt_tokens"])
         self.assertLess(lim["soft_prompt_tokens"], lim["max_prompt_tokens"])

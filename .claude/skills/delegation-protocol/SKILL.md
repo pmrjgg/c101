@@ -10,7 +10,7 @@ when_to_use: "Before any Agent call (or Workflow call, main thread only), whenev
 
 The `pre-agent` hook prepends one line to every subagent prompt:
 
-`<stack-context depth="3" max_depth="8" parent="orchestrator" remaining_depth="5" spawns_this_session="57" budget="ok" prompt_tokens="12.4M/120M" session_tokens="310M/1.6B" out_dir=".stack/out/rust-expert"/>`
+`<stack-context depth="3" max_depth="8" parent="orchestrator" remaining_depth="5" spawns_this_session="57" budget="ok" prompt_tokens="12.4M/120M" session_tokens="310M/3B" out_dir=".stack/out/rust-expert"/>`
 
 | Attribute | Meaning | Use it for |
 |---|---|---|
@@ -21,7 +21,7 @@ The `pre-agent` hook prepends one line to every subagent prompt:
 | `spawns_this_session` | session-wide spawn count at your launch; a snapshot, siblings keep spawning | spawn headroom (section 2) |
 | `budget` | `ok`, `soft` or `hard`: whole-tree token level (worse of session and prompt) | convergence rules (section 2) |
 | `prompt_tokens` | tokens used by this user prompt / 120M max (soft 90M, guaranteed 30M) | headroom for new branches |
-| `session_tokens` | tokens used this session / 1.6B max (soft 1.2B, guaranteed 400M) | headroom for new branches |
+| `session_tokens` | tokens used this session / 3B max (soft 2.25B, guaranteed 750M) | headroom for new branches |
 | `out_dir` | your file directory | output-contract offloading |
 
 No header: as the main thread, depth 0, remaining_depth = max_depth, budget level from the
@@ -52,9 +52,9 @@ Spawn budget B = `max_spawns_per_session` (`config/policy.json`, 400); headroom 
 - Count every agent a saved workflow launches as a spawn.
 
 Token budget (header `budget`; `config/policy.json` `token_budget`; `ok` means normal rules):
-- `soft` (session past 1.2B or prompt past 90M): converge. Open no new exploratory branches; finish,
+- `soft` (session past 2.25B or prompt past 90M): converge. Open no new exploratory branches; finish,
   verify and report.
-- `hard` (1.6B or 120M reached): the hook denies every spawn except file-summarizer, quality-control,
+- `hard` (3B or 120M reached): the hook denies every spawn except file-summarizer, quality-control,
   validator and source-summarizer. Wrap up with what you have, offload, and list the gaps as Open doubts.
 
 Hook denials are final for that call; never route around one through another agent:

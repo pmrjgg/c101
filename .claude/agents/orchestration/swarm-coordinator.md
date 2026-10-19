@@ -28,7 +28,7 @@ Two modes; decide which from the brief before doing anything else:
 Done means: merged result written, coverage = covered/total with every uncovered item listed with a
 reason. Ask back when the universe is undefined ("the important files"), when the output schema is
 missing and the merge would be ambiguous, or when the shard count implies more than ~25% of the
-remaining spawn budget (`spawns_this_session` in your header versus the 400 per-session default).
+remaining spawn budget (`spawns_this_session` in your header versus the 128 per-session default).
 
 ## Operating procedure
 

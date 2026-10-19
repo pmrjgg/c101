@@ -33,8 +33,8 @@ tooling) that turns a single session into a coordinated team:
   top of the three protocol skills every agent preloads.
 - **Depth 8, bounded.** Native nested subagents are raised from 3 to 8 levels. The `pre-agent` hook gives every child
   a `<stack-context>` header (depth, parent, remaining depth, spawn count, token budget, output directory) and
-  enforces per-caller spawn rules, a 400-spawn session budget and whole-tree token budgets (session 400M guaranteed,
-  1.2B soft, 1.6B hard; per prompt 30M, 90M, 120M).
+  enforces per-caller spawn rules, a 128-spawn session budget and whole-tree token budgets (session 750M guaranteed,
+  2.25B soft, 3B hard; per prompt 30M, 90M, 120M).
 - **Three model tiers.** `claude-opus-5-5`, `claude-sonnet-5-5` and `claude-haiku-5-5` are the only models allowed
   anywhere, enforced at seven layers; a caller that wants cheaper or stronger work picks a different agent, never a
   per-call model or effort.
@@ -211,7 +211,7 @@ The design rests on a few invariants. Each one is enforced by a hook, a setting 
 | Nesting is capped at depth 8 | `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=8` (native) plus the `pre-agent` hook (`CLAUDE_STACK_MAX_DEPTH=8`) |
 | Every subagent knows its depth, parent, remaining depth, spawn count, token budget and output directory | the `<stack-context>` header that `pre-agent` prepends to every child prompt |
 | Only three models exist, and each agent runs on its tier | `config/models.json`, `availableModels` + `enforceAvailableModels`, `pre-agent` strips per-call `model`/`effort`, `PreModelSwitch` hook |
-| The whole tree shares one spawn budget and one token budget | `config/policy.json` → `max_spawns_per_session` (400), `token_budget` |
+| The whole tree shares one spawn budget and one token budget | `config/policy.json` → `max_spawns_per_session` (128), `token_budget` |
 | Large outputs live in files, and only summaries and paths travel up the tree | `output-contract` skill, `context_policy` (60 lines / 3,000 chars) |
 | Agents verify uncertain facts or escalate them as doubts, never guess | `doubt-escalation` skill, preloaded everywhere |
 | Nothing reaches the user without a gate | `validator` per node, `quality-control` per phase and at the end |
@@ -460,7 +460,7 @@ Route: multi-phase project (research -> decide -> build -> verify)
 1. /research-sweep depth=standard on runtime trade-offs (foreground: step 2 consumes it) ~15-25 spawns
 2. mediator, 5 voters, Schulze, picks the runtime from the sweep report    ~11 spawns
 3. orchestrator: prototype + criterion benchmarks, validator gates          ~10-20 spawns
-Returns: report path, decision table, prototype path, benchmark summary. Budget ~60 of 400.
+Returns: report path, decision table, prototype path, benchmark summary. Budget ~60 of 128.
 ```
 
 The delegator keeps its ledger in `.stack/out/delegator/<YYYYMMDD-HHMM>-ledger.md`, one row per route
@@ -830,7 +830,7 @@ Coordinators. All seven belong to the `orchestration` spawn group (with `expert-
 | `swarm-coordinator` | ADVANCED / `claude-opus-5-5` | medium | 220 | none | `swarm-execution`, `concurrent-fanout` | Coordinator mode: enumerates the universe in code (`git ls-files ':(glob)src/api/**/*.ts'`, cross-checked with `find`), shards by job type (module, size-balanced greedy largest-first, one domain per shard, one hypothesis per shard), launches workers (at most 20 homogeneous or 8 mixed calls per message), retries only the uncovered remainder once, merges in code on a declared dedup key (`(path, line, rule_id)`, canonical URL, normalised-text hash) and reconciles covered + dropped + excluded = universe in `ledger.md`. Merge mode (final stage of `/swarm-run`): no spawns, dedup and ledger only. |
 | `mesh-router` | MEDIUM / `claude-sonnet-5-5` | high | 220 | none | `mesh-blackboard` | Runs a blackboard in `.stack/blackboard/<task-id>/` through `.claude/skills/mesh-blackboard/scripts/board.py` (`init`, `ids`, `index`, `open`, `set`). Specialists write typed posts (claim, evidence, question, answer, objection, decision; body at most 400 words) using pre-allocated id blocks; the router alone sets statuses and routes the open set each round (at most ~6 participants per round). Stops on T1 covered, T2 quiescent (no new substantive post for 2 rounds), T3 stalled (adjudicate the top 3 blockers once) or T4 budget (`max_rounds` 6, `max_posts` 60, spawn headroom under 20, `budget` soft/hard), then writes `FINAL.md`. |
 | `ensemble-assembler` | ADVANCED / `claude-opus-5-5` | high | 180 | none | `ensemble-assembly`, `expert-synthesis` | Splits a cross-domain problem into 3-10 sub-questions, gives each exactly one owner from a discipline-to-agent table, assigns lead / specialists / challenger (team size 2-7), writes a shared `common.md` (glossary with units, shared assumptions, member output schema with interface outputs and needs), runs the team concurrently and blind to each other, checks interface fit, runs one follow-up round for mismatches, writes `roster.md`, and hands off to `cross-domain-synthesizer` (complementary outputs), `mediator` (competing answers), `expert-panel-chair` (numeric disagreement) or `adversarial-verifier`/`debate-moderator` (one contested claim). |
-| `concurrent-dispatcher` | LOW / `claude-haiku-5-5` | medium | 150 | none | `concurrent-fanout` | Mechanical map with no content judgement. Inputs `items`, `agentType`, `promptTemplate` (`{{item}}`, `{{index}}`), optional `schema`, `outDir`, `retry` (default 1), `nestedSpawns` (default 0). Refuses before launching unless `N * (1 + nestedSpawns) + ceil(0.2 N) <= H / 2` with H = 400 - `spawns_this_session`; renders briefs deterministically, launches batches of min(20, items left, headroom), validates `results/<NNNN>.json` against the schema with `jq`/`python3`, retries each non-ok item once, and collates `results.json` with an `ok/total` line. A hook denial stops the run. |
+| `concurrent-dispatcher` | LOW / `claude-haiku-5-5` | medium | 150 | none | `concurrent-fanout` | Mechanical map with no content judgement. Inputs `items`, `agentType`, `promptTemplate` (`{{item}}`, `{{index}}`), optional `schema`, `outDir`, `retry` (default 1), `nestedSpawns` (default 0). Refuses before launching unless `N * (1 + nestedSpawns) + ceil(0.2 N) <= H / 2` with H = 128 - `spawns_this_session`; renders briefs deterministically, launches batches of min(20, items left, headroom), validates `results/<NNNN>.json` against the schema with `jq`/`python3`, retries each non-ok item once, and collates `results.json` with an `ok/total` line. A hook denial stops the run. |
 | `mediator` | ADVANCED / `claude-opus-5-5` | xhigh | 180 | none | `mediator-voting`, `judge-panel`, `bayesian-aggregation` | Auditable decision among independent attempts. Run mode: `frame.md`, voting rule declared before generation (Schulze default), N = 5 diverse voters (3 cheap, 7 high stakes) solving blind, anonymisation in code (S1..Sn labelled by `shasum -a 256` of normalised text, author map in `private/map.json`), blind critique ballots, tally with `.claude/skills/mediator-voting/scripts/tally.py` plus `--method all`, `--no-self` and leave-one-voter-out robustness, one debate round on a near-tie, a fixed tie-break cascade, then synthesis from the winner with cited grafts and a dissent report. Synthesis mode (end of `/mediate`): re-checks the tally, never spawns. |
 
 The delegator's 18 routing classes (`.claude/agents/orchestration/delegator.md`, step 1), with their default routes
@@ -1059,7 +1059,7 @@ sequenceDiagram
     participant C as Child agent
     participant L as SubagentStop hook
     P->>H: Agent(subagent_type, prompt, run_in_background: false)
-    H->>H: check depth (max 8), spawn_rules, 400 spawns per session, token budgets
+    H->>H: check depth (max 8), spawn_rules, 128 spawns per session, token budgets
     alt denied
         H-->>P: deny with reason (policy block)
     else allowed
@@ -1234,7 +1234,7 @@ agent body repeats and `bin/stack doctor` checks.
 | Nesting limit 8 | `.claude/settings.json` env `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH=8`, `CLAUDE_STACK_MAX_DEPTH=8` | Claude Code (withholds the Agent tool at the limit) and the `pre-agent` hook (deny) |
 | Caller to allowed-children table | `config/policy.json` `spawn_rules.callers`, `spawn_rules.groups` | `pre-agent` hook (deny) |
 | No coordinators below depth 6 | `spawn_rules.orchestrators_until_depth` = 6 | `pre-agent` hook (deny) |
-| Spawn budget 400 per session | `max_spawns_per_session` = 400 | `pre-agent` hook (deny) |
+| Spawn budget 128 per session | `max_spawns_per_session` = 128 | `pre-agent` hook (deny) |
 | Token budgets (whole tree) | `token_budget` | `pre-agent` hook at `hard`; agents converge at `soft` |
 | Tiers are authoritative | `enforce_tiers` = true | `pre-agent` hook strips `model` and `effort` |
 | Children run in the foreground | `CLAUDE_STACK_FOREGROUND=1` (SDK runner) | `pre-agent` hook sets `run_in_background: false` |
@@ -1269,7 +1269,7 @@ never route around it through another agent):
 | `Spawn policy: <parent> may delegate only to <list> (config/policy.json spawn_rules). Route <child> through your caller instead, or handle it yourself.` | caller restricted by `spawn_rules.callers` | Use an allowed child, do it yourself, or return it to the caller as an Open doubt |
 | `Spawn policy: orchestration agents (<child>) are not started below depth 6; at depth <d> spawn leaves (researchers, testers, summarizers) or do the work yourself.` | coordinator requested with `child_depth > orchestrators_until_depth` | Spawn leaves or do the work |
 | `Token budget exhausted (session <x> of <max>, this prompt <y> of <max>). Do not start new work: finish with what you have, offload full output to a file and return your Result with the gaps as Open doubts. Only <finishing agents> may still be spawned.` | budget level `hard`, child not in `finishing_agents` | Act as at `budget="hard"`: wrap up, offload, list gaps as Open doubts |
-| `Stack spawn budget exhausted (<n> subagents this session, budget 400). Finish with what you have or ask the user to raise max_spawns_per_session in config/policy.json.` | session counter above `max_spawns_per_session` | Finish with what you have; `Status: partial` if needed |
+| `Stack spawn budget exhausted (<n> subagents this session, budget 128). Finish with what you have or ask the user to raise max_spawns_per_session in config/policy.json.` | session counter above `max_spawns_per_session` | Finish with what you have; `Status: partial` if needed |
 
 ### The stack-context header
 
@@ -1285,7 +1285,7 @@ from `stack/hooks.py`:
 Example as a child sees it:
 
 ```
-<stack-context depth="3" max_depth="8" parent="orchestrator" remaining_depth="5" spawns_this_session="57" budget="ok" prompt_tokens="12.4M/120M" session_tokens="310M/1.6B" out_dir=".stack/out/rust-expert"/>
+<stack-context depth="3" max_depth="8" parent="orchestrator" remaining_depth="5" spawns_this_session="57" budget="ok" prompt_tokens="12.4M/120M" session_tokens="310M/3B" out_dir=".stack/out/rust-expert"/>
 ```
 
 | Attribute | Computed as | How the agent acts on it |
@@ -1297,7 +1297,7 @@ Example as a child sees it:
 | `spawns_this_session` | session spawn counter including this child; a snapshot, siblings keep spawning | spawn headroom `H` (spawn budget below) |
 | `budget` | `ok`, `soft` or `hard`; the worse of the session level and the prompt level | convergence rules (token budgets below) |
 | `prompt_tokens` | tokens used by the current user prompt / `max_prompt_tokens` (120M) | headroom for new branches |
-| `session_tokens` | tokens used this session / `max_global_tokens` (1.6B) | headroom for new branches |
+| `session_tokens` | tokens used this session / `max_global_tokens` (3B) | headroom for new branches |
 | `out_dir` | `.stack/out/<subagent_type>` (`general-purpose` if none was given) | where offloaded files go (output contract) |
 
 Token counts are formatted with three significant digits and a `k`, `M` or `B` suffix (`budget.fmt`).
@@ -1373,7 +1373,7 @@ expands a group.
 
 ### Spawn budget
 
-`max_spawns_per_session` (400) is a runaway-fan-out guard. The hook keeps a per-session counter in
+`max_spawns_per_session` (128) is a runaway-fan-out guard. The hook keeps a per-session counter in
 `~/.claude/stack-data/sessions/<session_id>.json` with fields `spawns`, `by_depth`, `by_type`,
 `max_depth_seen` and `updated_at`, updated under an exclusive `fcntl` lock and written atomically
 (`.tmp` then `os.replace`), so concurrent spawns from parallel siblings never lose a count.
@@ -1383,7 +1383,7 @@ expands a group.
 Agents size fan-outs from the header:
 
 ```
-B = max_spawns_per_session            (400)
+B = max_spawns_per_session            (128)
 H = B - spawns_this_session           (headroom)
 a fan-out of k agents requires  k <= H / 2
 H < 20  ->  no new fan-outs; single essential spawns only
@@ -1392,13 +1392,13 @@ H < 20  ->  no new fan-outs; single essential spawns only
 Half of the headroom is always left for the rest of the tree, because `spawns_this_session` is a
 snapshot and siblings keep spawning. If `k` is too large, put more items into each brief and spawn
 fewer agents. Every agent a saved workflow launches counts as a spawn. Example: at
-`spawns_this_session="57"`, `H = 343` and a fan-out may have at most 171 agents; at 385, `H = 15`
+`spawns_this_session="57"`, `H = 71` and a fan-out may have at most 35 agents; at 113, `H = 15`
 and only single essential spawns remain.
 
 ### Token budgets as seen by delegation
 
 Budgets cover the whole tree (main transcript plus every `<session>/subagents/**/agent-*.jsonl`),
-per session and per user prompt (`promptId`). The limits (guaranteed / soft / hard: session 400M / 1.2B / 1.6B,
+per session and per user prompt (`promptId`). The limits (guaranteed / soft / hard: session 750M / 2.25B / 3B,
 prompt 30M / 90M / 120M), the weighted token count and the incremental accounting in `stack/budget.py` are described
 in [Token budgets](#token-budgets). Below the guaranteed amount an agent is never throttled; the header's `budget` is
 the worse of the session level and the prompt level, and it sets the agent's conduct:
@@ -2518,7 +2518,7 @@ flowchart TD
    `hard`, only `finishing_agents` may be spawned.
 4. **Spawn budget.** The per-session counter in `<data>/sessions/<session_id>.json` (also `by_depth`, `by_type`,
    `max_depth_seen`, `updated_at`; read by `bin/stack depth`) is incremented under a lock, and the call is denied
-   when it exceeds `max_spawns_per_session` (`400`; `0` disables). Denials 1–3 happen before the increment and do
+   when it exceeds `max_spawns_per_session` (`128`; `0` disables). Denials 1–3 happen before the increment and do
    not consume spawn budget; denial 4 does, and once the budget is exceeded every further attempt is counted and
    denied. The counter's format and the fan-out sizing it drives are in [Spawn budget](#spawn-budget).
 5. **Context header.** Unless `inject_context` is `false`, the prompt is not a string, or it already starts with
@@ -2581,7 +2581,7 @@ Token budget: session <used> used of <max_global> (soft <soft_global>); this pro
 
 If the session level is not `ok` it appends `SESSION BUDGET SOFT: converge, do not open new branches.` (or `HARD`).
 Only the session level is checked here, because a prompt that has just been submitted has spent nothing yet. Numbers
-use `budget.fmt()`: three significant digits with `k`, `M` or `B` (`1.6B`, `120M`).
+use `budget.fmt()`: three significant digits with `k`, `M` or `B` (`3B`, `2.25B`, `120M`).
 
 ### Hook state files
 
@@ -3414,7 +3414,7 @@ names that do not exist.
 
 Related keys in `config/policy.json`: `ingest_debounce_seconds` (60), `midsession_update_minutes`
 (30), and in `token_budget`: `learn_global` (`"report"` or `"apply"`), `cache_read_weight` (1.0),
-`soft_global_tokens` (1.2B), `max_global_tokens` (1.6B), `soft_prompt_tokens` (90M) and
+`soft_global_tokens` (2.25B), `max_global_tokens` (3B), `soft_prompt_tokens` (90M) and
 `max_prompt_tokens` (120M).
 
 Fixed constants in code:
@@ -4908,7 +4908,7 @@ the `<stack-context>` header and the tier rules.
 
 | Key | Default | Meaning |
 |---|---|---|
-| `max_spawns_per_session` | `400` | subagent spawns per session before new spawns are denied (runaway fan-out guard); `0` disables |
+| `max_spawns_per_session` | `128` | subagent spawns per session before new spawns are denied (runaway fan-out guard); `0` disables |
 | `inject_context` | `true` | prepend `<stack-context depth max_depth parent remaining_depth spawns_this_session budget prompt_tokens session_tokens out_dir/>` to every child prompt |
 | `midsession_update_minutes` | `30` | minimum interval between posterior updates (and auto-apply) triggered from `SubagentStop` |
 | `ingest_debounce_seconds` | `60` | minimum interval between transcript ingests from `SubagentStop`; SessionEnd always does a full ingest |
@@ -4920,7 +4920,7 @@ the `<stack-context>` header and the tier rules.
 | `spawn_rules.groups.research_leaves` | `quick-researcher`, `web-searcher`, `web-scraper`, `web-crawler`, `browser-operator`, `fact-checker`, `source-summarizer`, `file-summarizer`, `paper-researcher` | `@research_leaves` |
 | `spawn_rules.callers.<caller>` | see [Per-caller spawn rules](#per-caller-spawn-rules) | allowed child types for that caller (`*` = any, `@group` expands); callers not listed may spawn anything. Enforced here because Claude Code ignores `Agent(type)` lists in a subagent's `tools` |
 | `token_budget.cache_read_weight` | `1.0` | weight of cache-read tokens in the effective count |
-| `token_budget.min_global_tokens` / `soft_global_tokens` / `max_global_tokens` | `400000000` / `1200000000` / `1600000000` | session scope: never throttled below min; converge at soft; deny new spawns at max |
+| `token_budget.min_global_tokens` / `soft_global_tokens` / `max_global_tokens` | `750000000` / `2250000000` / `3000000000` | session scope: never throttled below min; converge at soft; deny new spawns at max |
 | `token_budget.min_prompt_tokens` / `soft_prompt_tokens` / `max_prompt_tokens` | `30000000` / `90000000` / `120000000` | same per user prompt (`promptId`); `max_prompt_tokens` is also the SDK `task_budget` |
 | `token_budget.finishing_agents` | `file-summarizer`, `quality-control`, `validator`, `source-summarizer` | still spawnable at the hard limit so work can be wrapped up |
 | `token_budget.learn_global` | `"report"` | `"report"`: `learn update` only recommends raised limits; `"apply"`: `budgets.json` `_global.applied` raises the effective limits |
