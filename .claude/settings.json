@@ -14,15 +14,7 @@
   ],
   "availableModelsMatch": "exact",
   "enforceAvailableModels": true,
-  "enabledMcpjsonServers": [
-    "playwright",
-    "exa",
-    "jina",
-    "spider",
-    "context7",
-    "image",
-    "fetch"
-  ],
+  "enabledMcpjsonServers": [],
   "permissions": {
     "allow": [
       "Bash(bin/stack *)",
@@ -40,7 +32,8 @@
       "Workflow(review-verify)",
       "Workflow(plan-tournament)",
       "Workflow(visual-iterate)",
-      "mcp__fetch"
+      "mcp__fetch",
+      "mcp__neural-memory"
     ],
     "deny": [
       "Read(~/.claude/stack.env)",
@@ -71,7 +64,7 @@
         ]
       },
       {
-        "matcher": "Bash|Write|Edit|MultiEdit|NotebookEdit|mcp__playwright__browser_type|mcp__playwright__browser_fill_form|mcp__playwright__browser_file_upload|mcp__playwright__browser_press_key",
+        "matcher": "Bash|Write|Edit|MultiEdit|NotebookEdit|mcp__playwright__browser_type|mcp__playwright__browser_fill_form|mcp__playwright__browser_file_upload|mcp__playwright__browser_press_key|mcp__neural-memory__.*",
         "hooks": [
           {
             "type": "command",

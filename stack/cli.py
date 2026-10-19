@@ -13,6 +13,7 @@
     stack hook <pre-agent|subagent-stop|session-start|session-end>
     stack depth [SESSION_ID]                    spawn statistics recorded by the depth guard
     stack mcp list | enable NAME | disable NAME  manage optional MCP servers (config/mcp.optional.json)
+    stack mcp sync [--dry-run]                  re-render inline (lazy) servers in agents from config/mcp.servers.json
     stack packs list                            install packs (skills + agents per pack)
     stack packs apply --only a,b | --all [--dry-run]   enable packs for this project (settings.local.json)
 """
@@ -24,7 +25,7 @@ import os
 import sys
 from typing import List
 
-from . import doctor, frontmatter, hooks, paths
+from . import doctor, frontmatter, hooks, mcpcat, paths
 
 EDITABLE = {"tier", "model", "effort", "maxTurns", "mcpServers", "skills", "color", "autoCompactWindow",
             "tools", "disallowedTools", "description", "memory", "permissionMode", "isolation", "background"}
@@ -42,7 +43,7 @@ def _agents() -> List[dict]:
         rows.append({
             "name": fm.get("name"), "group": "" if group == "." else group,
             "model": fm.get("model", "inherit"), "effort": fm.get("effort", "-"),
-            "maxTurns": fm.get("maxTurns", "-"), "mcpServers": doctor._as_list(fm.get("mcpServers")),
+            "maxTurns": fm.get("maxTurns", "-"), "mcpServers": [mcpcat.entry_name(e) for e in doctor._as_list(fm.get("mcpServers"))],
             "skills": doctor._as_list(fm.get("skills")), "autoCompactWindow": fm.get("autoCompactWindow", ""),
             "description": fm.get("description", ""), "path": os.path.relpath(f, paths.REPO),
         })
@@ -121,6 +122,8 @@ def cmd_agents(a) -> int:
                 upd[k] = None
             elif k in LIST_KEYS:
                 upd[k] = [x.strip() for x in v.split(",") if x.strip()]
+                if k == "mcpServers":  # catalog servers are written inline (lazy)
+                    upd[k] = mcpcat.render(upd[k], mcpcat.catalog())
             else:
                 upd[k] = v
         changed = frontmatter.update_file(path, upd)
@@ -147,7 +150,7 @@ def cmd_doctor(a) -> int:
             len(rep.errors), len(rep.warnings), len(paths.all_agent_files()), len(doctor.skill_names()),
             len([f for f in os.listdir(os.path.join(paths.REPO, ".claude", "workflows"))
                  if f.endswith(".js")]) if os.path.isdir(os.path.join(paths.REPO, ".claude", "workflows")) else 0,
-            len(doctor.mcp_names())))
+            len(doctor.mcp_names() | set(mcpcat.catalog()))))
     return 1 if rep.errors else 0
 
 
@@ -253,10 +256,18 @@ def cmd_mcp(a) -> int:
     settings = os.path.join(paths.REPO, ".claude", "settings.json")
     active = _load_json(proj).get("mcpServers", {})
     optional = _load_json(opt).get("mcpServers", {})
+    from . import mcpcat
+    lazy = mcpcat.catalog()
+    if a.action == "sync":
+        changed = mcpcat.sync(dry_run=a.dry_run)
+        for f in changed:
+            print("%s %s" % ("would update" if a.dry_run else "updated", os.path.relpath(f, paths.REPO)))
+        print("%d agent file(s) %s" % (len(changed), "out of date" if a.dry_run else "updated"))
+        return 1 if (a.dry_run and changed) else 0
     if a.action == "list":
-        for name in sorted(set(active) | set(optional)):
-            src = "active" if name in active else "optional"
-            cfg = active.get(name) or optional.get(name)
+        for name in sorted(set(active) | set(optional) | set(lazy)):
+            src = "lazy" if name in lazy else "active" if name in active else "optional"
+            cfg = lazy.get(name) or active.get(name) or optional.get(name)
             where = cfg.get("url") or " ".join([cfg.get("command", "")] + cfg.get("args", []))
             print("%-14s %-9s %s" % (name, src, where))
             note = (optional.get(name) or {}).get("_note")
@@ -370,8 +381,9 @@ def main(argv=None) -> int:
     pk.set_defaults(fn=cmd_packs)
 
     mc = sub.add_parser("mcp")
-    mc.add_argument("action", choices=["list", "enable", "disable"])
+    mc.add_argument("action", choices=["list", "enable", "disable", "sync"])
     mc.add_argument("name", nargs="?")
+    mc.add_argument("--dry-run", action="store_true")
     mc.set_defaults(fn=cmd_mcp)
 
     a = p.parse_args(argv)

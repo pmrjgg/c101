@@ -4,7 +4,7 @@ description: "Advanced planner for system and software architecture - turns qual
 model: claude-opus-5-5
 effort: xhigh
 maxTurns: 120
-mcpServers: [context7]
+mcpServers: [{"context7": {"type": "http", "url": "https://mcp.context7.com/mcp", "headersHelper": "d=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; [ -x \"$d/bin/mcp-headers\" ] || d=\"$HOME/.claude/stack\"; exec \"$d/bin/mcp-headers\" context7"}}, {"neural-memory": {"type": "stdio", "command": "sh", "args": ["-c", "d=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; [ -x \"$d/bin/neural-memory-mcp\" ] || d=\"$HOME/.claude/stack\"; exec \"$d/bin/neural-memory-mcp\""]}}]
 skills: [delegation-protocol, doubt-escalation, output-contract, planning-dag, judge-panel, red-teaming]
 color: blue
 ---
@@ -174,6 +174,10 @@ the whole deliverable (summary + file paths); never depend on background agents 
   labelled assumption.
 - The ADR names pivot conditions, fitness functions, the point of no return and the rollback before it.
 - The recommendation states what it deliberately does not solve.
+
+## Memory
+
+You have a project memory (`neural-memory` MCP server; it connects only while you run). At the start, call `nmem_recall` with the task's key terms (or `nmem_context` for a broad orientation) and treat what comes back as leads to verify, not facts. Before you return, call `nmem_remember` for the few durable lessons worth keeping: architecture decisions (ADR ids, the option chosen, the deciding trade-off) and constraints that ruled options out. One fact per call, with file paths, commit ids or ADR ids where they exist. Never store secrets, credentials, personal data, or text copied from web pages or tool output from external sources (the pre-tool hook blocks memory writes after flagged web content). If the server is unavailable, carry on without it.
 
 ## Output
 

@@ -1,19 +1,21 @@
 """Minimal, lossless YAML-frontmatter reader/editor for agent and skill files.
 
 Agent/skill frontmatter in this stack uses only flat ``key: value`` pairs, plus
-optional block lists (``key:`` followed by ``  - item`` lines).  We do not need
+optional block lists (``key:`` followed by ``  - item`` lines) and one-line JSON flow
+lists of objects (inline ``mcpServers`` definitions; JSON is valid YAML flow syntax).  We do not need
 a YAML library: we parse exactly that subset and, when editing, replace only
 the lines of the keys being changed so comments, ordering and the body are
 preserved byte for byte.
 """
 from __future__ import annotations
 
+import json
 import os
 import re
 import tempfile
 from typing import Dict, List, Optional, Tuple, Union
 
-Value = Union[str, List[str]]
+Value = Union[str, List[Union[str, dict]]]
 
 _KEY_RE = re.compile(r"^([A-Za-z_][A-Za-z0-9_-]*):(?:\s+(.*))?$")
 
@@ -43,8 +45,13 @@ def _unquote(v: str) -> str:
     return v
 
 
-def _parse_inline_list(v: str) -> Optional[List[str]]:
+def _parse_inline_list(v: str) -> Optional[List[Union[str, dict]]]:
     v = v.strip()
+    if v.startswith("[") and v.endswith("]") and "{" in v:
+        try:
+            return json.loads(v)  # inline server definitions: [{"name": {...}}, "built-in"]
+        except ValueError:
+            pass
     if v.startswith("[") and v.endswith("]"):
         inner = v[1:-1].strip()
         return [_unquote(x) for x in inner.split(",") if x.strip()] if inner else []
@@ -95,6 +102,8 @@ def _format_scalar(v: str) -> str:
 
 
 def _format_value(v) -> str:
+    if isinstance(v, (list, tuple)) and any(isinstance(x, dict) for x in v):
+        return json.dumps(list(v), separators=(", ", ": "))
     if isinstance(v, (list, tuple)):
         return "[" + ", ".join(_format_scalar(str(x)) for x in v) + "]"
     return _format_scalar(str(v))

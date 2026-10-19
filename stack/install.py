@@ -112,6 +112,12 @@ def register_mcp(ctx: Ctx) -> None:
     claude = shutil.which("claude")
     with open(os.path.join(paths.REPO, ".mcp.json"), encoding="utf-8") as fh:
         servers = json.load(fh)["mcpServers"]
+    from . import mcpcat
+    lazy = sorted(mcpcat.catalog())
+    if lazy:
+        print("MCP servers %s load lazily inside the agents that use them (config/mcp.servers.json); nothing to "
+              "register for them. If an earlier install registered them at user scope, remove those so they stop "
+              "connecting for every session: claude mcp remove --scope user <name>" % ", ".join(lazy))
     for name, cfg in servers.items():
         entry = json.dumps(_user_mcp_entry(cfg))
         if not claude:

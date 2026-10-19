@@ -1,0 +1,62 @@
+{
+  "_doc": "Single source of truth for the stack's MCP servers. They are NOT in .mcp.json: `bin/stack mcp sync` renders each server inline into the mcpServers frontmatter of the agents that use it, so Claude Code connects it when such a subagent starts and disconnects it when the subagent finishes, and the main conversation never loads its tools. `bin/stack doctor` reports agents whose inline copy drifted from this file. Launchers locate the stack through CLAUDE_PROJECT_DIR / the working directory, falling back to ~/.claude/stack for --user installs.",
+  "servers": {
+    "playwright": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@playwright/mcp@latest",
+        "--headless",
+        "--isolated",
+        "--caps=vision,pdf,devtools",
+        "--output-dir=.stack/playwright",
+        "--viewport-size=1280x800"
+      ]
+    },
+    "exa": {
+      "type": "http",
+      "url": "https://mcp.exa.ai/mcp?tools=web_search_exa,web_fetch_exa,web_search_advanced_exa,agent_run",
+      "headersHelper": "d=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; [ -x \"$d/bin/mcp-headers\" ] || d=\"$HOME/.claude/stack\"; exec \"$d/bin/mcp-headers\" exa"
+    },
+    "jina": {
+      "type": "http",
+      "url": "https://mcp.jina.ai/v1",
+      "headersHelper": "d=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; [ -x \"$d/bin/mcp-headers\" ] || d=\"$HOME/.claude/stack\"; exec \"$d/bin/mcp-headers\" jina"
+    },
+    "spider": {
+      "type": "http",
+      "url": "https://mcp.spider.cloud/mcp",
+      "headersHelper": "d=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; [ -x \"$d/bin/mcp-headers\" ] || d=\"$HOME/.claude/stack\"; exec \"$d/bin/mcp-headers\" spider"
+    },
+    "context7": {
+      "type": "http",
+      "url": "https://mcp.context7.com/mcp",
+      "headersHelper": "d=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; [ -x \"$d/bin/mcp-headers\" ] || d=\"$HOME/.claude/stack\"; exec \"$d/bin/mcp-headers\" context7"
+    },
+    "image": {
+      "type": "stdio",
+      "command": "sh",
+      "args": [
+        "-c",
+        "d=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; [ -x \"$d/bin/mcp-run\" ] || d=\"$HOME/.claude/stack\"; exec \"$d/bin/mcp-run\" \"$d\"/bin/image-router"
+      ]
+    },
+    "fetch": {
+      "type": "stdio",
+      "command": "sh",
+      "args": [
+        "-c",
+        "d=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; [ -x \"$d/bin/mcp-run\" ] || d=\"$HOME/.claude/stack\"; exec \"$d/bin/mcp-run\" uvx --python 3.13 mcp-server-fetch"
+      ]
+    },
+    "neural-memory": {
+      "type": "stdio",
+      "command": "sh",
+      "args": [
+        "-c",
+        "d=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; [ -x \"$d/bin/neural-memory-mcp\" ] || d=\"$HOME/.claude/stack\"; exec \"$d/bin/neural-memory-mcp\""
+      ]
+    }
+  }
+}

@@ -205,6 +205,11 @@ FORM_TOOLS = ("mcp__playwright__browser_type", "mcp__playwright__browser_fill_fo
               "mcp__playwright__browser_file_upload", "mcp__playwright__browser_press_key")
 
 
+MEMORY_PREFIX = "mcp__neural-memory__"
+# Read-only NeuralMemory tools; every other tool of that server can write persistent memory.
+MEMORY_READ_TOOLS = ("nmem_recall", "nmem_context", "nmem_recap", "nmem_situation", "nmem_health", "nmem_stats")
+
+
 def under_root(path: str, project_dir: str, root: str = ".stack") -> bool:
     if not path:
         return False
@@ -224,6 +229,8 @@ def risky_action(tool: str, tool_input: dict, project_dir: str, write_root: str 
         return None
     if tool in FORM_TOOLS:
         return "typing into or uploading to a web page"
+    if tool.startswith(MEMORY_PREFIX) and tool[len(MEMORY_PREFIX):] not in MEMORY_READ_TOOLS:
+        return "writing persistent memory (%s)" % tool[len(MEMORY_PREFIX):]
     return None
 
 

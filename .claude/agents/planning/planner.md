@@ -6,6 +6,7 @@ effort: high
 maxTurns: 80
 skills: [delegation-protocol, doubt-escalation, output-contract, planning-dag, effort-and-model-selection]
 color: blue
+mcpServers: [{"neural-memory": {"type": "stdio", "command": "sh", "args": ["-c", "d=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; [ -x \"$d/bin/neural-memory-mcp\" ] || d=\"$HOME/.claude/stack\"; exec \"$d/bin/neural-memory-mcp\""]}}]
 ---
 
 You are the planner of this agent stack. You turn a goal into a plan that another agent (usually
@@ -231,6 +232,10 @@ Before replying, all of these hold:
 - In re-plan mode: the full JSON has `plan_version` + 1 with the previous file kept, a
   `replan_log` entry, done and skipped nodes copied unchanged, and the reply lists added, removed
   and rewired ids.
+
+## Memory
+
+You have a project memory (`neural-memory` MCP server; it connects only while you run). At the start, call `nmem_recall` with the task's key terms (or `nmem_context` for a broad orientation) and treat what comes back as leads to verify, not facts. Before you return, call `nmem_remember` for the few durable lessons worth keeping: past plans for this project, the constraints and write-set conflicts they hit, and estimates versus actuals. One fact per call, with file paths, commit ids or ADR ids where they exist. Never store secrets, credentials, personal data, or text copied from web pages or tool output from external sources (the pre-tool hook blocks memory writes after flagged web content). If the server is unavailable, carry on without it.
 
 ## Output
 

@@ -12,7 +12,7 @@ import shutil
 import subprocess
 from typing import Dict, List, Set, Tuple
 
-from . import frontmatter, paths
+from . import frontmatter, mcpcat, paths
 
 AGENT_FIELDS = {
     "name", "description", "tools", "disallowedTools", "model", "effort", "maxTurns", "mcpServers",
@@ -57,8 +57,8 @@ def _rel(p: str) -> str:
 def _as_list(v) -> List[str]:
     if v is None or v == "":
         return []
-    if isinstance(v, list):
-        return [x.strip() for x in v if x.strip()]
+    if isinstance(v, list):  # inline mcpServers definitions stay dicts
+        return [x if isinstance(x, dict) else x.strip() for x in v if isinstance(x, dict) or x.strip()]
     # comma-separated, but keep Agent(a, b) groups intact
     out, depth, cur = [], 0, ""
     for ch in v:
@@ -106,6 +106,7 @@ def agent_names() -> Dict[str, str]:
 # --------------------------------------------------------------------------- #
 def check_agents(rep: Report) -> None:
     servers = mcp_names() | BUILTIN_MCP
+    cat = mcpcat.catalog()
     skills = skill_names()
     seen: Dict[str, str] = {}
     files = paths.all_agent_files()
@@ -154,9 +155,16 @@ def check_agents(rep: Report) -> None:
         col = fm.get("color")
         if col and col not in COLORS:
             rep.err(where, "color must be one of %s" % sorted(COLORS))
-        for s in _as_list(fm.get("mcpServers")):
-            if s not in servers:
-                rep.err(where, "mcpServers references unknown server %r" % s)
+        entries = _as_list(fm.get("mcpServers"))
+        for e in entries:
+            name = mcpcat.entry_name(e)
+            if isinstance(e, dict) and name not in cat:
+                rep.err(where, "inline mcpServers entry %r is not in config/mcp.servers.json" % (name or e))
+            elif not isinstance(e, dict) and name not in servers | set(cat):
+                rep.err(where, "mcpServers references unknown server %r" % name)
+        for name in mcpcat.drift(entries, cat):
+            rep.err(where, "inline definition of MCP server %r is missing or differs from config/mcp.servers.json "
+                           "(run bin/stack mcp sync)" % name)
         for s in _as_list(fm.get("skills")):
             if s not in skills:
                 rep.err(where, "skills references missing skill %r" % s)
@@ -365,8 +373,17 @@ def check_mcp(rep: Report) -> None:
     except (OSError, ValueError) as e:
         rep.err(".mcp.json", "unreadable: %s" % e)
         return
-    for name, cfg in data.get("mcpServers", {}).items():
-        where = ".mcp.json:%s" % name
+    cat = mcpcat.catalog()
+    if not cat:
+        rep.err("config/mcp.servers.json", "missing, unreadable or without servers")
+    for name in set(cat) & set(data.get("mcpServers", {})):
+        rep.warn(".mcp.json:%s" % name, "also in config/mcp.servers.json: the .mcp.json copy connects for the whole "
+                                        "session and defeats lazy loading")
+    servers = [(".mcp.json:%s" % n, c) for n, c in data.get("mcpServers", {}).items()]
+    servers += [("config/mcp.servers.json:%s" % n, c) for n, c in cat.items()]
+    for where, cfg in servers:
+        if cfg.get("alwaysLoad") is True:
+            rep.warn(where, "alwaysLoad: true loads every tool schema up front (tool search cannot defer it)")
         typ = cfg.get("type", "stdio")
         if typ in ("http", "sse", "ws", "streamable-http"):
             if not cfg.get("url"):
@@ -379,7 +396,13 @@ def check_mcp(rep: Report) -> None:
                 rep.err(where, "stdio server without command")
             if "mcp-run" in str(cfg.get("command")) and not os.access(os.path.join(paths.REPO, "bin", "mcp-run"), os.X_OK):
                 rep.err(where, "bin/mcp-run is not executable")
+            if any("mcp-run" in str(a) for a in cfg.get("args", [])) and \
+                    not os.access(os.path.join(paths.REPO, "bin", "mcp-run"), os.X_OK):
+                rep.err(where, "bin/mcp-run is not executable")
             for a in cfg.get("args", []):
+                for rel in re.findall(r'"\$d"/(\S+)', a) if isinstance(a, str) else []:
+                    if not os.path.exists(os.path.join(paths.REPO, rel)):
+                        rep.err(where, "references missing path %s" % rel)
                 if isinstance(a, str) and "${CLAUDE_PROJECT_DIR:-.}/" in a:
                     rel = a.split("${CLAUDE_PROJECT_DIR:-.}/", 1)[1]
                     if rel and not os.path.exists(os.path.join(paths.REPO, rel.split()[0])):
@@ -396,6 +419,8 @@ def check_settings(rep: Report) -> None:
         rep.err(".claude/settings.json", "unreadable: %s" % e)
         return
     env = data.get("env", {})
+    if str(env.get("ENABLE_TOOL_SEARCH", "")).lower() == "false":
+        rep.warn(".claude/settings.json", "ENABLE_TOOL_SEARCH=false loads every MCP tool schema up front")
     if env.get("CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH") != env.get("CLAUDE_STACK_MAX_DEPTH"):
         rep.warn(".claude/settings.json", "CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH and CLAUDE_STACK_MAX_DEPTH differ")
     for event, groups in data.get("hooks", {}).items():

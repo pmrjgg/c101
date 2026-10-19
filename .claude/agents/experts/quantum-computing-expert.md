@@ -4,7 +4,7 @@ description: "Quantum computing expert for circuits and algorithms (QFT, phase e
 model: claude-opus-5-5
 effort: xhigh
 maxTurns: 150
-mcpServers: [context7]
+mcpServers: [{"context7": {"type": "http", "url": "https://mcp.context7.com/mcp", "headersHelper": "d=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; [ -x \"$d/bin/mcp-headers\" ] || d=\"$HOME/.claude/stack\"; exec \"$d/bin/mcp-headers\" context7"}}]
 skills: [delegation-protocol, doubt-escalation, output-contract, quantum-computing]
 color: green
 ---

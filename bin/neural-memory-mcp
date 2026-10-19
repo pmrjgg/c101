@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+# NeuralMemory MCP server (associative memory graph), pinned, with the stack's own data directory.
+#
+# The package's first start (no config.toml yet) injects hooks into ~/.claude/settings.json unless its
+# Claude Code plugin is installed. We initialise the data directory ourselves first (config + brain only,
+# no hooks), so the server always takes its "already initialised" path. The config also turns off the
+# PyPI version check and exposes the minimal tool tier (recall, remember, context, recap; the rest stay
+# callable), keeping the agents' context lean. stdout is reserved for JSON-RPC, so setup logs go to stderr.
+set -euo pipefail
+
+NM_VERSION="4.62.0"
+export NEURALMEMORY_DIR="${NEURALMEMORY_DIR:-${CLAUDE_STACK_DATA:-${HOME:-/nonexistent}/.claude/stack-data}/neural-memory}"
+export PATH="${HOME:-/nonexistent}/.local/bin:/opt/homebrew/bin:/usr/local/bin:${PATH:-/usr/bin:/bin}"
+nm=(uvx --quiet --python 3.13 --from "neural-memory==${NM_VERSION}")
+
+if [[ ! -f "$NEURALMEMORY_DIR/config.toml" ]]; then
+  "${nm[@]}" python - >&2 <<'PY'
+import dataclasses
+import os
+import pathlib
+
+from neural_memory.cli.setup import setup_brain
+from neural_memory.unified_config import ToolTierConfig, UnifiedConfig
+
+d = pathlib.Path(os.environ["NEURALMEMORY_DIR"])
+c = UnifiedConfig(data_dir=d)
+c = dataclasses.replace(c, maintenance=dataclasses.replace(c.maintenance, version_check_enabled=False),
+                        tool_tier=ToolTierConfig(tier="minimal"))
+c.save()
+setup_brain(d)
+PY
+  if [[ ! -f "$NEURALMEMORY_DIR/config.toml" ]]; then
+    echo "neural-memory: setup failed; not starting (its own first-run setup would edit ~/.claude/settings.json)" >&2
+    exit 1
+  fi
+fi
+
+# The package's config writer omits version_check_enabled (its loader reads it), and it may re-save the
+# file later, so (re)assert it on every start.
+cfg="$NEURALMEMORY_DIR/config.toml"
+if ! grep -q '^version_check_enabled *= *false' "$cfg"; then
+  tmp="$(mktemp "$cfg.XXXXXX")"
+  awk '/^version_check_enabled *=/ {next} {print} /^\[maintenance\]$/ {print "version_check_enabled = false"}' "$cfg" > "$tmp"
+  mv "$tmp" "$cfg"
+fi
+
+exec "${nm[@]}" nmem-mcp

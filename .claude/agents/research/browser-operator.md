@@ -4,7 +4,7 @@ description: "Drives a real headless Chromium through the Playwright MCP for JS-
 model: claude-sonnet-5-5
 effort: medium
 maxTurns: 150
-mcpServers: [playwright]
+mcpServers: [{"playwright": {"type": "stdio", "command": "npx", "args": ["-y", "@playwright/mcp@latest", "--headless", "--isolated", "--caps=vision,pdf,devtools", "--output-dir=.stack/playwright", "--viewport-size=1280x800"]}}]
 skills: [delegation-protocol, doubt-escalation, output-contract, browser-automation]
 color: cyan
 disallowedTools: [Edit, NotebookEdit]

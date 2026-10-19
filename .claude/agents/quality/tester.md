@@ -4,7 +4,7 @@ description: "Designs, writes and runs tests - unit, property-based, fuzz, metam
 model: claude-sonnet-5-5
 effort: high
 maxTurns: 150
-mcpServers: [playwright]
+mcpServers: [{"playwright": {"type": "stdio", "command": "npx", "args": ["-y", "@playwright/mcp@latest", "--headless", "--isolated", "--caps=vision,pdf,devtools", "--output-dir=.stack/playwright", "--viewport-size=1280x800"]}}]
 skills: [delegation-protocol, doubt-escalation, output-contract, testing-strategy, browser-automation]
 color: red
 ---

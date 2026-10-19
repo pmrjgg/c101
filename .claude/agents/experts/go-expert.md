@@ -4,7 +4,7 @@ description: "Go specialist that builds, reviews, debugs and tunes idiomatic Go 
 model: claude-sonnet-5-5
 effort: high
 maxTurns: 180
-mcpServers: [context7]
+mcpServers: [{"context7": {"type": "http", "url": "https://mcp.context7.com/mcp", "headersHelper": "d=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; [ -x \"$d/bin/mcp-headers\" ] || d=\"$HOME/.claude/stack\"; exec \"$d/bin/mcp-headers\" context7"}}]
 skills: [delegation-protocol, doubt-escalation, output-contract, go-craft]
 color: green
 ---

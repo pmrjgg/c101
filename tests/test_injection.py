@@ -165,6 +165,20 @@ class WebContentHookTests(unittest.TestCase):
         rc, out, _ = run_hook("pre-tool", self.tool("Bash", {"command": "cargo test"}, "a4", "rust-expert"), self.env)
         self.assertIsNone(out)
 
+    def test_memory_writes_are_risky_reads_are_not(self):
+        from stack import injection
+        self.assertIsNone(injection.risky_action("mcp__neural-memory__nmem_recall", {"query": "x"}, self.proj))
+        self.assertIn("persistent memory", injection.risky_action("mcp__neural-memory__nmem_remember", {}, self.proj))
+        self.assertIn("persistent memory", injection.risky_action("mcp__neural-memory__nmem_forget", {}, self.proj))
+        tool = lambda name: self.tool("mcp__neural-memory__" + name, {"content": "x"}, "a9", "architect")
+        rc, out, _ = run_hook("pre-tool", tool("nmem_remember"), self.env)
+        self.assertIsNone(out)  # untainted agents may remember
+        run_hook("post-web", self.web_result(ATTACKS["override"], "a9", "architect"), self.env)
+        rc, out, _ = run_hook("pre-tool", tool("nmem_remember"), self.env)
+        self.assertEqual(out["hookSpecificOutput"]["permissionDecision"], "deny")
+        rc, out, _ = run_hook("pre-tool", tool("nmem_recall"), self.env)
+        self.assertIsNone(out)  # reading stays allowed after taint
+
     def test_tainted_main_thread_asks_the_user(self):
         run_hook("post-web", self.web_result(ATTACKS["persona"]), self.env)
         rc, out, _ = run_hook("pre-tool", self.tool("Bash", {"command": "git push"}), self.env)

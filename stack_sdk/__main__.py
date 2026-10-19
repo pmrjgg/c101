@@ -24,7 +24,7 @@ def _cmd_agents(a) -> int:
     for name, ag in sorted(load_all().items()):
         d = ag.definition
         rows.append({"name": name, "group": ag.group, "model": d.model, "effort": d.effort, "maxTurns": d.maxTurns,
-                     "mcpServers": d.mcpServers or [], "skills": d.skills or [], "disallowedTools": d.disallowedTools,
+                     "mcpServers": [next(iter(e)) if isinstance(e, dict) else e for e in d.mcpServers or []], "skills": d.skills or [], "disallowedTools": d.disallowedTools,
                      "prompt_chars": len(d.prompt), "dropped": sorted(ag.dropped)})
     if a.json:
         print(json.dumps(rows, indent=2))

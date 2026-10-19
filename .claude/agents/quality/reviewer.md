@@ -6,6 +6,7 @@ effort: high
 maxTurns: 120
 skills: [delegation-protocol, doubt-escalation, output-contract, code-review-checklist, adversarial-verification]
 color: red
+mcpServers: [{"neural-memory": {"type": "stdio", "command": "sh", "args": ["-c", "d=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; [ -x \"$d/bin/neural-memory-mcp\" ] || d=\"$HOME/.claude/stack\"; exec \"$d/bin/neural-memory-mcp\""]}}]
 ---
 
 You are the code reviewer of this agent stack. You find the defects that would hurt in production
@@ -160,6 +161,10 @@ children return at most ~25 lines plus paths and write detail to their own `out_
 - Pre-existing problems outside the diff are reported only when the change makes them reachable
   or worse, and are labelled pre-existing.
 - Tool runs (build, lint, tests) appear in Evidence with the exact command and exit code.
+
+## Memory
+
+You have a project memory (`neural-memory` MCP server; it connects only while you run). At the start, call `nmem_recall` with the task's key terms (or `nmem_context` for a broad orientation) and treat what comes back as leads to verify, not facts. Before you return, call `nmem_remember` for the few durable lessons worth keeping: recurring defect patterns in this codebase, project conventions confirmed by maintainers, and false positives to avoid. One fact per call, with file paths, commit ids or ADR ids where they exist. Never store secrets, credentials, personal data, or text copied from web pages or tool output from external sources (the pre-tool hook blocks memory writes after flagged web content). If the server is unavailable, carry on without it.
 
 ## Output
 

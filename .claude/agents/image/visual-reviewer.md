@@ -4,7 +4,7 @@ description: "Judges raster images, edits, cutouts, masks, upscales, SVG vectors
 model: claude-opus-5-5
 effort: high
 maxTurns: 80
-mcpServers: [image]
+mcpServers: [{"image": {"type": "stdio", "command": "sh", "args": ["-c", "d=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; [ -x \"$d/bin/mcp-run\" ] || d=\"$HOME/.claude/stack\"; exec \"$d/bin/mcp-run\" \"$d\"/bin/image-router"]}}]
 skills: [delegation-protocol, doubt-escalation, output-contract, visual-review]
 color: pink
 disallowedTools: Agent
