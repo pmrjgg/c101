@@ -44,7 +44,7 @@ script computes every decision: tallies, quantiles, stop rules, dedup and covera
 replayed from the agents' structured returns. Each row reads left to right: who produces (blue), who judges or
 verifies (orange), where the script decides and what stops it (green), and what comes out (purple).
 [Section 8](#8-workflows-one-by-one) draws each workflow in more detail. Source:
-[Saved workflows](../README.md#saved-workflows).
+[Saved workflows](reference/workflows.md#saved-workflows).
 
 ```mermaid
 flowchart TB
@@ -164,7 +164,7 @@ playwright; nine experts and `architect` use context7; the image agents and `gra
 server. Every agent preloads the three protocol skills plus at most three role skills: method skills from the core
 pack, or for an expert the hub skill of its domain pack, which indexes that pack's granular skills (144 skills in
 19 install packs). Any agent at any depth can hand an Open doubt to one of the doubt resolvers, budget and depth
-permitting. Source: [Agent layers](../README.md#agent-layers), [docs/ARCHITECTURE.md](ARCHITECTURE.md),
+permitting. Source: [Agent layers](reference/overview.md#agent-layers), [docs/ARCHITECTURE.md](ARCHITECTURE.md),
 [docs/MCP.md](MCP.md).
 
 ```mermaid
@@ -247,7 +247,7 @@ five-section output contract and keeps long output in `.stack/out/<agent>/`. `Su
 records the effort that was in effect and ingests the session at most once a minute; `SessionEnd` detaches the
 learner (diagram 6). Every handler fails open: an error inside a hook never blocks the session, only deliberate
 deny or ask decisions do. The `PreModelSwitch` guard, which keeps the main thread on its tier model, is left out.
-Source: [Lifecycle of one request](../README.md#lifecycle-of-one-request), [Hook wiring](../README.md#hook-wiring).
+Source: [Lifecycle of one request](reference/overview.md#lifecycle-of-one-request), [Hook wiring](reference/hooks.md#hook-wiring).
 
 ```mermaid
 sequenceDiagram
@@ -298,8 +298,8 @@ tree for the session and for the current prompt, and the worse of the two levels
 floor nothing is ever throttled, `soft` tells agents to converge, `hard` leaves only the finishing agents. The
 spawn counter covers the whole session. Tier enforcement strips any per-call `model` and `effort`, so every agent
 runs on its tier model and learned effort. On an internal error the hook fails open and the spawn proceeds
-unchanged. Source: [pre-agent](../README.md#pre-agent-depth-guard-spawn-rules-budgets-and-tier-stripping),
-[Token budgets](../README.md#token-budgets), [docs/DEPTH.md](DEPTH.md).
+unchanged. Source: [pre-agent](reference/hooks.md#pre-agent-depth-guard-spawn-rules-budgets-and-tier-stripping),
+[Token budgets](reference/hooks.md#token-budgets), [docs/DEPTH.md](DEPTH.md).
 
 ```mermaid
 flowchart TD
@@ -365,7 +365,7 @@ adds a warning to the agent's context and logs the event (rule names, score, URL
 taint before risky actions: a tainted subagent is denied, the main thread gets an ask prompt, and a tainted agent
 may spawn only research leaves. The scanner is a tripwire, not a guarantee (paraphrases, other languages and text
 in images get through), which is why layer 1 never depends on a flag. Source:
-[Web content safety](../README.md#web-content-safety-prompt-injection), [`stack/injection.py`](../stack/injection.py).
+[Web content safety](reference/web-safety.md#web-content-safety-prompt-injection), [`stack/injection.py`](../stack/injection.py).
 
 ```mermaid
 flowchart TB
@@ -430,7 +430,7 @@ score. Apply writes a recommendation into the agent's frontmatter only with enou
 step limits and hysteresis of `config/learning.json`, and appends every change to `changes.jsonl`, so
 `git diff .claude/agents` shows exactly what the learner did. The token windows feed `budgets.json`; the global
 token-budget limits are only reported unless `token_budget.learn_global` is `apply`. Source:
-[Bayesian self-tuning](../README.md#bayesian-self-tuning), [docs/LEARNING.md](LEARNING.md).
+[Bayesian self-tuning](reference/learning.md#bayesian-self-tuning), [docs/LEARNING.md](LEARNING.md).
 
 ```mermaid
 flowchart TB
@@ -493,8 +493,8 @@ fidelity whatever the provider returned, and every output lands in `.stack/image
 that never contains keys. The producer agents send their candidates to `visual-reviewer`, which scores them
 against the brief with a weighted rubric and returns PASS, REVISE with numbered revisions, or STOP; the loop ends
 after round 4 at the latest. Layered SVG and layered PDF exports come last. Source:
-[The image server](../README.md#the-image-server),
-[The visual-reviewer agent](../README.md#the-visual-reviewer-agent), [docs/MCP.md](MCP.md).
+[The image server](reference/mcp.md#the-image-server),
+[The visual-reviewer agent](reference/agents.md#the-visual-reviewer-agent), [docs/MCP.md](MCP.md).
 
 ```mermaid
 flowchart TB
@@ -563,7 +563,7 @@ remainder, then exact-key dedup and a coverage ledger in code and a `swarm-coord
 `SHARD <id> STATUS <ok|partial|failed> COVERED <n>/<m> ITEMS <k>` followed by `ITEM`, `UNCOVERED` and `XSHARD`
 lines. A dead worker is re-run once with the same brief, which uses up that shard's retry. Coverage from a
 remainder retry adds up (the units are disjoint); a whole-shard retry takes the better attempt, never the sum. The
-nominal agent count is two per shard plus one merge. Source: [swarm-run](../README.md#swarm-run).
+nominal agent count is two per shard plus one merge. Source: [swarm-run](reference/workflows.md#swarm-run).
 
 ```mermaid
 flowchart TD
@@ -616,7 +616,7 @@ schema results and retries of null, empty or failed calls. Every prompt is rende
 template mistake costs nothing: a template without the item placeholder gets the item appended under `ITEM:` (a
 warning), and a field path that is empty for every item stops the run. Each prompt tells the agent to write its
 full deliverable to a numbered file in the output directory. The agent count lies between `N` and
-`N x (1 + retry)`. Source: [fanout](../README.md#fanout).
+`N x (1 + retry)`. Source: [fanout](reference/workflows.md#fanout).
 
 ```mermaid
 flowchart TD
@@ -664,7 +664,7 @@ ballot. A near-tie triggers one debate round, and `mediator` writes the final an
 from runner-up strengths. Labels `S1..Sn` follow the order of an FNV-1a hash of the normalised answer and
 arguments, so a label never reveals its author. Near-tie thresholds are 0.2 for plurality, approval and Schulze
 and 0.1 for Borda and the log pool. The agent count is `2V + 1`, plus `2 + V` with a debate. Source:
-[mediate](../README.md#mediate).
+[mediate](reference/workflows.md#mediate).
 
 ```mermaid
 flowchart TD
@@ -717,7 +717,7 @@ the statistics and the stop rules: `quantity` converges when the relative IQR of
 round 2 means the median (or the Borda leader) barely moved and at most one panelist moved materially; `open`
 stops on stability alone. Rounds default to 3 (at most 4), and no new round starts below 60k tokens when a budget
 is set. A shrinking spread with fewer than two new reasons is labelled convergence by conformity. Source:
-[expert-panel](../README.md#expert-panel).
+[expert-panel](reference/workflows.md#expert-panel).
 
 ```mermaid
 flowchart TD
@@ -764,7 +764,7 @@ loop a completeness critic until dry, then write a cited report. The depth sets 
 sub-questions over web and papers with 1 critic round and 8 claim checks, `standard` 6 sub-questions with crawling,
 2 critic rounds and 20 checks, `exhaustive` 10 sub-questions, 4 critic rounds and 50 checks through two lenses.
 Contradicted claims never appear as fact in the report, disputed claims show both sides, and single-origin key
-claims and stale claims are flagged. Source: [research-sweep](../README.md#research-sweep).
+claims and stale claims are flagged. Source: [research-sweep](reference/workflows.md#research-sweep).
 
 ```mermaid
 flowchart TD
@@ -815,7 +815,7 @@ confirm it. A crashed verifier never counts as a refutation: a finding whose con
 reach the majority is inconclusive, not rejected. The lens set comes from the finding's most specialised
 dimension (security, then performance, concurrency, correctness, and so on). The final severity is the median of
 the confirming verifiers' severities. The agent count is `1 + dimensions x shards + verified x votes`, plus one
-report agent. Source: [review-verify](../README.md#review-verify).
+report agent. Source: [review-verify](reference/workflows.md#review-verify).
 
 ```mermaid
 flowchart TD
@@ -871,7 +871,7 @@ mvp-first, risk-first, performance-first and user-first; the default weights are
 0.15, verifiability 0.2 and completeness 0.2. Judge `j` sees the candidates rotated by `j` (reversed for odd `j`)
 with strategy names stripped. If synthesis fails, the winner's own file is returned unmerged and not revised. The
 agent count is `angles + judges + 2`, plus one when revised. Source:
-[plan-tournament](../README.md#plan-tournament).
+[plan-tournament](reference/workflows.md#plan-tournament).
 
 ```mermaid
 flowchart TD
@@ -914,7 +914,7 @@ The workflow recomputes the weighted overall with the profile fixed in round 1, 
 PASS. A round improves only when there is no best yet, when it passes where the best did not, or when it raises
 the best overall by at least 0.3; two non-improving rounds in a row stop the loop. An unconfigured operation stops
 the run at once with an Open doubt naming the `IMAGE_<OP>_URL`, `_KEY` and `_MODEL` variables, never a fallback.
-Source: [visual-iterate](../README.md#visual-iterate).
+Source: [visual-iterate](reference/workflows.md#visual-iterate).
 
 ```mermaid
 stateDiagram-v2
