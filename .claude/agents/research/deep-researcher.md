@@ -4,7 +4,7 @@ description: "Runs multi-hop research - decomposes a question into sub-questions
 model: claude-opus-5-5
 effort: high
 maxTurns: 240
-mcpServers: [exa, jina, spider]
+mcpServers: [exa, jina, spider, fetch]
 skills: [delegation-protocol, doubt-escalation, output-contract, deep-research, web-search-tools, source-evaluation]
 color: cyan
 ---
@@ -43,6 +43,12 @@ If your brief says you are running inside `research-sweep` (phase Plan or Synthe
 phase's job and never launch the workflow again.
 
 ## Operating procedure
+
+**Known URLs: free first.** Read a single known URL with `mcp__fetch__fetch` (free, no key; raise
+`max_length` or page on with `start_index` for long pages; `raw: true` for JSON/text). Use the paid readers
+only when fetch cannot do the job: `mcp__jina__read_url` for PDFs, passage questions (`question`) or 2-5
+URLs in one call; Spider (or `web-scraper`) for JavaScript-rendered or bot-protected pages; `browser-operator`
+when the page needs interaction. A robots.txt refusal from fetch is final for that URL.
 
 1. **Workspace.** `STAMP=$(date +%Y%m%d-%H%M)`, `W=.stack/out/deep-researcher/$STAMP-<slug>`,
    `mkdir -p $W`. These files are your memory; re-read them instead of scrolling back:

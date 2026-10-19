@@ -3585,8 +3585,8 @@ uncomment them before you enable the `replicate` or `fal` optional server.
 
 ### Active servers (`.mcp.json`)
 
-`.claude/settings.json` pre-approves all six servers in `enabledMcpjsonServers`. `permissions.allow` contains
-`mcp__exa`, `mcp__jina`, `mcp__spider`, `mcp__image` and `mcp__context7`. Playwright is absent from that list, so its
+`.claude/settings.json` pre-approves all seven servers in `enabledMcpjsonServers`. `permissions.allow` contains
+`mcp__exa`, `mcp__jina`, `mcp__spider`, `mcp__image`, `mcp__context7` and `mcp__fetch`. Playwright is absent from that list, so its
 browser actions still ask for permission. `MAX_MCP_OUTPUT_TOKENS` is raised to `40000` in the settings `env` block.
 
 | Server | Transport and endpoint | Key | Tools (`mcp__<server>__…`) | Used by |
@@ -3594,9 +3594,16 @@ browser actions still ask for permission. `MAX_MCP_OUTPUT_TOKENS` is raised to `
 | `playwright` | stdio `npx -y @playwright/mcp@latest --headless --isolated --caps=vision,pdf,devtools --output-dir=.stack/playwright --viewport-size=1280x800` | none | `browser_navigate`, `browser_snapshot`, `browser_click`, `browser_type`, `browser_fill_form`, `browser_take_screenshot`, `browser_network_requests`, `browser_evaluate`, `browser_tabs`, …; `vision`: `browser_mouse_*_xy`; `pdf`: `browser_pdf_save`; `devtools`: tracing and video | `browser-operator`, `tester` |
 | `exa` | http `https://mcp.exa.ai/mcp?tools=web_search_exa,web_fetch_exa,web_search_advanced_exa,agent_run` | `EXA_API_KEY` (anonymous works with rate limits; `agent_run` needs the key) | the four named in `?tools=`, which replaces Exa's two-tool default | `quick-researcher`, `deep-researcher`, `web-searcher`, `fact-checker`, `paper-researcher` |
 | `jina` | http `https://mcp.jina.ai/v1` | `JINA_API_KEY` (`read_url` and `capture_screenshot_url` work without it) | `read_url`, `search_web`, `search_arxiv`, `search_ssrn`, `search_images`, `extract_pdf`, `sort_by_relevance`, `deduplicate_strings`, `capture_screenshot_url`, `guess_datetime_url`, `primer`, `search_jina_blog` | researchers, `source-summarizer`, `web-scraper` |
+| `fetch` | stdio `mcp-run uvx --python 3.13 mcp-server-fetch` (official server) | none (free) | `fetch(url, max_length=5000, start_index=0, raw=false)`: one URL to markdown, or raw text/JSON with `raw`; honours robots.txt | the eight research agents (`quick-researcher`, `deep-researcher`, `web-searcher`, `web-scraper`, `web-crawler`, `fact-checker`, `paper-researcher`, `source-summarizer`) as the first rung of the free-first ladder |
 | `spider` | http `https://mcp.spider.cloud/mcp` | `SPIDER_API_KEY` (required) | `spider_crawl`, `spider_scrape`, `spider_search`, `spider_links`, `spider_screenshot`, `spider_transform`, `spider_get_credits`, `spider_ai_*`, `spider_browser_*` | `web-scraper`, `web-crawler`, `deep-researcher` |
 | `context7` | http `https://mcp.context7.com/mcp` | `CONTEXT7_API_KEY` (optional, raises rate limits) | `resolve-library-id`, `query-docs` | language and domain experts, `architect` |
 | `image` | stdio `${CLAUDE_PROJECT_DIR:-.}/bin/mcp-run ${CLAUDE_PROJECT_DIR:-.}/bin/image-router` | `IMAGE_<OP>_KEY` per operation | see [The image server](#the-image-server) | `image-generator`, `image-editor`, `vector-artist`, `visual-reviewer`, `graphic-design-expert` |
+
+**Free first.** For a URL already in hand, agents read it with `fetch` (free, no key) and escalate only when it
+cannot do the job: `jina` `read_url`/`extract_pdf` for PDFs, passage questions or 2-5 URLs per call (metered with a
+key), `spider` for JavaScript-rendered or bot-protected pages and crawls (paid), Playwright for interaction. Long
+pages are paged with `start_index` rather than handed to a paid reader. The ladder lives in the `web-search-tools`
+skill and in each research agent's operating procedure.
 
 Computer use is not configured in `.mcp.json`. The built-in `computer-use` server, enabled once through `/mcp`, is
 used by `computer-operator`. `bin/stack doctor` treats `computer-use` and `claude-in-chrome` as known built-ins
@@ -3616,7 +3623,6 @@ used by `computer-operator`. `bin/stack doctor` treats `computer-use` and `claud
 | `firecrawl` | http `https://mcp.firecrawl.dev/v2/mcp` | `FIRECRAWL_API_KEY` (Bearer) | without a key: `firecrawl_scrape`, `firecrawl_search`, `firecrawl_parse`; with a key, 27 tools including `firecrawl_map`, `firecrawl_crawl`, `firecrawl_agent` |
 | `tavily` | http `https://mcp.tavily.com/mcp/` | `TAVILY_API_KEY` (Bearer) | `tavily_search`, `tavily_extract`, `tavily_map`, `tavily_crawl`, `tavily_research` |
 | `brave-search` | stdio `mcp-run npx -y @brave/brave-search-mcp-server --transport stdio` | `BRAVE_API_KEY` | `brave_web_search`, `brave_local_search`, `brave_image_search`, `brave_news_search`, `brave_video_search`, `brave_summarizer`, `brave_place_search`, `brave_llm_context` |
-| `fetch` | stdio `mcp-run uvx --python 3.13 mcp-server-fetch` | none | `fetch(url, max_length=5000, start_index, raw)` |
 | `markitdown` | stdio `mcp-run uvx --python 3.13 markitdown-mcp` | none | `convert_to_markdown(uri)` for PDF, Office and HTML |
 
 `bin/stack mcp` (`cmd_mcp` in `stack/cli.py`) works on three files: `.mcp.json`, `config/mcp.optional.json` and
@@ -4985,7 +4991,7 @@ Every hook command is `"$CLAUDE_PROJECT_DIR"/bin/stack hook <name>`.
 | File | Contents |
 |---|---|
 | `.mcp.json` | active project MCP servers: `playwright` (stdio `npx -y @playwright/mcp@latest --headless --isolated --caps=vision,pdf,devtools --output-dir=.stack/playwright --viewport-size=1280x800`), `exa`, `jina`, `spider`, `context7` (http with `headersHelper`), `image` (stdio via `bin/mcp-run bin/image-router`) |
-| `config/mcp.optional.json` | `mcpServers.<name>` entries (`type`, `url`/`headersHelper` or `command`/`args`, `_note`) for `fal`, `fal-oauth`, `replicate`, `recraft`, `flux`, `runware`, `peekaboo`, `firecrawl`, `tavily`, `brave-search`, `fetch`, `markitdown` |
+| `config/mcp.optional.json` | `mcpServers.<name>` entries (`type`, `url`/`headersHelper` or `command`/`args`, `_note`) for `fal`, `fal-oauth`, `replicate`, `recraft`, `flux`, `runware`, `peekaboo`, `firecrawl`, `tavily`, `brave-search`, `markitdown` |
 | `config/image-ops.json` | per image operation: env names, tool, adapter request-mapping notes, default output format; no secrets and no model choices |
 | `config/stack.env.example` | template for `~/.claude/stack.env`: web keys (`EXA_API_KEY`, `JINA_API_KEY`, `SPIDER_API_KEY`, `CONTEXT7_API_KEY`), `IMAGE_<OP>_URL/_KEY/_MODEL` blocks (optional `_API`, `_PARAMS`), optional fallback keys |
 | `pyproject.toml` | dependencies, scripts (`stack`, `image-router`, `stack-sdk`), `[tool.pytest.ini_options] testpaths = ["tests", "stack_mcp"]` |

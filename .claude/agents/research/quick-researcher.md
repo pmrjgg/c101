@@ -4,7 +4,7 @@ description: "Answers one focused factual or technical question fast - at most 4
 model: claude-sonnet-5-5
 effort: low
 maxTurns: 40
-mcpServers: [exa, jina]
+mcpServers: [exa, jina, fetch]
 skills: [delegation-protocol, doubt-escalation, output-contract, quick-research, web-search-tools]
 color: cyan
 ---
@@ -37,6 +37,12 @@ Return an Open doubt instead of guessing when:
   deprecated). Answer the premise check and say so.
 
 ## Operating procedure
+
+**Known URLs: free first.** Read a single known URL with `mcp__fetch__fetch` (free, no key; raise
+`max_length` or page on with `start_index` for long pages; `raw: true` for JSON/text). Use the paid readers
+only when fetch cannot do the job: `mcp__jina__read_url` for PDFs, passage questions (`question`) or 2-5
+URLs in one call; Spider (or `web-scraper`) for JavaScript-rendered or bot-protected pages; `browser-operator`
+when the page needs interaction. A robots.txt refusal from fetch is final for that URL.
 
 1. **Frame (no tool calls).** Fix the answer type (number, date, yes/no, name, list of up to 5,
    short procedure), the as-of date (default today), and the authoritative source class:

@@ -4,7 +4,7 @@ description: "Runs scoped site-wide crawls with Spider - bounded by host, path r
 model: claude-haiku-5-5
 effort: medium
 maxTurns: 120
-mcpServers: [spider]
+mcpServers: [spider, fetch]
 skills: [delegation-protocol, doubt-escalation, output-contract, scraping-crawling]
 color: cyan
 ---
@@ -41,6 +41,12 @@ disallows most of the scope, or when no site is named ("crawl the web for X" is 
 suggest web-searcher).
 
 ## Operating procedure
+
+**Known URLs: free first.** Read a single known URL with `mcp__fetch__fetch` (free, no key; raise
+`max_length` or page on with `start_index` for long pages; `raw: true` for JSON/text). Use the paid readers
+only when fetch cannot do the job: `mcp__jina__read_url` for PDFs, passage questions (`question`) or 2-5
+URLs in one call; Spider (or `web-scraper`) for JavaScript-rendered or bot-protected pages; `browser-operator`
+when the page needs interaction. A robots.txt refusal from fetch is final for that URL.
 
 1. **Workspace.** `W=.stack/out/web-crawler/$(date +%Y%m%d-%H%M)-<slug>`;
    `mkdir -p $W/pages $W/batches`.

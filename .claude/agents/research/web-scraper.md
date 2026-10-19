@@ -4,7 +4,7 @@ description: "Extracts clean content and schema-shaped structured data from spec
 model: claude-haiku-5-5
 effort: low
 maxTurns: 80
-mcpServers: [spider, jina]
+mcpServers: [spider, jina, fetch]
 skills: [delegation-protocol, doubt-escalation, output-contract, scraping-crawling]
 color: cyan
 ---
@@ -36,6 +36,12 @@ authentication, or when the site's terms forbid automated access for the request
 
 ## Operating procedure
 
+**Known URLs: free first.** Read a single known URL with `mcp__fetch__fetch` (free, no key; raise
+`max_length` or page on with `start_index` for long pages; `raw: true` for JSON/text). Use the paid readers
+only when fetch cannot do the job: `mcp__jina__read_url` for PDFs, passage questions (`question`) or 2-5
+URLs in one call; Spider (or `web-scraper`) for JavaScript-rendered or bot-protected pages; `browser-operator`
+when the page needs interaction. A robots.txt refusal from fetch is final for that URL.
+
 1. **Workspace.** `W=.stack/out/web-scraper/$(date +%Y%m%d-%H%M)-<slug>`; `mkdir -p $W/raw`.
 
 2. **Preflight per host.**
@@ -51,7 +57,8 @@ authentication, or when the site's terms forbid automated access for the request
 
    | Page kind | Tool | Settings |
    |---|---|---|
-   | Static article or docs page, up to 5 per call | `mcp__jina__read_url` | `url` as an array (max 5); `withAllLinks` when you need pagination links |
+   | One static page (HTML, docs, changelog, JSON/text) | `mcp__fetch__fetch` (free, try first) | `max_length` 20000-50000 for docs, page on with `start_index`; `raw: true` for JSON/text |
+   | Static articles or docs pages, 2-5 per call, or fetch came back empty/blocked | `mcp__jina__read_url` | `url` as an array (max 5); `withAllLinks` when you need pagination links |
    | Many URLs, metadata or selector control needed | `mcp__spider__spider_scrape` | `return_format: "markdown"`, `metadata: true`, `filter_output_main_only: true`; `root_selector` / `exclude_selector` to cut site chrome |
    | Exact HTML structure needed (rowspans, attributes, data-* values) | `mcp__spider__spider_scrape` | `return_format: "raw"`, then parse with Python stdlib `html.parser` via `python3 -I` |
    | JS-rendered content missing in the default `smart` mode | `mcp__spider__spider_scrape` | `request` set to browser rendering (take the value from the tool schema); still empty -> list under Open doubts (route: browser-operator) |

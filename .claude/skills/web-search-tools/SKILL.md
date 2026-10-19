@@ -45,6 +45,25 @@ list rather than retrying variants blindly.
 Default move: **search wide with one neural query (Exa) and one keyword batch (Jina) in the same
 message, read narrow with question-scoped reads, crawl only when 10 or more pages of one site matter.**
 
+### Reading a known URL: free first
+
+`mcp__fetch__fetch` is free and needs no key, so it is the first choice for any URL you already have.
+Escalate one rung only when the rung below cannot do the job:
+
+| Rung | Tool | Cost | Use when | Escalate when |
+|---|---|---|---|---|
+| 1 | `mcp__fetch__fetch` {`url`, `max_length` (default 5000 chars), `start_index`, `raw`} | free | static HTML, docs, READMEs, changelogs; `raw: true` for JSON, text or source files | empty or boilerplate-only output (JS-rendered), consent or bot wall, PDF/Office file, several URLs or a passage question |
+| 2 | `mcp__jina__read_url` (array of up to 5, `question`), `mcp__jina__extract_pdf` | metered with `JINA_API_KEY` (rate-limited without) | PDFs, 2-5 URLs in one call, passage extraction, link lists | still blocked or JS-only |
+| 3 | `mcp__spider__spider_scrape` (`request: "smart"`), `spider_crawl` | paid | JavaScript-rendered or bot-protected pages, many pages, crawls | needs clicks, forms or login |
+| 4 | Playwright via `browser-operator` | free, heavy (snapshots cost context) | interaction, infinite scroll, forms | - |
+
+- Long pages: page on with `start_index` (previous `start_index` + `max_length`) or raise `max_length`
+  (20000-50000 for a docs page) instead of switching to a paid reader.
+- fetch honours robots.txt: a refusal is final for that URL (the stack respects site rules).
+- Search is separate: fetch only reads URLs; discovery still needs Exa or Jina search.
+- `markitdown` (optional server, free, `bin/stack mcp enable markitdown`) converts PDFs and Office
+  files locally when you would rather not spend Jina credits.
+
 ## 2. Query crafting
 
 ### Neural and keyword queries are written differently

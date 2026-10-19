@@ -39,6 +39,16 @@
       "args": [
         "${CLAUDE_PROJECT_DIR:-.}/bin/image-router"
       ]
+    },
+    "fetch": {
+      "type": "stdio",
+      "command": "${CLAUDE_PROJECT_DIR:-.}/bin/mcp-run",
+      "args": [
+        "uvx",
+        "--python",
+        "3.13",
+        "mcp-server-fetch"
+      ]
     }
   }
 }

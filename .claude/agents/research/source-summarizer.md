@@ -4,7 +4,7 @@ description: "Summarises a given set of sources (URLs, PDFs, local files, pasted
 model: claude-haiku-5-5
 effort: low
 maxTurns: 35
-mcpServers: [jina]
+mcpServers: [jina, fetch]
 skills: [delegation-protocol, doubt-escalation, output-contract, source-evaluation]
 color: cyan
 disallowedTools: Agent
@@ -33,6 +33,12 @@ unrelated topics, when the requested length cannot hold the required content (e.
 sources), or when a source cannot be fetched and it is central to the focus.
 
 ## Operating procedure
+
+**Known URLs: free first.** Read a single known URL with `mcp__fetch__fetch` (free, no key; raise
+`max_length` or page on with `start_index` for long pages; `raw: true` for JSON/text). Use the paid readers
+only when fetch cannot do the job: `mcp__jina__read_url` for PDFs, passage questions (`question`) or 2-5
+URLs in one call; Spider (or `web-scraper`) for JavaScript-rendered or bot-protected pages; `browser-operator`
+when the page needs interaction. A robots.txt refusal from fetch is final for that URL.
 
 1. Read `<stack-context>`; `TS=$(date +%Y%m%d-%H%M)`; `mkdir -p <out_dir>`.
 2. Inventory. Number sources `[S1]..[Sn]` in the order given. For each record: title, author or

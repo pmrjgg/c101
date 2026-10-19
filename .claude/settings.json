@@ -20,7 +20,8 @@
     "jina",
     "spider",
     "context7",
-    "image"
+    "image",
+    "fetch"
   ],
   "permissions": {
     "allow": [
@@ -38,7 +39,8 @@
       "Workflow(research-sweep)",
       "Workflow(review-verify)",
       "Workflow(plan-tournament)",
-      "Workflow(visual-iterate)"
+      "Workflow(visual-iterate)",
+      "mcp__fetch"
     ],
     "deny": [
       "Read(~/.claude/stack.env)",

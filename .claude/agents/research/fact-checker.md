@@ -4,7 +4,7 @@ description: "Verifies individual claims against primary sources and returns a v
 model: claude-sonnet-5-5
 effort: medium
 maxTurns: 60
-mcpServers: [exa, jina]
+mcpServers: [exa, jina, fetch]
 skills: [delegation-protocol, doubt-escalation, output-contract, source-evaluation, web-search-tools]
 color: cyan
 ---
@@ -34,6 +34,12 @@ or "most popular" with no metric), return it as UNVERIFIABLE with the reason and
 rewrite ("most GitHub stars among X as of <date>").
 
 ## Operating procedure
+
+**Known URLs: free first.** Read a single known URL with `mcp__fetch__fetch` (free, no key; raise
+`max_length` or page on with `start_index` for long pages; `raw: true` for JSON/text). Use the paid readers
+only when fetch cannot do the job: `mcp__jina__read_url` for PDFs, passage questions (`question`) or 2-5
+URLs in one call; Spider (or `web-scraper`) for JavaScript-rendered or bot-protected pages; `browser-operator`
+when the page needs interaction. A robots.txt refusal from fetch is final for that URL.
 
 1. **Atomize.** Rewrite each claim as one or more atomic statements: subject, predicate, object,
    quantity with unit, time, scope or conditions. "Python 3.13 dropped the GIL and is twice as fast"

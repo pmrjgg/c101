@@ -10,7 +10,8 @@ when_to_use: "Extracting content or fields from known URLs, building a corpus fr
 
 | Job | Method | Tool |
 |---|---|---|
-| 1-5 static URLs, read as markdown | read | `mcp__jina__read_url` (array of up to 5) or `mcp__exa__web_fetch_exa` |
+| 1 static URL, read as markdown | read | `mcp__fetch__fetch` (free, no key; `max_length`, `start_index` for long pages) |
+| 2-5 static URLs, a PDF, or passage extraction | read | `mcp__jina__read_url` (array of up to 5) or `mcp__exa__web_fetch_exa` (both metered) |
 | 1 URL that renders client-side or blocks plain fetches | scrape | `mcp__spider__spider_scrape` with `request: "smart"` |
 | Links on a page or a site's URL inventory | map | `mcp__spider__spider_links`, or `read_url` with `withAllLinks: true` |
 | A site section, up to a few hundred pages | crawl | `mcp__spider__spider_crawl` with `limit`, `depth`, `whitelist` |
@@ -19,8 +20,9 @@ when_to_use: "Extracting content or fields from known URLs, building a corpus fr
 | Clicks, filters, infinite scroll, forms | browser | Playwright (browser-automation skill); Spider remote browser only if Playwright is unavailable |
 | Data behind a public JSON endpoint the page calls | API | find it once with Playwright `browser_network_requests`, then read the JSON URL directly |
 
-Prefer the lowest row that works: a read costs less than a scrape, a scrape less than a crawl, and an
-API response is cleaner than any scraped HTML.
+Prefer the lowest row that works: a free fetch costs nothing, a read costs less than a scrape, a scrape
+less than a crawl, and an API response is cleaner than any scraped HTML. The full free-first ladder is in
+the web-search-tools skill ("Reading a known URL: free first").
 
 ## 2. Pre-flight (every new site)
 
