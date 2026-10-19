@@ -65,10 +65,17 @@ def _cmd_mcp(_a) -> int:
     return 0
 
 
+# Set by a parent Claude Code session (e.g. bin/stack-sdk run from Bash inside a session). The child CLI would
+# adopt the parent's session id, so hooks would share its spawn count, token budget and taint state.
+PARENT_SESSION_VARS = ("CLAUDE_CODE_SESSION_ID", "CLAUDE_CODE_CHILD_SESSION")
+
+
 async def _run(a) -> int:
     from claude_agent_sdk import AssistantMessage, ResultMessage, TextBlock, query
 
     from .options import StackRunConfig, build_options
+    for var in PARENT_SESSION_VARS:
+        os.environ.pop(var, None)
     cfg = StackRunConfig(cwd=a.cwd, main_agent=None if a.agent == "none" else a.agent, agents_source=a.agents_source,
                          hooks=a.hooks, permission_mode=a.permission_mode, model=a.model, effort=a.effort,
                          max_budget_usd=a.max_budget_usd, task_budget_tokens=a.task_budget,

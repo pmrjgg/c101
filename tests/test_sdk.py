@@ -1,5 +1,7 @@
 """Tests for running the stack under the Claude Agent SDK (stack_sdk). No API calls."""
 import asyncio
+import contextlib
+import io
 import json
 import os
 import shutil
@@ -137,6 +139,31 @@ class SdkOptionsTests(unittest.TestCase):
             os.environ.pop("CLAUDE_STACK_DATA", None)
             os.environ.pop("CLAUDE_STACK_MAX_DEPTH", None)
             shutil.rmtree(tmp)
+
+    def test_run_drops_parent_session_identity(self):
+        import claude_agent_sdk
+        from stack_sdk import __main__ as cli
+        seen = {}
+
+        async def fake_query(prompt, options):
+            seen.update({v: os.environ.get(v) for v in cli.PARENT_SESSION_VARS})
+            return
+            yield
+
+        saved = {v: os.environ.get(v) for v in cli.PARENT_SESSION_VARS}
+        os.environ.update(CLAUDE_CODE_SESSION_ID="parent-session", CLAUDE_CODE_CHILD_SESSION="1")
+        real = claude_agent_sdk.query
+        claude_agent_sdk.query = fake_query
+        try:
+            with contextlib.redirect_stderr(io.StringIO()):
+                cli.main(["run", "x", "--cwd", ROOT, "--json"])
+            self.assertEqual(seen, {v: None for v in cli.PARENT_SESSION_VARS})
+        finally:
+            claude_agent_sdk.query = real
+            for v, val in saved.items():
+                os.environ.pop(v, None)
+                if val is not None:
+                    os.environ[v] = val
 
 
 if __name__ == "__main__":
