@@ -502,6 +502,7 @@ claude101/
 ├── install.sh              installer: uv bootstrap, then python -m stack.install
 ├── pyproject.toml uv.lock  Python 3.13 project and locked dependencies   .python-version  3.13
 ├── CLAUDE.md               project memory: conventions, test commands, secret rules
+├── .github/workflows/      ci.yml: doctor + both test suites on push and pull request
 ├── .mcp.json               active project MCP servers
 ├── .gitignore              .stack/, .claude-flow/ (third-party plugin state), settings.local.json, *.env, caches, .venv/
 ├── .claude/
@@ -531,6 +532,9 @@ uv run --python 3.13 pytest                                 # both (testpaths = 
 bin/stack doctor                                            # must report 0 errors
 bin/stack-sdk check                                         # SDK options for both placements, no API call
 ```
+
+CI (`.github/workflows/ci.yml`) runs the doctor and both suites on every push to `main` and every pull
+request, on Python 3.13 and Node 22, with no secrets.
 
 Every suite that touches state points `CLAUDE_STACK_DATA` at a temporary directory, so tests never modify
 `~/.claude/stack-data`.
