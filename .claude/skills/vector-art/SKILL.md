@@ -85,7 +85,8 @@ Shell variables do not persist between Bash calls: set them in the same command 
 | Flat-colour raster you generated and like | `image_vectorize` after palette reduction | fine when colours are flat and edges hard |
 | Change an existing SVG (colours, layout, layers, text, size) | edit the SVG text (section 5) | exact; regeneration would redraw everything |
 | Photo or painterly image | usually decline; posterised trace only on request | thousands of paths, large files |
-| Wordmark | generate or trace the symbol only; set type from a real font and outline it in a design tool | generated lettering is rarely typographically correct |
+| Logo, badge or poster with lettering, VECTOR on Ideogram with strategy `layerize` | `vector_generate` → `Artwork` + live `Text` layers | the text stays real `<text>` in a named font: fix wording, kerning and size by editing the SVG |
+| Wordmark without the `layerize` strategy | generate or trace the symbol only; set type from a real font and outline it in a design tool | generated lettering is rarely typographically correct |
 | Poster or composition with raster parts | `layers_compose` (vector and PNG layers) → `export_pdf` | editable hand-off |
 
 ## 4. Prompting `vector_generate`
@@ -109,6 +110,25 @@ line-art>, no text.
 - `layered: true` when the brief wants editable parts; top-level groups become layers, labels may
   be generic: rename them (section 8).
 - Logos: 2-3 candidates (`n` or separate calls); icons rarely need more than one round.
+- Raster VECTOR models (`IMAGE_VECTOR_PARAMS` strategy `trace` or `layerize`, e.g. Ideogram): the
+  model draws a raster that is then traced, so prompt for traceable art: flat solid colours, hard
+  edges, no gradients, textures or photographic detail, plain light background. With `layerize` you
+  may ask for lettering ("the text 'NORTHWIND' in a bold geometric sans"): it comes back as live text.
+
+### Output of the `layerize` strategy
+
+- Layers: `Artwork` (or `Artwork #rrggbb` per colour with `layered: true`) and `Text` on top. Each text
+  line is a `<text>` inside `<g id="text-N">` carrying `font-family`, `font-size`, `font-weight`,
+  `text-anchor` and `data-font-file` (the font Ideogram matched); spans are `<tspan>` with `fill`.
+- The draft raster and the text-free artwork are kept next to the SVG (`intermediates` in the result):
+  use the draft as the visual reference when you correct the SVG.
+- Correct by editing SVG text (section 5): spelling, `x`/`y` and `font-size` against the draft, swap a
+  font family, recolour spans. Baselines are estimates; check with `svg_render` beside the draft and
+  hand both to visual-reviewer with the brief and any reference images.
+- Fonts: rendering and `export_pdf` use the named font only if it is installed; otherwise PDF text
+  falls back to Helvetica. For print hand-off, say so under Open doubts (install the font, or convert
+  the text to outlines in a design tool); keep live text for editable deliverables.
+- `export_pdf` on the result gives a layered PDF with `Artwork` and `Text` OCGs.
 
 ## 5. Editing SVG directly (default manipulation)
 

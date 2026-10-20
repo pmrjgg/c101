@@ -514,11 +514,28 @@ by regeneration and adds a caveat to `notes`. "no model" means the service has n
 | GEN, REF | N | N | N (`generations`; `edits` with several `image[]`) | N | — |
 | EDIT | N; a mask is sent as a reference, then composited | N (`mask` on mask-capable models, e.g. `fal/ideogram-v4.5-edit`) | N (alpha mask) | N (`mask_url` on fill/inpaint endpoints) | — |
 | TRANSPARENT | N on models declaring `background: transparent` (GPT Image 2.5, Riverflow 2.5 Pro) | N (GPT Image via `parameters.background`) | N | N where the schema has `background` | — |
-| SEGMENT | A (`render`) or boxes (`detect`) | no model | — | N (`fal-ai/sam-3/image`) | — |
+| SEGMENT | A (`render`) or boxes (`detect`) | no model | — | N (`fal-ai/sam-3-1/image`) | — |
 | BG_REMOVAL | A, then alpha transfer | no model | — | N (`fal-ai/bria/background/remove`) | — |
-| UPSCALE | A (regenerate at 4K) | no model | — | N (`fal-ai/topaz/upscale/image`) | Lanczos |
-| VECTOR | N (`recraft/recraft-v4.1-vector`, `output_format: "svg"`) | not verified to return SVG; a raster reply is an error | — | N (`fal-ai/recraft/v4.1/text-to-vector`) | — |
+| UPSCALE | A (regenerate at 4K) | no model | — | N (`topaz/upscale/image/precision`; a transparent source keeps its alpha) | Lanczos |
+| VECTOR | N (`recraft/recraft-v4.1-vector`, `output_format: "svg"`) | not verified to return SVG; a raster reply is an error | — | N (`fal-ai/recraft/v4.1/text-to-vector`), or a raster model with strategy `trace` / `layerize` (`ideogram/v4.5`) | — |
 | TRACE | A (vector model with the raster as a reference) | no model | — | N (`fal-ai/recraft/vectorize`) | vtracer |
+
+### Vector strategies for raster models
+
+A raster model such as Ideogram can fill the VECTOR slot through two router-side strategies, set in
+`IMAGE_VECTOR_PARAMS` (any other keys there go to the drawing call, e.g. `"quality":"medium"`):
+
+| Strategy | Pipeline | Result |
+|---|---|---|
+| `trace` | the VECTOR model draws a raster; the TRACE configuration vectorizes it | one `Artwork` layer, or one layer per colour with `layered=true` |
+| `layerize` (fal only) | draw; `fal-ai/ideogram/v3/layerize-text` (override with the `layerize_model` directive) removes the lettering and returns its boxes, fonts and styled spans; TRACE vectorizes the text-free artwork; `textlayer.compose` rebuilds the lettering as live `<text>` | `Artwork` layer(s) plus a `Text` layer on top: text stays editable in design tools, by Claude as SVG text, and as text in `export_pdf`'s layered PDF |
+
+Both need TRACE configured (fal Recraft vectorize, or `IMAGE_TRACE_API=local`). The draft raster and, for
+`layerize`, the text-free artwork are written next to the SVG with their own sidecars, and the SVG's sidecar records
+every stage (`pipeline`: models, endpoints, text containers). Text boxes come in the draft's pixel space and are
+mapped onto the traced viewBox; lines are centred in their box with the baseline 0.35 em below each line centre.
+Fonts are named (`font-family`, `data-font-file`): `export_pdf` falls back to Helvetica unless the font is available,
+so for print either install the font or convert the text to outlines.
 
 ### Masks and fidelity post-processing
 
@@ -559,6 +576,11 @@ drift = (1 / (3·|A|)) · Σ_{p∈A} Σ_{c∈{r,g,b}} |R_c(p) − S_c(p)|      (
 
 When drift is high (above 18 levels, `imaging.DRIFT_WARN`), `notes` warns that the matte may not fit the original
 silhouette.
+
+**Upscale transparency** (`image_upscale`). Most upscalers return opaque RGB, which would flatten a transparent
+source. When the source has transparency and the result does not, the server scales the source alpha to the output
+size (Lanczos) and reattaches it (`imaging.reattach_alpha`), noting it in `notes`; a result of another aspect ratio
+gets a warning instead.
 
 **Segmentation output** (`image_segment`, `imaging.normalize_mask_output()`) always returns a white-on-black L PNG at
 the source size:

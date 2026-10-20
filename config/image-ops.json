@@ -240,7 +240,8 @@
         "openrouter": "regeneration: input_references: [source] + resolution tier; result resized to the exact target, drift reported",
         "opper": "regeneration: image = source (model-specific size/quality via IMAGE_UPSCALE_PARAMS)",
         "openai": "regeneration via /images/edits"
-      }
+      },
+      "alpha": "a transparent source keeps its transparency: when the model returns opaque RGB, the source alpha is Lanczos-scaled and reattached"
     },
     "VECTOR": {
       "tools": [
@@ -257,7 +258,9 @@
       "default_output": "svg (validated as well-formed)",
       "strategies": {
         "image": "default for openrouter/opper: the image endpoint must return image/svg+xml (OpenRouter: output_format=svg, e.g. recraft *-vector models; Opper: models declaring a 'style' parameter (Recraft) get parameters.style=vector_illustration[/substyle])",
-        "chat": "default for openai-compatible: an LLM writes the SVG via chat completions"
+        "chat": "default for openai-compatible: an LLM writes the SVG via chat completions",
+        "trace": "raster model + TRACE: the VECTOR model draws a raster, the TRACE configuration vectorizes it (Artwork layer, or one per colour with layered=true)",
+        "layerize": "fal only: draw, Ideogram layerize-text (directive layerize_model, default fal-ai/ideogram/v3/layerize-text) separates the lettering, TRACE vectorizes the text-free artwork, the lettering is rebuilt as live <text> in a 'Text' layer over the 'Artwork' layer(s); intermediates kept"
       }
     },
     "TRACE": {

@@ -45,7 +45,7 @@ DEFAULT_OUTPUT_DIR = ".stack/images"
 
 APIS = ("openrouter", "opper", "openai", "fal", "local")
 # Directive keys inside IMAGE_<OP>_PARAMS that steer the router and are never sent.
-DIRECTIVE_KEYS = frozenset({"strategy", "mask_convention"})
+DIRECTIVE_KEYS = frozenset({"strategy", "mask_convention", "layerize_model"})
 # Request fields the router owns: the model comes from IMAGE_<OP>_MODEL and the prompt / input
 # images from the tool call. Neither IMAGE_<OP>_PARAMS nor a tool call's `params` may set them
 # (that would be a silent per-call model switch, and sidecars would record the wrong model).

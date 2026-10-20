@@ -16,6 +16,7 @@ descriptions an LLM sees. Keys never appear in results, sidecars or logs.
 registration time.)
 """
 
+import dataclasses
 import functools
 import json
 import sys
@@ -61,6 +62,7 @@ from .imaging import (
     normalize_raster_input,
     prepare_mask,
     to_png_bytes,
+    reattach_alpha,
     transfer_alpha,
     upscale_drift,
     white_fraction,
@@ -76,11 +78,13 @@ from .io import (
     resolve_input,
     resolve_local_path,
     sanitize,
+    sniff_mime,
     unique_path,
     write_output,
 )
 from .providers import AdapterError, AdapterResult, ImageJob, get_adapter, supported_ops
 from .providers.base import validate_svg
+from . import textlayer
 from .render import RenderError, bounded_width, render_svg, svg_to_pdf_layers
 from .svg import SvgError, optimize_svg
 from .svgtools import ComposeLayer, appearance_delta, compose, describe_layers, inspect, layerize, load_svg
@@ -606,7 +610,8 @@ async def image_upscale(
 
     IMAGE_UPSCALE_API=local uses Pillow Lanczos (faithful, no invented detail). Remote models
     regenerate the image at a higher resolution; the result is resized to exactly scale x the
-    source and its drift from the source is reported (warning when high).
+    source and its drift from the source is reported (warning when high). A transparent source keeps
+    its transparency: when the model returns opaque RGB, the source alpha is scaled and reattached.
     """
     tool = "image_upscale"
     cfg = require("UPSCALE", tool)
@@ -632,6 +637,13 @@ async def image_upscale(
                 warnings.append(f"high drift from the source ({stats['drift']:.1f}/255): the model changed the content")
             if w := _aspect_warning("image", stats, (w0, h0)):
                 warnings.append(w)
+        fixed, alpha = reattach_alpha(src.data, data)
+        if fixed is not None:
+            data = fixed
+            stats["alpha"] = "reattached"
+            notes.append("the upscaler returned opaque RGB: the source's transparency was scaled (Lanczos) and reattached")
+        elif alpha["reason"].startswith("output"):
+            warnings.append(f"transparency not restored: {alpha['reason']}")
         fidelity.append(stats)
         outputs.append(OutputBlob(data, "image/png"))
     files = _write_outputs(
@@ -677,6 +689,113 @@ def appearance_warning(appearance: dict[str, Any] | None) -> str | None:
     return None
 
 
+RASTER_VECTOR_STRATEGIES = ("trace", "layerize")
+DEFAULT_LAYERIZE_MODEL = "fal-ai/ideogram/v3/layerize-text"
+
+
+async def _vector_from_raster(
+    cfg: OpConfig,
+    *,
+    strategy: str,
+    prompt: str,
+    style: str | None,
+    aspect_ratio: str | None,
+    layered: bool,
+    n: int,
+    output_dir: str | None,
+    filename_prefix: str | None,
+    params: dict[str, Any] | None,
+) -> dict[str, Any]:
+    """VECTOR strategies 'trace' and 'layerize': the VECTOR model draws a raster, TRACE vectorizes it.
+
+    'layerize' first sends the drawing to Ideogram's layerize endpoint (fal), traces the text-free
+    artwork and rebuilds the lettering as live <text> in a 'Text' layer. Every intermediate (the draft
+    raster, the text-free artwork) is written next to the SVG with its own sidecar.
+    """
+    tool = "vector_generate"
+    try:
+        tcfg = require("TRACE", tool)
+    except ConfigError as exc:
+        raise ConfigError(f"{tool}: IMAGE_VECTOR strategy '{strategy}' vectorizes with the TRACE configuration, "
+                          f"which is not usable: {exc}", op="TRACE", missing_env=exc.missing_env) from None
+    layerize_model = str(cfg.directives.get("layerize_model") or DEFAULT_LAYERIZE_MODEL)
+    if strategy == "layerize" and cfg.api != "fal":
+        raise ToolFailure(f"IMAGE_VECTOR strategy 'layerize' calls {layerize_model} on fal, but IMAGE_VECTOR uses the "
+                          f"{cfg.api} adapter; point IMAGE_VECTOR at https://queue.fal.run or use strategy 'trace'")
+    draw_cfg = dataclasses.replace(cfg, directives={k: v for k, v in cfg.directives.items()
+                                                   if k not in ("strategy", "layerize_model")})
+    directory = output_directory(output_dir, DEFAULT_OUTPUT_DIR)
+    stem = file_stem(filename_prefix, prompt, "vector")
+    draw_prompt = f"{prompt}. Style: {style}" if style else prompt
+    notes: list[str] = [f"strategy '{strategy}': {cfg.model} drew a raster, {tcfg.model or tcfg.api} traced it"
+                        + (f", {layerize_model} separated the text" if strategy == "layerize" else "")]
+    warnings: list[str] = []
+    outputs: list[OutputBlob] = []
+    pipelines: list[dict[str, Any]] = []
+    async with http.new_client() as client:
+        drawn = await _run(draw_cfg, ImageJob(op="VECTOR", task="generate", prompt=draw_prompt, aspect_ratio=aspect_ratio,
+                                              n=n, call_params=dict(params or {})), client)
+        notes += drawn.notes
+        warnings += drawn.warnings
+        for i, blob in enumerate(drawn.outputs[: max(1, n)]):
+            mime = sniff_mime(blob.data) or blob.mime or "image/png"
+            if mime == "image/svg+xml":
+                raise ToolFailure(f"{cfg.model} returned SVG: it is a native vector model, so drop the '{strategy}' strategy")
+            draft = await _raster(InputFile(blob.data, mime, f"{stem}-draft.png", f"{cfg.model} draft"))
+            info: dict[str, Any] = {"strategy": strategy, "draw": {**_op_fields(cfg), "endpoint": drawn.endpoint}}
+            info["draw"]["file"] = write_output(OutputBlob(draft.data, draft.mime), directory, f"{stem}-draft", {
+                "tool": tool, "stage": "draft raster", **_op_fields(cfg), "prompt": draw_prompt, "index": i}).as_dict()["path"]
+            source, containers = draft, []
+            if strategy == "layerize":
+                lcfg = dataclasses.replace(cfg, model=layerize_model, params={}, directives={})
+                adapter = get_adapter(lcfg, client)
+                result = await adapter.submit_and_wait({"image_url": draft.data_uri, "prompt": draw_prompt})
+                image = (result or {}).get("image") or {}
+                if not isinstance(image, dict) or not image.get("url"):
+                    raise AdapterError(f"{layerize_model} returned no text-free image: {str(result)[:300]}")
+                art = await adapter.fetch(str(image["url"]))
+                art_mime = sniff_mime(art.data) or "image/png"
+                containers = (result or {}).get("text_containers") or []
+                source = await _raster(InputFile(art.data, art_mime, f"{stem}-artwork.png", f"{layerize_model} artwork"))
+                info["layerize"] = {"model": layerize_model, "text_containers": containers,
+                                    "image_layers": len((result or {}).get("image_layers") or [])}
+                info["layerize"]["file"] = write_output(OutputBlob(source.data, source.mime), directory, f"{stem}-artwork", {
+                    "tool": tool, "stage": "text-free artwork", "model": layerize_model, "index": i,
+                    "text_containers": containers}).as_dict()["path"]
+            traced = await _run(tcfg, ImageJob(op="TRACE", task="trace", prompt="", image=source,
+                                               options={"layered": False, "colormode": "color"}), client)
+            notes += traced.notes
+            if not traced.outputs:
+                raise AdapterError(f"{tcfg.model or tcfg.api} returned no SVG")
+            svg = validate_svg(traced.outputs[0].data.decode("utf-8-sig"))
+            svg, composed = textlayer.compose(svg, containers, image_size(draft.data), split_colors=layered)
+            info["trace"] = {**_op_fields(tcfg), "endpoint": traced.endpoint}
+            info["layers"] = composed["layers"]
+            info["text_elements"] = composed["text_elements"]
+            notes += composed["notes"]
+            pipelines.append(info)
+            outputs.append(OutputBlob(validate_svg(svg).encode("utf-8"), "image/svg+xml"))
+    if not tcfg.is_local:
+        warnings.append("model-based tracing redraws the image: shapes may differ from the draft (kept next to the SVG)")
+    texts = sum(p["text_elements"] for p in pipelines)
+    if strategy == "layerize":
+        fonts = sorted({str(it.get("font_file")) for p in pipelines for c in p.get("layerize", {}).get("text_containers") or []
+                        if isinstance(c, dict) for it in c.get("items") or [] if isinstance(it, dict) and it.get("font_file")})
+        notes.append(f"{texts} live text line(s) in the 'Text' layer" + (f" (fonts: {', '.join(fonts)}; install them for exact "
+                     "rendering, or convert text to outlines for print)" if fonts else "")
+                     if texts else "layerize found no text: the SVG is the traced drawing only")
+    files = _write_outputs(
+        outputs, tool=tool, cfg=cfg, res=drawn, text_key="prompt", text=prompt, prefix=filename_prefix,
+        output_dir=output_dir, inputs=[], notes=notes, warnings=warnings,
+        params=_clean({"style": style, "aspect_ratio": aspect_ratio, "layered": layered, "n": n, "params": params}),
+        extra={"pipeline": pipelines},
+    )
+    layers = [{"file": f["path"], "layers": p["layers"], "text_elements": p["text_elements"]} for f, p in zip(files, pipelines)]
+    return _payload(files=files, notes=notes, warnings=warnings, layers=layers,
+                    intermediates=[p["draw"]["file"] for p in pipelines] + [p["layerize"]["file"] for p in pipelines if "layerize" in p],
+                    **_op_fields(cfg))
+
+
 @tool_entry
 async def vector_generate(
     prompt: Annotated[str, Field(description="Icon, logo or illustration to draw as an SVG.")],
@@ -692,11 +811,20 @@ async def vector_generate(
 
     OpenRouter: an SVG model (e.g. recraft/recraft-v4.1-vector) with output_format=svg. Opper: the
     image endpoint must return image/svg+xml, or set IMAGE_VECTOR_PARAMS={"strategy":"chat"} to have
-    an LLM write the SVG (the default for OpenAI-compatible endpoints). Output is validated as
-    well-formed SVG. Returns JSON {ok, files, op, adapter, url_host, model, notes, warnings, layers?}.
+    an LLM write the SVG (the default for OpenAI-compatible endpoints). Raster models (e.g. Ideogram):
+    strategy "trace" draws a raster and vectorizes it with the TRACE configuration; strategy "layerize"
+    (fal) also separates the lettering with Ideogram layerize and rebuilds it as live <text> in a 'Text'
+    layer over the 'Artwork' layer(s), ready for export_pdf (layered PDF) and for editing as SVG text.
+    Output is validated as well-formed SVG. Returns JSON {ok, files, op, adapter, url_host, model,
+    notes, warnings, layers?, intermediates?}.
     """
     tool = "vector_generate"
     cfg = require("VECTOR", tool)
+    strategy = cfg.strategy("image")
+    if strategy in RASTER_VECTOR_STRATEGIES:
+        return await _vector_from_raster(cfg, strategy=strategy, prompt=prompt, style=style, aspect_ratio=aspect_ratio,
+                                         layered=layered, n=n, output_dir=output_dir, filename_prefix=filename_prefix,
+                                         params=params)
     async with http.new_client() as client:
         job = ImageJob(op="VECTOR", task="vector", prompt=prompt, style=style, aspect_ratio=aspect_ratio, n=n,
                        call_params=dict(params or {}), options={"layered": layered})

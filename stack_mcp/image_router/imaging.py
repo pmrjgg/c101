@@ -535,6 +535,28 @@ def lanczos_resize(data: bytes, size: tuple[int, int]) -> bytes:
     return to_png_bytes(im)
 
 
+def reattach_alpha(src_data: bytes, result_data: bytes) -> tuple[bytes | None, dict[str, Any]]:
+    """Upscale fidelity for RGBA sources: the source's alpha, Lanczos-scaled, on the model's RGB.
+
+    Most upscalers return opaque RGB, flattening a transparent source. Returns (png, stats) with
+    ``png`` None when nothing needs doing (the source has no transparency, or the result kept its
+    own alpha) or when the compositions differ (aspect ratio), with ``stats['reason']``.
+    """
+    src = open_image(src_data)
+    src_alpha = _alpha_channel(src)
+    if src_alpha is None or src_alpha.getextrema()[0] == 255:
+        return None, {"reason": "source has no transparency"}
+    res = open_image(result_data)
+    res_alpha = _alpha_channel(res)
+    if res_alpha is not None and res_alpha.getextrema()[0] < 255:
+        return None, {"reason": "model output kept its alpha"}
+    if aspect_mismatch(src.size, res.size):
+        return None, {"reason": f"output {res.width}x{res.height} differs in aspect from the source {src.width}x{src.height}"}
+    rgba = res.convert("RGB").convert("RGBA")
+    rgba.putalpha(src_alpha.resize(res.size, Image.Resampling.LANCZOS))
+    return to_png_bytes(rgba), {"alpha": "reattached", "from": list(src.size), "to": list(res.size)}
+
+
 def fit_to_size(result_data: bytes, size: tuple[int, int]) -> tuple[bytes, dict[str, Any]]:
     """Exact output size for upscales: Lanczos-fit the model output when it differs.
 
