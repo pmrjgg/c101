@@ -3,7 +3,8 @@
 #   bin/desktop-sandbox            serve (Claude Code starts it through bin/mcp-run --only DESKTOP_SANDBOX_)
 #   bin/desktop-sandbox --check    runtime, image and limits
 #   bin/desktop-sandbox --build    build the sandbox image once (needs network)
-#       [--packages "libreoffice-calc firefox-esr"] [--base debian:bookworm-slim@sha256:...]
+#       [--profile operator|tester|recommended] [--packages "extra pkgs"] [--base image@sha256:...]
+#   bin/desktop-sandbox --list-profiles
 # Settings come from DESKTOP_SANDBOX_* in ~/.claude/stack.env; the server never receives API keys.
 set -euo pipefail
 . "$(dirname "${BASH_SOURCE[0]}")/_pyenv.sh"

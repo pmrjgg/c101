@@ -46,8 +46,8 @@ from PIL import Image
 
 from . import __version__, guard
 from .config import Settings, load
-from .runtime import (RuntimeFailure, Sandbox, image_present, reap_orphans, sanitize_all, sanitize_exchange,
-                      stop_quietly, usage)
+from .runtime import (PACKAGES_LABEL, RuntimeFailure, Sandbox, image_packages, image_present, reap_orphans,
+                      sanitize_all, sanitize_exchange, stop_quietly, usage)
 
 SERVER_NAME = "desktop-sandbox"
 # The exchange directory is the one host path the container can write: cap it (the tmpfs mounts have their own).
@@ -225,7 +225,10 @@ async def sandbox_status() -> CallToolResult:
     else:
         payload["image_present"] = await anyio.to_thread.run_sync(image_present, s)
         if not payload["image_present"]:
-            payload["next"] = "image missing: the user builds it once with `bin/desktop-sandbox --build`"
+            payload["next"] = ("image missing: the user builds it once with "
+                               "`bin/desktop-sandbox --build --profile recommended`")
+        else:
+            payload["image_packages"] = await anyio.to_thread.run_sync(image_packages, s)
     box = STATE.box
     payload["running"] = bool(box)
     if box:
@@ -545,18 +548,42 @@ def build_server() -> MCPServer:
 
 
 _DEB_PACKAGE = re.compile(r"^[a-z0-9][a-z0-9+.-]{1,62}$")
+PROFILES_FILE = IMAGE_DIR / "profiles.json"
 
 
-def build_image(s: Settings, packages: str = "", base: str = "") -> int:
+def load_profiles() -> dict[str, dict[str, Any]]:
+    return json.loads(PROFILES_FILE.read_text(encoding="utf-8"))["profiles"]
+
+
+def profile_packages(name: str, profiles: dict[str, dict[str, Any]] | None = None, _seen: frozenset = frozenset()) -> list[str]:
+    profiles = load_profiles() if profiles is None else profiles
+    if name not in profiles:
+        raise ValueError(f"unknown profile {name!r} (have: {', '.join(sorted(profiles))})")
+    if name in _seen:
+        raise ValueError(f"profile {name!r} includes itself")
+    out: list[str] = []
+    for inc in profiles[name].get("include", []):
+        out += profile_packages(inc, profiles, _seen | {name})
+    out += profiles[name].get("packages", [])
+    return list(dict.fromkeys(out))
+
+
+def build_image(s: Settings, packages: str = "", base: str = "", profile: str = "") -> int:
     if not s.runtime:
         print("desktop-sandbox: no docker or podman found", file=sys.stderr)
         return 2
-    names = packages.replace(",", " ").split()
+    try:
+        names = profile_packages(profile) if profile else []
+    except ValueError as exc:
+        print(f"desktop-sandbox: {exc}", file=sys.stderr)
+        return 2
+    names = list(dict.fromkeys(names + packages.replace(",", " ").split()))
     bad = [n for n in names if not _DEB_PACKAGE.match(n)]
     if bad:
         print(f"desktop-sandbox: not Debian package names: {', '.join(bad)}", file=sys.stderr)
         return 2
     argv = [s.runtime, "build", "--pull", "--tag", s.image]
+    argv += ["--label", f"{PACKAGES_LABEL}={' '.join(names)}"]  # read back by --check and sandbox_status
     if names:
         argv += ["--build-arg", "EXTRA_PACKAGES=" + " ".join(names)]
     if base:
@@ -571,6 +598,9 @@ def _parse(argv: Sequence[str] | None) -> argparse.Namespace:
                                 "sandboxed computer use in a disposable, hardened desktop container.")
     p.add_argument("--check", action="store_true", help="print runtime, image and limits to stderr and exit")
     p.add_argument("--build", action="store_true", help="build the sandbox image (needs network) and exit")
+    p.add_argument("--profile", default="", help="with --build: a named package set from image/profiles.json "
+                   "(operator, tester, recommended); --list-profiles shows them")
+    p.add_argument("--list-profiles", action="store_true", help="print the build profiles and exit")
     p.add_argument("--packages", default="", help="with --build: Debian packages for the apps to drive, e.g. "
                    "'libreoffice-calc firefox-esr' (space or comma separated)")
     p.add_argument("--base", default="", help="with --build: base image, ideally pinned by digest "
@@ -581,12 +611,18 @@ def _parse(argv: Sequence[str] | None) -> argparse.Namespace:
 def main(argv: Sequence[str] | None = None) -> int:
     args = _parse(argv)
     s = _settings()
+    if args.list_profiles:
+        for name, prof in load_profiles().items():
+            print(f"{name:<12} {prof.get('description', '')}\n             {' '.join(profile_packages(name))}")
+        return 0
     if args.build:
-        return build_image(s, args.packages, args.base)
+        return build_image(s, args.packages, args.base, args.profile)
     if args.check:
         present = bool(s.runtime) and image_present(s)
+        apps = " ".join(image_packages(s)) if present else ""
         print(f"runtime: {s.runtime or 'NOT FOUND (install docker or podman)'}\n"
-              f"image:   {s.image} ({'present' if present else 'missing: bin/desktop-sandbox --build'})\n"
+              f"image:   {s.image} ({'present' if present else 'missing: bin/desktop-sandbox --build --profile recommended'})\n"
+              f"apps:    {apps or 'base desktop only (xcalc, xclock, xmessage...)'}\n"
               f"network: {s.network}  screen: {s.width}x{s.height}  memory: {s.memory}  cpus: {s.cpus}\n"
               f"limits:  {s.max_actions} actions, {s.max_lifetime // 60} min lifetime, "
               f"{s.idle_timeout // 60} min idle", file=sys.stderr)

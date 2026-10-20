@@ -325,8 +325,10 @@ exit 2 because the tier list is authoritative; every other argument (for example
 Launches the `desktop-sandbox` MCP server (`python -m stack_mcp.desktop_sandbox`, Python 3.13 via `_pyenv.sh`) with
 the repo on `PYTHONPATH`. Agents' inline entries start it through `bin/mcp-run --only DESKTOP_SANDBOX_`, so it
 receives only `DESKTOP_SANDBOX_*` settings and no API keys. `--check` prints the container runtime, the image and
-the limits (exit 1 when the runtime or image is missing). `--build` builds the image once from
-`stack_mcp/desktop_sandbox/image/`; it is the only step that needs network, and agents never run it. See
+the apps baked into the image and the limits (exit 1 when the runtime or image is missing). `--build` builds the
+image from `stack_mcp/desktop_sandbox/image/`, with `--profile operator|tester|recommended` (package sets in
+`image/profiles.json`, listed by `--list-profiles`), `--packages "..."` for extra validated Debian packages and
+`--base <image>@sha256:...` to pin the base; it is the only step that needs network, and agents never run it. See
 [The desktop-sandbox server](mcp.md#the-desktop-sandbox-server).
 
 ### `bin/image-router`

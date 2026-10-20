@@ -200,3 +200,27 @@ def test_build_passes_validated_packages(monkeypatch, tmp_path) -> None:
     assert argv[-1].endswith("image")
     for bad in ("libreoffice; rm -rf /", "--privileged", "$(id)"):
         assert server.build_image(s, bad) == 2
+
+
+def test_profiles_resolve_and_are_valid() -> None:
+    profiles = server.load_profiles()
+    rec = server.profile_packages("recommended")
+    assert set(server.profile_packages("operator")) | set(server.profile_packages("tester")) == set(rec)
+    assert "libreoffice-calc" in rec and "openjfx" not in rec and len(rec) == len(set(rec))
+    assert all(server._DEB_PACKAGE.match(p) for name in profiles for p in server.profile_packages(name))
+    with pytest.raises(ValueError):
+        server.profile_packages("nope")
+    with pytest.raises(ValueError):
+        server.profile_packages("a", {"a": {"include": ["a"]}})
+
+
+def test_build_with_profile_labels_image(monkeypatch, tmp_path) -> None:
+    from stack_mcp.desktop_sandbox.config import Settings
+    seen = []
+    monkeypatch.setattr(server.subprocess, "call", lambda argv: seen.append(argv) or 0)
+    s = Settings(runtime="/x/docker", project=tmp_path)
+    assert server.build_image(s, "gimp", "", "operator") == 0
+    argv = seen[-1]
+    label = argv[argv.index("--label") + 1]
+    assert label.startswith("dev.c101.desktop-sandbox.packages=libreoffice-calc") and label.endswith(" gimp")
+    assert server.build_image(s, "", "", "bogus") == 2

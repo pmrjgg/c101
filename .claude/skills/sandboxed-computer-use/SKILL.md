@@ -53,11 +53,15 @@ Call `sandbox_status` first. It is read-only and tells you what is missing:
 | `sandbox_status` says | Do |
 |---|---|
 | `runtime: null` | `Status: blocked`. Open doubt for the user: install Docker Desktop, OrbStack, colima or podman. Never install it yourself |
-| `image_present: false` | `Status: blocked`. Open doubt: the user runs `bin/desktop-sandbox --build --packages "<debian packages for the apps>"` once. Never build or pull it yourself |
+| `image_present: false` | `Status: blocked`. Open doubt: the user runs `bin/desktop-sandbox --build --profile recommended` once (add `--packages "..."` for other apps). Never build or pull it yourself |
 | tools missing from your session | `Status: blocked`. Open doubt naming `bin/stack mcp sync` and `bin/stack doctor` |
+| `image_packages` lacks the app the task needs (e.g. no `libreoffice-calc`) | `Status: blocked`. Open doubt with the rebuild command `bin/desktop-sandbox --build --profile recommended --packages "<missing>"`. The base image alone has only xcalc, xclock and xmessage |
 | `network: bridge` | the user opted in to network access: section 6 rules for outbound actions apply |
 
-The needed app must already be in the image (Debian packages via `bin/desktop-sandbox --build --packages "..."`, which replaces the image, so list every app still needed; or the user's own
+The needed app must already be in the image: `sandbox_status` lists its extra packages in
+`image_packages` (profiles: `operator` = LibreOffice Calc, Writer, Impress, Liberation fonts, MuPDF;
+`tester` = OpenJDK 17, Python Tk, PyQt6, GTK 3 bindings, Electron libraries; `recommended` = both; a
+rebuild replaces the image, so it must list every app still needed), or the user's own
 binary copied in with `put_file`). Inside the sandbox nothing can be installed: the root filesystem is
 read-only and there is no root.
 
@@ -132,7 +136,7 @@ Residual risks and hardening options (rootless podman, pinning the base image by
 | `no sandbox is running` | `sandbox_start` (the watchdog may have stopped an idle one; the error says why in the audit) |
 | `already running` | keep using it; `sandbox_status` shows its id and seconds left |
 | `action budget ... used up` | `sandbox_stop`, report what is done, and add an Open doubt with the remaining steps |
-| Program window never appears | `window_list`; if empty, the binary is missing from the image or crashed. Check `launch` argv; Open doubt with the rebuild command `bin/desktop-sandbox --build --packages "..."` |
+| Program window never appears | `window_list`; if empty, the binary is missing from the image or crashed. Check `launch` argv; Open doubt with the rebuild command `bin/desktop-sandbox --build --profile recommended --packages "..."` |
 | Click lands in the wrong place | the UI moved: new screenshot, re-locate, never repeat a blind click |
 | `refused: the text looks like a ...` | do not rephrase it to slip past the guard: it is a secret, so return it to the user |
 | `display did not come up` | `sandbox_stop`, `sandbox_start` once more; then Open doubt with the error text |
@@ -149,8 +153,9 @@ that need the real desktop instead.
 ## 9. Worked example: CSV to chart PDF with LibreOffice (computer-operator)
 
 Brief: "Make a bar chart PDF of `data/q3.csv` with LibreOffice." The image was built with
-`--packages "libreoffice-calc"`.
-1. ToolSearch select the core and apps-and-files sets. Call `sandbox_status`: runtime and image are present, network `none`.
+`--profile operator` (or `recommended`).
+1. ToolSearch select the core and apps-and-files sets. Call `sandbox_status`: runtime and image are present,
+   `image_packages` includes `libreoffice-calc`, and network is `none`.
 2. `sandbox_start`. Then `put_file {source: "data/q3.csv"}` puts it at `/exchange/q3.csv`.
 3. `launch {argv: ["libreoffice", "--calc", "/exchange/q3.csv"]}`. Then `wait {seconds: 4}`: the
    screenshot shows the Text Import dialog. `key {keys: "Return", then_screenshot: true}` accepts it.

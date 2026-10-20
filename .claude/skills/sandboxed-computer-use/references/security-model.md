@@ -38,7 +38,8 @@ Boundaries: (1) agent -> MCP server (tool arguments, validated by `guard.py`); (
 - The image is built only by the user (`bin/desktop-sandbox --build`); the server never builds or pulls.
 - Pin the base image for reviewed, reproducible builds:
   `bin/desktop-sandbox --build --base debian:bookworm-slim@sha256:<digest> --packages "..."`.
-- Keep `--packages` to the apps the tasks need; every package adds attack surface inside the
+- Profiles live in `stack_mcp/desktop_sandbox/image/profiles.json` (package names validated; the build labels
+  the image with the list, which `--check` and `sandbox_status` report). Keep `--packages` to the apps the tasks need; every package adds attack surface inside the
   container but not outside it.
 - Rebuild periodically for security updates (the root filesystem is read-only at runtime, so updates
   happen only through rebuilds).

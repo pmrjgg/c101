@@ -1,0 +1,18 @@
+{
+  "_doc": "Named package sets for `bin/desktop-sandbox --build --profile NAME` (combine with --packages for extras). Every name was checked against Debian bookworm on arm64 and amd64. openjfx is absent on arm64: JavaFX apps must bundle it. A build replaces the image, so a profile lists everything that image needs.",
+  "profiles": {
+    "operator": {
+      "description": "computer-operator: open and convert office documents, charts, PDF export, safe viewing of untrusted files",
+      "packages": ["libreoffice-calc", "libreoffice-writer", "libreoffice-impress", "fonts-liberation2", "mupdf"]
+    },
+    "tester": {
+      "description": "tester: runtimes for GUI tests of your own Java Swing, Python Tk/Qt6/GTK3 and packaged Electron apps",
+      "packages": ["openjdk-17-jre", "python3-tk", "python3-pyqt6", "python3-gi", "gir1.2-gtk-3.0",
+                   "libnss3", "libgbm1", "libasound2", "libgtk-3-0", "libxss1", "libxtst6"]
+    },
+    "recommended": {
+      "description": "operator + tester (about 1.5 GB)",
+      "include": ["operator", "tester"]
+    }
+  }
+}

@@ -101,8 +101,19 @@ def run(argv: list[str], *, timeout: float = 30.0, check: bool = True) -> subpro
     return cp
 
 
+PACKAGES_LABEL = LABEL + ".packages"
+
+
 def image_present(s: Settings) -> bool:
     return run([s.runtime, "image", "inspect", "--format", "{{.Id}}", s.image], check=False).returncode == 0
+
+
+def image_packages(s: Settings) -> list[str]:
+    """Extra Debian packages baked into the image (label written by ``--build``); [] when none or unknown."""
+    cp = run([s.runtime, "image", "inspect", "--format", "{{ index .Config.Labels \"" + PACKAGES_LABEL + "\" }}",
+              s.image], check=False)
+    raw = cp.stdout.decode("utf-8", "replace").strip() if cp.returncode == 0 else ""
+    return [] if raw in ("", "<no value>") else raw.split()
 
 
 def _pid_alive(pid: int) -> bool:

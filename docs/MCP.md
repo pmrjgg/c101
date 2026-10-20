@@ -36,7 +36,7 @@ user's real apps: enable it once with `/mcp` → computer-use → Enable. `compu
 stack's own `desktop-sandbox` server (`stack_mcp/desktop_sandbox/`) drives a disposable, network-less Linux desktop
 in a hardened container and works in both runtimes. It is the default for GUI work that needs no personal state
 and the only unattended route (skill `sandboxed-computer-use`; build the image once with
-`bin/desktop-sandbox --build`). The optional `peekaboo` server drives the real desktop headless and is used only
+`bin/desktop-sandbox --build --profile recommended`). The optional `peekaboo` server drives the real desktop headless and is used only
 with the user's quoted approval.
 
 ## Image server (`image`)

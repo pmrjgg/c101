@@ -15,7 +15,7 @@ with Playwright.
 
 `put_file` copies one file. For a directory, archive it into the project's build output (`tar czf build/app.tgz -C build app`; `.stack/`, `.git/` and `.claude/` are refused as sources)
 and unpack inside: `launch {argv: ["tar", "xzf", "/exchange/app.tgz", "-C", "/exchange"]}`. If the image
-lacks something, return an Open doubt with the exact rebuild command (`bin/desktop-sandbox --build --packages "..."`). Never request network
+lacks something, return an Open doubt with the exact rebuild command (`bin/desktop-sandbox --build --profile recommended --packages "..."`). The `tester` profile already has OpenJDK 17, Python Tk, PyQt6, GTK 3 bindings and the Electron libraries. Never request network
 to fetch it.
 
 ## 2. Deterministic waits

@@ -78,7 +78,7 @@ bin/claude-stack                # Claude Code with the delegator as the main thr
 
 Inside Claude Code, accept the folder trust dialog once: each agent defines its MCP servers inline, and Claude Code
 connects them only in a trusted folder, only while that agent runs. Run `/mcp` once to enable computer use on the
-host desktop; for sandboxed computer use install Docker or podman and run `bin/desktop-sandbox --build` once.
+host desktop; for sandboxed computer use install Docker or podman and run `bin/desktop-sandbox --build --profile recommended` once.
 
 Use the stack in every project, with only the packs you want:
 
