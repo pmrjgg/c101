@@ -87,7 +87,7 @@ def test_settings_clamp_and_network_opt_in(monkeypatch: pytest.MonkeyPatch) -> N
     assert s.network == "none"  # 'host' is never accepted
     assert (s.width, s.height) == (1920, 480)
     assert s.max_lifetime == 120 * 60
-    assert s.image == "c101-desktop-sandbox:1" and s.memory == "2g"
+    assert s.image == "c101-desktop-sandbox:2" and s.memory == "2g"
     monkeypatch.setenv("DESKTOP_SANDBOX_NETWORK", "bridge")
     assert load().network == "bridge"
 

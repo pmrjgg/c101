@@ -42,8 +42,8 @@ class FakeCLI:
                 out = _png()
             elif cmd[:2] == ["xdotool", "getdisplaygeometry"]:
                 out = b"1280 800\n"
-            elif cmd[:2] == ["xdotool", "search"]:
-                out = b"4194307\n"
+            elif cmd[:2] == ["xprop", "-root"]:
+                out = b"_NET_CLIENT_LIST(WINDOW): window id # 0x400003\n"
             elif cmd[:2] == ["xdotool", "getwindowname"]:
                 out = b"Untitled - Editor\n"
             elif cmd[:2] == ["xdotool", "getwindowgeometry"]:

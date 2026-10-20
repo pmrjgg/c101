@@ -221,7 +221,8 @@ class Sandbox:
         deadline = time.monotonic() + timeout
         last = ""
         while time.monotonic() < deadline:
-            cp = run(exec_argv(self.settings, self.name, ["xdotool", "getdisplaygeometry"]), check=False)
+            # the entrypoint touches this only after Xvfb is up AND openbox manages the screen
+            cp = run(exec_argv(self.settings, self.name, ["test", "-e", "/tmp/.sandbox-ready"]), check=False)
             if cp.returncode == 0:
                 return
             last = cp.stderr.decode("utf-8", "replace").strip()[-200:]

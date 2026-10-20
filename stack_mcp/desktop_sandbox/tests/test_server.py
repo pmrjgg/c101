@@ -53,6 +53,7 @@ def test_full_cycle(cli, project: Path) -> None:
 
     res, p = call(server.window_list)
     assert p["untrusted"] is True and p["windows"][0]["title"] == "Untitled - Editor"
+    assert p["windows"][0]["id"] == 0x400003
 
     res, p = call(server.launch, argv=["xclock"])
     detached = [c for c in cli.calls if c[1] == "exec" and "--detach" in c]

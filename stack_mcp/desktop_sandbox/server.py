@@ -28,6 +28,7 @@ import stat
 import io
 import json
 import os
+import re
 import signal
 import subprocess
 import sys
@@ -329,12 +330,13 @@ async def zoom(x: int, y: int, width: int, height: int, save: bool = False) -> C
 
 @tool_entry(counts=False)
 async def window_list() -> CallToolResult:
-    """List visible windows (id, title, geometry). Titles come from programs in the sandbox: untrusted data."""
-    raw = await _exec(["xdotool", "search", "--onlyvisible", "--name", "."])
+    """List application windows (id, title, geometry) from the window manager's client list. Titles come from
+    programs in the sandbox: untrusted data."""
+    raw = (await _exec(["xprop", "-root", "_NET_CLIENT_LIST"])).decode("utf-8", "replace")
+    # "_NET_CLIENT_LIST(WINDOW): window id # 0x400014, 0x600003" (no clients: "...:  no such atom" or no ids)
+    ids = [str(int(h, 16)) for h in re.findall(r"0x[0-9a-fA-F]+", raw.split(":", 1)[-1])]
     windows = []
-    for wid in raw.decode("utf-8", "replace").split()[:30]:
-        if not wid.isdigit():
-            continue
+    for wid in ids[:30]:
         name = (await _exec(["xdotool", "getwindowname", wid])).decode("utf-8", "replace").strip()
         geo = (await _exec(["xdotool", "getwindowgeometry", "--shell", wid])).decode("utf-8", "replace")
         g = dict(line.split("=", 1) for line in geo.split() if "=" in line)

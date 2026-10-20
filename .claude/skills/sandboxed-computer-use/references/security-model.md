@@ -37,7 +37,7 @@ Boundaries: (1) agent -> MCP server (tool arguments, validated by `guard.py`); (
 
 - The image is built only by the user (`bin/desktop-sandbox --build`); the server never builds or pulls.
 - Pin the base image for reviewed, reproducible builds:
-  `docker build --build-arg BASE=debian:bookworm-slim@sha256:<digest> -t c101-desktop-sandbox:1 stack_mcp/desktop_sandbox/image`.
+  `docker build --build-arg BASE=debian:bookworm-slim@sha256:<digest> -t c101-desktop-sandbox:2 stack_mcp/desktop_sandbox/image`.
 - Keep `EXTRA_PACKAGES` to the apps the tasks need; every package adds attack surface inside the
   container but not outside it.
 - Rebuild periodically for security updates (the root filesystem is read-only at runtime, so updates
@@ -48,7 +48,7 @@ Boundaries: (1) agent -> MCP server (tool arguments, validated by `guard.py`); (
 | Variable | Default | Accepted |
 |---|---|---|
 | `DESKTOP_SANDBOX_RUNTIME` | first of docker, podman on PATH | `docker`, `podman` or an absolute path |
-| `DESKTOP_SANDBOX_IMAGE` | `c101-desktop-sandbox:1` | an image reference (lowercase, no spaces) |
+| `DESKTOP_SANDBOX_IMAGE` | `c101-desktop-sandbox:2` | an image reference (lowercase, no spaces) |
 | `DESKTOP_SANDBOX_NETWORK` | `none` | `none` or `bridge` (`host` and anything else fall back to `none`) |
 | `DESKTOP_SANDBOX_SIZE` | `1280x800` | `WxH`, clamped to 640..1920 x 480..1200 |
 | `DESKTOP_SANDBOX_MEMORY` / `_CPUS` | `2g` / `2` | `512m`..`99g` / `0.5`..`16` |

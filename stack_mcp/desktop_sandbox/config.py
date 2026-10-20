@@ -15,7 +15,8 @@ import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 
-DEFAULT_IMAGE = "c101-desktop-sandbox:1"
+# Bump the tag whenever image/ changes in a way the server depends on (an old image then reads as missing).
+DEFAULT_IMAGE = "c101-desktop-sandbox:2"
 NETWORKS = ("none", "bridge")
 _SIZE = re.compile(r"^(\d{3,4})x(\d{3,4})$")
 _MEMORY = re.compile(r"^\d{3,5}m$|^\d{1,2}g$")
