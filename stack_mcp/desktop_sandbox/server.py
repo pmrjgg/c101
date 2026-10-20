@@ -544,11 +544,24 @@ def build_server() -> MCPServer:
     return server
 
 
-def build_image(s: Settings) -> int:
+_DEB_PACKAGE = re.compile(r"^[a-z0-9][a-z0-9+.-]{1,62}$")
+
+
+def build_image(s: Settings, packages: str = "", base: str = "") -> int:
     if not s.runtime:
         print("desktop-sandbox: no docker or podman found", file=sys.stderr)
         return 2
-    argv = [s.runtime, "build", "--pull", "--tag", s.image, str(IMAGE_DIR)]
+    names = packages.replace(",", " ").split()
+    bad = [n for n in names if not _DEB_PACKAGE.match(n)]
+    if bad:
+        print(f"desktop-sandbox: not Debian package names: {', '.join(bad)}", file=sys.stderr)
+        return 2
+    argv = [s.runtime, "build", "--pull", "--tag", s.image]
+    if names:
+        argv += ["--build-arg", "EXTRA_PACKAGES=" + " ".join(names)]
+    if base:
+        argv += ["--build-arg", f"BASE={base}"]
+    argv.append(str(IMAGE_DIR))
     print("desktop-sandbox: " + " ".join(argv), file=sys.stderr)
     return subprocess.call(argv)
 
@@ -558,6 +571,10 @@ def _parse(argv: Sequence[str] | None) -> argparse.Namespace:
                                 "sandboxed computer use in a disposable, hardened desktop container.")
     p.add_argument("--check", action="store_true", help="print runtime, image and limits to stderr and exit")
     p.add_argument("--build", action="store_true", help="build the sandbox image (needs network) and exit")
+    p.add_argument("--packages", default="", help="with --build: Debian packages for the apps to drive, e.g. "
+                   "'libreoffice-calc firefox-esr' (space or comma separated)")
+    p.add_argument("--base", default="", help="with --build: base image, ideally pinned by digest "
+                   "(debian:bookworm-slim@sha256:...)")
     return p.parse_args(argv)
 
 
@@ -565,7 +582,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     args = _parse(argv)
     s = _settings()
     if args.build:
-        return build_image(s)
+        return build_image(s, args.packages, args.base)
     if args.check:
         present = bool(s.runtime) and image_present(s)
         print(f"runtime: {s.runtime or 'NOT FOUND (install docker or podman)'}\n"

@@ -187,3 +187,16 @@ def test_saved_screenshots_count_against_budget(cli) -> None:
     assert server.STATE.box.actions == before + 1
     call(server.screenshot)
     assert server.STATE.box.actions == before + 1
+
+
+def test_build_passes_validated_packages(monkeypatch, tmp_path) -> None:
+    from stack_mcp.desktop_sandbox.config import Settings
+    seen = []
+    monkeypatch.setattr(server.subprocess, "call", lambda argv: seen.append(argv) or 0)
+    s = Settings(runtime="/x/docker", project=tmp_path)
+    assert server.build_image(s, "libreoffice-calc, firefox-esr", "debian:bookworm-slim@sha256:" + "a" * 64) == 0
+    argv = seen[-1]
+    assert ["--build-arg", "EXTRA_PACKAGES=libreoffice-calc firefox-esr"] == argv[argv.index("--build-arg"):][:2]
+    assert argv[-1].endswith("image")
+    for bad in ("libreoffice; rm -rf /", "--privileged", "$(id)"):
+        assert server.build_image(s, bad) == 2

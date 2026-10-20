@@ -53,11 +53,11 @@ Call `sandbox_status` first. It is read-only and tells you what is missing:
 | `sandbox_status` says | Do |
 |---|---|
 | `runtime: null` | `Status: blocked`. Open doubt for the user: install Docker Desktop, OrbStack, colima or podman. Never install it yourself |
-| `image_present: false` | `Status: blocked`. Open doubt: the user runs `bin/desktop-sandbox --build` once (with `--build-arg EXTRA_PACKAGES=...` for the apps the task needs). Never build or pull it yourself |
+| `image_present: false` | `Status: blocked`. Open doubt: the user runs `bin/desktop-sandbox --build --packages "<debian packages for the apps>"` once. Never build or pull it yourself |
 | tools missing from your session | `Status: blocked`. Open doubt naming `bin/stack mcp sync` and `bin/stack doctor` |
 | `network: bridge` | the user opted in to network access: section 6 rules for outbound actions apply |
 
-The needed app must already be in the image (Debian packages via `EXTRA_PACKAGES`, or the user's own
+The needed app must already be in the image (Debian packages via `bin/desktop-sandbox --build --packages "..."`, which replaces the image, so list every app still needed; or the user's own
 binary copied in with `put_file`). Inside the sandbox nothing can be installed: the root filesystem is
 read-only and there is no root.
 
@@ -107,7 +107,7 @@ Keys use X keysym names: `Return`, `Tab`, `Escape`, `BackSpace`, `Delete`, `Page
 | Accountability | every call appended to `audit.jsonl` (typed text only as length and a keyed hash; secret-looking argv items redacted, even when refused) | `server._audit` |
 
 Residual risks and hardening options (rootless podman, pinning the base image by digest, reviewing
-`EXTRA_PACKAGES`): [security model](references/security-model.md).
+`--packages`): [security model](references/security-model.md).
 
 ## 6. Rules inside the sandbox
 
@@ -132,7 +132,7 @@ Residual risks and hardening options (rootless podman, pinning the base image by
 | `no sandbox is running` | `sandbox_start` (the watchdog may have stopped an idle one; the error says why in the audit) |
 | `already running` | keep using it; `sandbox_status` shows its id and seconds left |
 | `action budget ... used up` | `sandbox_stop`, report what is done, and add an Open doubt with the remaining steps |
-| Program window never appears | `window_list`; if empty, the binary is missing from the image or crashed. Check `launch` argv; Open doubt naming the package for `EXTRA_PACKAGES` |
+| Program window never appears | `window_list`; if empty, the binary is missing from the image or crashed. Check `launch` argv; Open doubt with the rebuild command `bin/desktop-sandbox --build --packages "..."` |
 | Click lands in the wrong place | the UI moved: new screenshot, re-locate, never repeat a blind click |
 | `refused: the text looks like a ...` | do not rephrase it to slip past the guard: it is a secret, so return it to the user |
 | `display did not come up` | `sandbox_stop`, `sandbox_start` once more; then Open doubt with the error text |
@@ -149,7 +149,7 @@ that need the real desktop instead.
 ## 9. Worked example: CSV to chart PDF with LibreOffice (computer-operator)
 
 Brief: "Make a bar chart PDF of `data/q3.csv` with LibreOffice." The image was built with
-`EXTRA_PACKAGES="libreoffice-calc"`.
+`--packages "libreoffice-calc"`.
 1. ToolSearch select the core and apps-and-files sets. Call `sandbox_status`: runtime and image are present, network `none`.
 2. `sandbox_start`. Then `put_file {source: "data/q3.csv"}` puts it at `/exchange/q3.csv`.
 3. `launch {argv: ["libreoffice", "--calc", "/exchange/q3.csv"]}`. Then `wait {seconds: 4}`: the

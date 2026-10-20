@@ -82,7 +82,7 @@ ambiguous case `skip`/`xfail` with a reason and return the question as an Open d
    sandboxed-computer-use and its GUI testing reference):
    - Load only the sets you need with one `ToolSearch select:` call. Call `sandbox_status` first: a missing
      runtime or image is an Open doubt for the user (`bin/desktop-sandbox --build`, with
-     `EXTRA_PACKAGES` for the app's runtime libraries). Never build, pull or install anything yourself.
+     `--packages "..."` for the app's runtime libraries). Never build, pull or install anything yourself.
    - `sandbox_start`, `put_file` the build (archive a directory into the project's build output, e.g. `build/app.tgz`; `.stack/`, `.git/` and `.claude/` are refused as sources), `launch`
      it with an argv list, poll `window_list` until its window appears, then drive it with `key`, `click`,
      `type_text` (`then_screenshot: true`). Assert with window titles, `zoom`-read text and files the

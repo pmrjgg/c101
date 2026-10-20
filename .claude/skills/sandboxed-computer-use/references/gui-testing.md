@@ -8,14 +8,14 @@ with Playwright.
 
 | App kind | How it gets in | Image needs |
 |---|---|---|
-| Linux binary or AppImage-extracted tree | build on the host or in CI for linux/amd64 or arm64 to match the runtime, then `put_file` the binary | its shared libraries via `EXTRA_PACKAGES` (check with `ldd` in a build container) |
+| Linux binary or AppImage-extracted tree | build on the host or in CI for linux/amd64 or arm64 to match the runtime, then `put_file` the binary | its shared libraries via `--packages` (check with `ldd` in a build container) |
 | JVM (Swing or JavaFX) | `put_file` the jar | `openjdk-17-jre` (plus `openjfx` for JavaFX) |
 | Python Tk, Qt or GTK | `put_file` the script or wheel | `python3-tk` / `python3-pyqt6` / `python3-gi gir1.2-gtk-4.0` |
 | Electron | `put_file` the packed linux app directory as one archive, plus a launcher the image provides | `libnss3 libgbm1 libasound2`; launch with `--no-sandbox` only inside this container (the container is the sandbox) |
 
 `put_file` copies one file. For a directory, archive it into the project's build output (`tar czf build/app.tgz -C build app`; `.stack/`, `.git/` and `.claude/` are refused as sources)
 and unpack inside: `launch {argv: ["tar", "xzf", "/exchange/app.tgz", "-C", "/exchange"]}`. If the image
-lacks something, return an Open doubt naming the packages for `EXTRA_PACKAGES`. Never request network
+lacks something, return an Open doubt with the exact rebuild command (`bin/desktop-sandbox --build --packages "..."`). Never request network
 to fetch it.
 
 ## 2. Deterministic waits
