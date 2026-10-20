@@ -46,10 +46,11 @@ and all eight workflows): [DIAGRAMS.md](DIAGRAMS.md).
 | Experts | 15 domain experts | each preloads its craft skill; context7 for live docs |
 | Synthesis | `cross-domain-synthesizer`, `expert-panel-chair`, `debate-moderator`, `analogy-mapper`, `first-principles-decomposer`, `general-chat` | combine knowledge from several experts into a higher-level answer |
 | Image | `image-generator`, `image-editor`, `vector-artist`, `visual-reviewer` | the `image` MCP server (one configured endpoint per operation, tools listed only when configured); produce → `visual-reviewer` → revise until the rubric passes |
+| Writing | `writing-project-builder`, `fiction-writer`, `manuscript-reviewer`, `copy-editor`, `prose-stylist`, `chat-aide` | markdown fiction projects (chapters/NNN_slug.md): scaffold, draft, copyedit, prose style, developmental review; `/polish` for real-time message checks; no MCP servers (text stays local) |
 | Meta | `stack-tuner`, `agent-architect` | operate the learner; extend the stack |
 
 Every agent preloads three protocol skills — `delegation-protocol`, `doubt-escalation`,
-`output-contract` — plus at most three role skills. 228 skills in total (hubs and method skills plus 168 granular
+`output-contract` — plus at most three role skills. 234 skills in total (hubs and method skills plus 169 granular
 playbooks, grouped into install packs in `config/packs.json`); see `docs/AGENTS.md`.
 
 ## Combining experts (higher-level problems)

@@ -492,6 +492,29 @@
         "shell-scripting"
       ],
       "agents": []
+    },
+    "writing": {
+      "description": "fiction-craft hub skill, manuscript/copyediting/style/developmental skills, the /polish message check, and the six writing agents (project builder, fiction writer, manuscript reviewer, copy editor, prose stylist, chat aide)",
+      "requires": [
+        "core"
+      ],
+      "hub": "fiction-craft",
+      "skills": [
+        "fiction-craft",
+        "manuscript-project",
+        "copyediting",
+        "prose-style-analysis",
+        "developmental-editing",
+        "polish"
+      ],
+      "agents": [
+        "writing-project-builder",
+        "fiction-writer",
+        "manuscript-reviewer",
+        "copy-editor",
+        "prose-stylist",
+        "chat-aide"
+      ]
     }
   }
 }

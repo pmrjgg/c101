@@ -2,7 +2,8 @@
 
 ## Workflows diagram
 
-All eight saved workflows in one picture: the shared entry (main thread, Workflow tool, argument validation)
+The first eight saved workflows in one picture (`manuscript-review` has its own diagram in
+[its section](#manuscript-review)): the shared entry (main thread, Workflow tool, argument validation)
 and one row per workflow with its producers, judges, the decision the script computes in code, and its stop
 rule. Each workflow has its own, more detailed diagram in [docs/DIAGRAMS.md](../DIAGRAMS.md#8-workflows-one-by-one)
 (also a static [SVG](../diagrams/all-workflows.svg) for viewers without Mermaid).
@@ -130,6 +131,7 @@ and auditable after the fact.
 | `review-verify` | code review where false positives are costly | `file-summarizer`, `reviewer`, `security-auditor`, `code-optimizer`, `adversarial-verifier` | `report.md` |
 | `plan-tournament` | competing plan shapes, expensive wrong pick | `planner` or `architect`, 1-7 judges, `plan-critic` | `plan.md`, `plan.json`, `scores.md` |
 | `visual-iterate` | produce or edit an image or vector and iterate until a visual rubric passes | `image-generator`, `image-editor`, `vector-artist`, `visual-reviewer` | best attempt, per-round review trail, optional layered SVG and PDF |
+| `manuscript-review` | full editorial pass over a markdown fiction manuscript, report-only | `writing-project-builder`, `copy-editor`, `prose-stylist` (per chapter), `manuscript-reviewer` | `reviews/<stamp>-manuscript-review.md` + one copyedit and one style report per chapter |
 
 ## Launching
 
@@ -745,6 +747,38 @@ pdf, layers, export_status, candidates, reviews, review_jsons, image_dir, run_di
 `open_doubts` covers a blocked operation, a best attempt below the threshold (accept it, sharpen the brief, raise
 `maxRounds` or lower `threshold`), no reviewed attempt, and a blocked export. Agent count: `2 × rounds`, plus 1 for
 the export.
+
+## manuscript-review
+
+Run a complete editorial pass over a markdown fiction project without touching a chapter file: validate and index
+the project, copyedit and analyse the prose of every chapter in parallel, then merge everything with a
+developmental pass into one prioritized report. Main thread only, deterministic, null-safe.
+
+| Arg | Type | Default | Notes |
+|---|---|---|---|
+| `project` | path | required | the folder with `manuscript.md` (a bare string is taken as the project) |
+| `chapters` | `"all"` \| array of numbers | `"all"` | 3-digit chapter numbers (`"001"`); unknown numbers are logged |
+| `checks` | array | `["copyedit","style","developmental"]` | any subset; unknown values stop the run with a message |
+| `maxChapters` | int | 120 | capped at 400 (2 analysts per chapter + 2 fixed agents stay under the 1000-agent cap) |
+
+```text
+Index (writing-project-builder: manuscript.py validate + index, date stamp)
+  └─> Analyze, pipelined per chapter: copy-editor ║ prose-stylist   (report-only, one report each)
+        └─> Synthesize (manuscript-reviewer: developmental pass + merge) ──> reviews/<stamp>-manuscript-review.md
+```
+
+- **Index.** `writing-project-builder` runs `manuscript.py validate` and `index` read-only and returns the chapter
+  list and one `date +%Y%m%d-%H%M` stamp that every report of the run uses. Validation errors that make chapters
+  ambiguous (no `manuscript.md`, duplicate numbers) return `{started:false}` with the errors.
+- **Analyze.** Per chapter, `copy-editor` (orthography, punctuation, grammar, consistency; `prose_check.py
+  mechanics`) and `prose-stylist` (show-not-tell, purple prose, generic or AI-sounding prose, filter words, rhythm;
+  `prose_check.py style` and `readability`) run in parallel, write `reviews/<stamp>-copyedit-NNN.md` and
+  `reviews/<stamp>-style-NNN.md`, and return counts per category, at most 5 top issues and strengths.
+- **Synthesize.** The script tallies categories across chapters; `manuscript-reviewer` receives the tallies and
+  the per-chapter summaries (2500 characters each, report paths for detail), runs `prose_check.py consistency` once
+  for cross-chapter name and term variants, does the developmental pass when requested, and writes the merged report.
+- **Return.** `{started, completed, project, stamp, checks, chapters, report, verdict, priorities, totals,
+  chapterReports, failures, notes}`. Manuscript text never leaves the machine: the agents use no MCP servers.
 
 ## Dry-run harness
 

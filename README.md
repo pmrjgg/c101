@@ -28,7 +28,7 @@ tooling) that turns a single session into a coordinated team:
   an `orchestrator` running a plan DAG, a swarm over shards, a subagent mesh on a shared blackboard, an ensemble of
   experts, or a `mediator` where several agents solve the same problem independently and **vote** (Schulze, Borda,
   approval, plurality, logarithmic opinion pool).
-- **57 agents in eight groups** (orchestration, planning, quality, research, experts, synthesis, image, meta), each
+- **63 agents in nine groups** (orchestration, planning, quality, research, experts, synthesis, image, writing, meta), each
   with a model tier, an effort level, a step budget, only the MCP servers it calls (connected only while it runs), and at most three role skills on
   top of the three protocol skills every agent preloads.
 - **Depth 8, bounded.** Native nested subagents are raised from 3 to 8 levels. The `pre-agent` hook gives every child
@@ -48,12 +48,17 @@ tooling) that turns a single session into a coordinated team:
 - **Experts and synthesis.** Computer graphics, computer science, quantum computing, Rust, C++, Go, Haskell, Julia,
   Java, Kotlin, Python, TypeScript, mathematics, physics and graphic design, each backed by a hub skill and granular skills, plus
   synthesis agents that combine experts into higher-level answers (Delphi panels, debate, analogy, first principles).
-- **Saved workflows.** Eight deterministic JavaScript workflows (`/swarm-run`, `/fanout`, `/mediate`,
-  `/expert-panel`, `/research-sweep`, `/review-verify`, `/plan-tournament`, `/visual-iterate`): agents produce the
+- **Saved workflows.** Nine deterministic JavaScript workflows (`/swarm-run`, `/fanout`, `/mediate`,
+  `/expert-panel`, `/research-sweep`, `/review-verify`, `/plan-tournament`, `/visual-iterate`, `/manuscript-review`): agents produce the
   content, and the script computes every decision (tallies, quantiles, stop rules, dedup, coverage ledgers).
 - **Context first.** Output past ~60 lines goes to `.stack/out/<agent>/` and only a summary and a path travel up;
   every reply follows a five-section output contract; uncertain facts are verified or escalated as Open doubts, never
   guessed. The stack optimises for context usage, not speed.
+- **Fiction writing and message checks.** A writing pack for markdown novels (`chapters/000_prologue.md`,
+  `001_chapter-1.md`, ...): a project builder, a fiction writer, a developmental manuscript reviewer, a US English
+  copy-editor and a prose stylist (show-not-tell, purple or generic prose, filter words, simplification), backed by
+  local analysis scripts and the `/manuscript-review` workflow; plus `chat-aide` and `/polish` for checking a chat,
+  email or DM before you send it. Analysis reports first and edits only on request; text never leaves the machine.
 - **Images and vectors.** One MCP server with a tool per operation (generation, references, edits, transparency,
   segmentation, background removal, upscaling, SVG generation, tracing), each pointed at your own endpoint and model
   with no fallbacks, layered SVG and layered PDF output, and a `visual-reviewer` that scores every result against the
@@ -145,6 +150,7 @@ The full reference manual lives in [`docs/reference/`](docs/reference/); each se
   - [review-verify](docs/reference/workflows.md#review-verify)
   - [plan-tournament](docs/reference/workflows.md#plan-tournament)
   - [visual-iterate](docs/reference/workflows.md#visual-iterate)
+  - [manuscript-review](docs/reference/workflows.md#manuscript-review)
   - [Dry-run harness](docs/reference/workflows.md#dry-run-harness)
 - [Hooks, model tiers and enforcement](docs/reference/hooks.md#hooks-model-tiers-and-enforcement)
   - [Hook wiring](docs/reference/hooks.md#hook-wiring)

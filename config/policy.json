@@ -130,6 +130,28 @@
       "adversarial-verifier": [
         "@research_leaves",
         "tester"
+      ],
+      "writing-project-builder": [
+        "file-summarizer"
+      ],
+      "fiction-writer": [
+        "prose-stylist",
+        "copy-editor",
+        "manuscript-reviewer",
+        "file-summarizer",
+        "quick-researcher"
+      ],
+      "manuscript-reviewer": [
+        "copy-editor",
+        "prose-stylist",
+        "file-summarizer",
+        "quick-researcher"
+      ],
+      "copy-editor": [
+        "file-summarizer"
+      ],
+      "prose-stylist": [
+        "file-summarizer"
       ]
     }
   },

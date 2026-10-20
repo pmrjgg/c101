@@ -24,7 +24,7 @@ docs/                                architecture, catalog, learning, MCP, depth
 .stack/                              runtime artefacts (gitignored): out/, blackboard/, images/, playwright/
 ```
 
-Agent groups: `orchestration`, `planning`, `quality`, `research`, `experts`, `image`, `synthesis`, `meta`.
+Agent groups: `orchestration`, `planning`, `quality`, `research`, `experts`, `image`, `synthesis`, `writing`, `meta`.
 
 ## 2. Agent frontmatter
 
@@ -113,7 +113,7 @@ standard references and the specific pitfalls they guard against.
 - Concurrency = several Agent calls in ONE message (they run in parallel). Up to 20 at once.
   Parallelism is for independence and coverage, never for latency (see section 10).
 - Saved workflows (`swarm-run`, `fanout`, `mediate`, `expert-panel`, `research-sweep`, `review-verify`,
-  `plan-tournament`) can be launched **only by the main thread**: Claude Code removes the Workflow tool
+  `plan-tournament`, `visual-iterate`, `manuscript-review`) can be launched **only by the main thread**: Claude Code removes the Workflow tool
   from every subagent. A subagent that wants one either fans out with parallel Agent calls itself or
   returns a recommendation (`Workflow name=<w> args={...}`) as an Open doubt for the main thread.
 - Every brief to a subagent is self-contained: goal, inputs (paths, not pasted blobs), constraints,

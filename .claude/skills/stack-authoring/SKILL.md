@@ -38,7 +38,7 @@ other's work.
 
 | Artifact | Path | Name rule |
 |---|---|---|
-| Agent | `.claude/agents/<group>/<name>.md` | kebab-case, equals file stem, no `:`; group one of orchestration, planning, quality, research, experts, image, synthesis, meta |
+| Agent | `.claude/agents/<group>/<name>.md` | kebab-case, equals file stem, no `:`; group one of orchestration, planning, quality, research, experts, image, synthesis, writing, meta |
 | Skill | `.claude/skills/<name>/SKILL.md` (+ `references/`, `scripts/`) | equals directory name |
 | Workflow | `.claude/workflows/<name>.js` | `meta.name`; must not equal a skill name or `deep-research` |
 | Model tier + initial traits | `config/models.json` → `agents.<name>` = `{tier, effort, maxTurns, why}` | agent name (doctor ERROR if missing) |
@@ -63,7 +63,7 @@ agent type). Do it only with the caller list updated in the same change.
 | `maxTurns` | Counts tool-use rounds (responses that call at least one tool). A moderate allowance: about 2 x the tool rounds of a typical demanding run (`config/models.json`), checked against peers of the same shape (command below). The learner's prior then centres on maxTurns / `prior_limit_ratio` (3.0; `jq .prior_limit_ratio config/learning.json`) and adjusts from evidence |
 | `mcpServers` | Only servers the procedure calls: playwright, exa, jina, spider, context7, image, fetch, neural-memory (cross-session memory; never for web-reading agents) (catalog `config/mcp.servers.json`; set them with `bin/stack agents set <name> mcpServers=a,b`, which writes each one inline as one-line JSON so it connects only while the agent runs; never hand-edit the inline copies, run `bin/stack mcp sync` after a catalog change, never add them to `.mcp.json`) or built-in computer-use as a plain name (interactive sessions only: absent under the SDK/-p, so the procedure must fall back to playwright or the optional peekaboo server, or return the item as blocked). Optional servers in `config/mcp.optional.json` must be enabled (`bin/stack mcp enable <name>`) before they can be referenced |
 | `skills` | Always `delegation-protocol, doubt-escalation, output-contract`, plus at most 3 role skills. Each preloaded skill costs about `wc -c SKILL.md / 3.6` tokens on every spawn |
-| `color` | orchestration purple, planning blue, quality red, research cyan, experts green, image pink, synthesis yellow, meta orange (allowed: red blue green yellow purple orange pink cyan) |
+| `color` | orchestration purple, planning blue, quality red, research cyan, experts green, image pink, synthesis yellow, writing yellow, meta orange (allowed: red blue green yellow purple orange pink cyan) |
 | `disallowedTools` | `Agent` only for pure leaves that must never spawn; otherwise omit `tools` and inherit everything |
 
    Peers for calibration (tier, effort, initial maxTurns of every agent):

@@ -304,5 +304,28 @@
    },
    "maxRounds": 2
   }
+ ],
+ "manuscript-review.js": [
+  {
+   "project": "books/my-novel"
+  },
+  {
+   "project": "books/my-novel",
+   "chapters": [
+    "001",
+    "003"
+   ],
+   "checks": [
+    "style",
+    "developmental"
+   ]
+  },
+  {
+   "project": "books/my-novel",
+   "checks": [
+    "copyedit"
+   ],
+   "maxChapters": 2
+  }
  ]
 }

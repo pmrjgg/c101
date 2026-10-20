@@ -32,6 +32,7 @@
       "Workflow(review-verify)",
       "Workflow(plan-tournament)",
       "Workflow(visual-iterate)",
+      "Workflow(manuscript-review)",
       "mcp__fetch",
       "mcp__neural-memory"
     ],

@@ -356,6 +356,42 @@
       "effort": "high",
       "maxTurns": 180,
       "why": "TypeScript and Node specialist (strict types, tsconfig/build, vitest, React, Node runtime); well-trodden ecosystem, peers go/java/kotlin"
+    },
+    "writing-project-builder": {
+      "tier": "MEDIUM_MODEL",
+      "effort": "medium",
+      "maxTurns": 60,
+      "why": "scaffolds, validates and indexes manuscript projects with manuscript.py; mechanical file work"
+    },
+    "fiction-writer": {
+      "tier": "ADVANCED_MODEL",
+      "effort": "high",
+      "maxTurns": 120,
+      "why": "drafts and revises fiction chapters against outline, bible and style sheet; voice and canon judgment"
+    },
+    "manuscript-reviewer": {
+      "tier": "ADVANCED_MODEL",
+      "effort": "high",
+      "maxTurns": 120,
+      "why": "developmental review and synthesis of copyedit/style reports; whole-book structural judgment"
+    },
+    "copy-editor": {
+      "tier": "MEDIUM_MODEL",
+      "effort": "medium",
+      "maxTurns": 100,
+      "why": "rule-based US English copyediting of chapters from prose_check.py candidates read in context"
+    },
+    "prose-stylist": {
+      "tier": "MEDIUM_MODEL",
+      "effort": "high",
+      "maxTurns": 100,
+      "why": "line-level style analysis (avoid-prose families, show-not-tell, rhythm) with rewrite suggestions"
+    },
+    "chat-aide": {
+      "tier": "MEDIUM_MODEL",
+      "effort": "low",
+      "maxTurns": 6,
+      "why": "real-time message checks: Sonnet keeps tone judgment sharp at low effort; no tools needed for a pasted draft"
     }
   }
 }

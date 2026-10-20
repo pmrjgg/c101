@@ -160,6 +160,66 @@
         "low",
         "high"
       ]
+    },
+    "writing-project-builder": {
+      "maxTurns": [
+        10,
+        300
+      ],
+      "effort": [
+        "low",
+        "high"
+      ]
+    },
+    "fiction-writer": {
+      "maxTurns": [
+        30,
+        600
+      ],
+      "effort": [
+        "high",
+        "max"
+      ]
+    },
+    "manuscript-reviewer": {
+      "maxTurns": [
+        30,
+        600
+      ],
+      "effort": [
+        "high",
+        "max"
+      ]
+    },
+    "copy-editor": {
+      "maxTurns": [
+        15,
+        500
+      ],
+      "effort": [
+        "low",
+        "high"
+      ]
+    },
+    "prose-stylist": {
+      "maxTurns": [
+        15,
+        500
+      ],
+      "effort": [
+        "medium",
+        "xhigh"
+      ]
+    },
+    "chat-aide": {
+      "maxTurns": [
+        2,
+        20
+      ],
+      "effort": [
+        "low",
+        "medium"
+      ]
     }
   },
   "apply_compact_window": true

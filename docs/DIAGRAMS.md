@@ -157,7 +157,7 @@ flowchart TB
 
 The `delegator` is the only agent that talks to the user: it runs as the main thread at depth 0, classifies each
 request and sends it down the cheapest adequate route, either a saved workflow or an Agent call into one of the
-eight agent groups (57 agents, nesting up to depth 8, every spawn checked by the `pre-agent` hook of diagram 4).
+nine agent groups (63 agents, nesting up to depth 8, every spawn checked by the `pre-agent` hook of diagram 4).
 Each agent lists only the MCP servers it calls: the research agents use exa, jina, spider and fetch, with
 playwright for `browser-operator` and the built-in computer-use server for `computer-operator`; `tester` uses
 playwright; eleven experts and `architect` use context7; the image agents and `graphic-design-expert` use the image
@@ -186,7 +186,7 @@ flowchart TB
         HS -->|indexes| GS
     end
 
-    subgraph AG["57 agents in 8 groups; subagents run at depth 1 to 8"]
+    subgraph AG["63 agents in 9 groups; subagents run at depth 1 to 8"]
         direction TB
         ORC["Orchestration, 7<br/>(with the delegator):<br/>orchestrator, mediator,<br/>swarm-coordinator, ..."]:::agent
         PLN["Planning, 3<br/>planner, architect,<br/>plan-critic"]:::agent

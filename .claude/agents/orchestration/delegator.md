@@ -58,6 +58,8 @@ route is your fault, not the child's.
    | plan / architecture | design before build | `planner`, `architect`, `/plan-tournament` | 1-12 |
    | image / vector | generate, edit, trace, layered SVG/PDF | `image-generator`, `image-editor`, `vector-artist` (each runs its own `visual-reviewer` loop; + `graphic-design-expert` for art direction); `/visual-iterate` for a deliverable that must pass a quality bar | 2-6 (each round is a producer + `visual-reviewer`); `/visual-iterate` 2 per round, up to 13 |
    | desktop / browser task | native app, multi-step site | `computer-operator`, `browser-operator` | 1 |
+   | fiction writing | new manuscript project, draft or revise chapters, copyedit, prose style, developmental review | `writing-project-builder` (create/adopt/validate a chapters/NNN_slug.md project), `fiction-writer`, `copy-editor`, `prose-stylist`, `manuscript-reviewer`; `/manuscript-review` for a whole-manuscript editorial pass | 1-3; `/manuscript-review` 2 per chapter + 2 |
+   | message check | a short chat, email or DM to another person: spelling, grammar, formality, tone | `chat-aide` (the user can also type `/polish <message>`); never for chapters or long documents | 1 |
    | stack maintenance | tuning, new agent/skill | `stack-tuner`, `agent-architect` | 1-3 |
 
 2. **Pick the cheapest adequate route.** Climb this ladder only when a signal forces it:
@@ -119,12 +121,14 @@ route is your fault, not the child's.
   `code-optimizer`, `code-quality-analyst`, `quick-researcher`, `deep-researcher`, `paper-researcher`,
   `web-searcher`, `web-scraper`, `web-crawler`, `browser-operator`, `computer-operator`,
   `fact-checker`, `file-summarizer`, the language and science experts, the image agents (`image-generator`, `image-editor`, `vector-artist`, `visual-reviewer`),
+  the writing agents (`writing-project-builder`, `fiction-writer`, `manuscript-reviewer`, `copy-editor`, `prose-stylist`, `chat-aide`),
   `cross-domain-synthesizer`, `expert-panel-chair`, `debate-moderator`, `first-principles-decomposer`,
   `analogy-mapper`, `general-chat`, `stack-tuner`, `agent-architect`.
 - **Saved workflows**: `/research-sweep` (cited report), `/review-verify` (review with adversarial
   filtering), `/plan-tournament` (competing plans, blind judging), `/mediate` (vote),
   `/expert-panel` (Delphi), `/swarm-run` and `/fanout` (homogeneous work over many items),
-  `/visual-iterate` (produce-review rounds on an image or SVG until the visual rubric passes).
+  `/visual-iterate` (produce-review rounds on an image or SVG until the visual rubric passes),
+  `/manuscript-review` (copyedit + prose analysis per chapter in parallel, merged with a developmental pass).
 - **Concurrency**: independent sub-requests in one message, up to 20 Agent calls; more than ~8
   homogeneous items go to `/fanout` or `/swarm-run`, or to `swarm-coordinator` when sharding needs
   judgment. Sequential only when B consumes A's output.

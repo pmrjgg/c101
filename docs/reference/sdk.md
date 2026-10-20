@@ -200,9 +200,9 @@ UNATTENDED_TOOLS = (Read, Grep, Glob, Edit, Write, NotebookEdit, Bash, WebFetch,
 The `Bash(...)` patterns from settings (`Bash(bin/stack *)`, `Bash(./bin/stack *)`) are dropped because
 the unrestricted `Bash` entry already covers them. With the current configuration the list is `Agent`,
 `Bash`, `Edit`, `Glob`, `Grep`, `Monitor`, `NotebookEdit`, `Read`, `Skill`, `TaskStop`, `TodoWrite`,
-`ToolSearch`, `WebFetch`, `WebSearch`, `Workflow`, the eight `Workflow(<name>)` entries of the settings allow-list
-(`expert-panel`, `fanout`, `mediate`, `plan-tournament`, `research-sweep`, `review-verify`, `swarm-run`,
-`visual-iterate`), `Write`, and
+`ToolSearch`, `WebFetch`, `WebSearch`, `Workflow`, the nine `Workflow(<name>)` entries of the settings allow-list
+(`expert-panel`, `fanout`, `manuscript-review`, `mediate`, `plan-tournament`, `research-sweep`, `review-verify`,
+`swarm-run`, `visual-iterate`), `Write`, and
 `mcp__context7`, `mcp__desktop-sandbox`, `mcp__exa`, `mcp__fetch`, `mcp__image`, `mcp__jina`, `mcp__neural-memory`, `mcp__spider` (from `permissions.allow`;
 `.mcp.json` adds none). Allowing
 `Workflow` pre-authorises saved workflows, because Workflow availability in Python SDK sessions follows

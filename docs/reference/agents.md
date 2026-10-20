@@ -1,6 +1,6 @@
 # Agents
 
-The stack ships 57 subagents in eight groups under `.claude/agents/<group>/<name>.md`. Claude Code scans the
+The stack ships 63 subagents in nine groups under `.claude/agents/<group>/<name>.md`. Claude Code scans the
 directory recursively, so the group directories only organise the files; the agent's identity is its `name`.
 Under the Agent SDK, `stack_sdk/agents.py` loads the same files into `AgentDefinition` objects (body as
 `prompt`, list fields `tools`, `disallowedTools`, `skills`, `mcpServers` normalised, keys the SDK does not
@@ -183,6 +183,32 @@ for a logo). Besides `delegator` and `orchestrator`, which route image nodes to 
 the image agents as executors and spawns `visual-reviewer` to judge their output. Larger jobs become `Workflow name=visual-iterate args={...}` (one deliverable that
 needs many review rounds) or `Workflow name=fanout args={agentType: "image-generator", ...}` (a catalog)
 Open doubts for the main thread.
+
+## Writing (`.claude/agents/writing/`)
+
+Installed by the `writing` pack (with the skills `fiction-craft`, `manuscript-project`, `copyediting`,
+`prose-style-analysis`, `developmental-editing` and `polish`). The fiction agents work on a markdown project:
+`manuscript.md` (front matter: language, POV, tense, `chapter_dir`, `chapter_pattern`), `chapters/NNN_slug.md`,
+`outline.md`, `bible/`, `style-sheet.md` and `reviews/`, managed by `manuscript.py` (scaffold, validate, index,
+stats, new, renumber, concat) and analysed by `prose_check.py` (style, mechanics, consistency, readability); both are
+stdlib scripts in the pack's skills. Analysis agents report first (reviews with `file:line` anchors) and edit
+chapters only on an explicit request, with a backup and a `diff -u`. No writing agent has an MCP server:
+manuscript and message text never reach a web service (LanguageTool only through a local server).
+
+| Agent | Tier / model | Effort | maxTurns | MCP | Role skills | Role and mechanics |
+|---|---|---|---|---|---|---|
+| `writing-project-builder` | MEDIUM / `claude-sonnet-5-5` | medium | 60 | none | `manuscript-project`, `fiction-craft` | Creates the default layout or a custom one, adopts and validates existing folders, adds, inserts and renumbers chapters, keeps the chapter list in `manuscript.md` current; Index step of `/manuscript-review` |
+| `fiction-writer` | ADVANCED / `claude-opus-5-5` | high | 120 | none | `fiction-craft`, `manuscript-project`, `prose-style-analysis` | Drafts and revises chapters after reading the outline, bible, style sheet and neighbouring chapters; lists and records new canon; self-checks with `prose_check.py style`; writes only the chapter files its brief names |
+| `manuscript-reviewer` | ADVANCED / `claude-opus-5-5` | high | 120 | none | `developmental-editing`, `fiction-craft`, `manuscript-project` | Developmental review (structure, plot logic, stakes, pacing, POV and tense, arcs, continuity against the bible) into `reviews/<stamp>-developmental.md`; Synthesize step of `/manuscript-review` |
+| `copy-editor` | MEDIUM / `claude-sonnet-5-5` | medium | 100 | none | `copyediting`, `manuscript-project` | US English (Merriam-Webster, CMOS fiction defaults): spelling, homophones, dialogue punctuation, grammar, tense slips, consistency of names, terms and numbers; candidates from `prose_check.py mechanics` and `consistency`, judged in context |
+| `prose-stylist` | MEDIUM / `claude-sonnet-5-5` | high | 100 | none | `prose-style-analysis`, `fiction-craft` | Show-not-tell, purple prose, generic or AI-sounding prose, filter words and weak verbs, said-bookisms, repetition and rhythm, with rewrites in the author's voice; simplification to a target reading grade on request |
+| `chat-aide` | MEDIUM / `claude-sonnet-5-5` | low | 6 | none | none | Real-time check of a short message to another person (chat, email, DM): corrected message first, copy-ready, with spelling, grammar, formality, tone, politeness and clarity fixed in the writer's voice and language. A locked leaf (`disallowedTools`: Agent, Bash, Edit, Write, NotebookEdit, WebFetch, WebSearch); the `/polish <message>` skill runs it directly |
+
+Spawn rules: `fiction-writer` may call `prose-stylist`, `copy-editor`, `manuscript-reviewer`, `file-summarizer` and
+`quick-researcher` (factual questions only, never manuscript text); `manuscript-reviewer` may call `copy-editor`,
+`prose-stylist`, `file-summarizer` and `quick-researcher`; the builder, `copy-editor` and `prose-stylist` may call
+only `file-summarizer`; `chat-aide` spawns nothing. A whole-manuscript editorial pass is the saved workflow
+[manuscript-review](workflows.md#manuscript-review).
 
 ## Meta (`.claude/agents/meta/`)
 

@@ -1,7 +1,7 @@
 # Overview and request lifecycle
 
-Under the hood, one session becomes a hierarchical multi-agent system. The repository contains 57 subagents in eight groups (`.claude/agents/<group>/<name>.md`), 228 skills
-(`.claude/skills/<name>/SKILL.md`), eight saved workflows (`.claude/workflows/<name>.js`), eight hooks wired in
+Under the hood, one session becomes a hierarchical multi-agent system. The repository contains 63 subagents in nine groups (`.claude/agents/<group>/<name>.md`), 234 skills
+(`.claude/skills/<name>/SKILL.md`), nine saved workflows (`.claude/workflows/<name>.js`), eight hooks wired in
 `.claude/settings.json`, MCP servers (`config/mcp.servers.json`, inlined into the agents that use them, so each
 connects only while such an agent runs), and the stdlib-only Python tooling that the hooks run
 (`stack/`, CPython 3.13 via uv). No code in this repository answers a request itself. The code sets the rules
@@ -68,7 +68,7 @@ flowchart TB
     end
 
     subgraph WF["Saved workflows, main thread only"]
-        W["/research-sweep /review-verify /plan-tournament<br/>/mediate /expert-panel /swarm-run /fanout /visual-iterate"]
+        W["/research-sweep /review-verify /plan-tournament<br/>/mediate /expert-panel /swarm-run /fanout /visual-iterate<br/>/manuscript-review"]
     end
 
     subgraph OR["Orchestration"]
@@ -149,6 +149,7 @@ flowchart TB
 | Research | 11 agents | Exa, Jina, Spider, Playwright, computer use (host and sandboxed), arXiv/SSRN |
 | Quality | 9 agents | find, then verify, then gate |
 | Image | `image-generator`, `image-editor`, `vector-artist`, `visual-reviewer` | produce, then review, then revise against a scored rubric |
+| Writing | 6 agents | fiction projects: scaffold, draft, copyedit, prose style, developmental review; `chat-aide` / `/polish` for messages |
 | Meta | `stack-tuner`, `agent-architect` | operate the learner; extend the stack |
 
 A spawn rule makes the orchestration group (plus `expert-panel-chair` and `debate-moderator`) unavailable below

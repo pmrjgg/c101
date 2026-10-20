@@ -293,7 +293,7 @@ and never rely on context the child cannot see ("as discussed", "the file above"
   `name=fanout` (map) or `name=swarm-run` (shards plus merge). A subagent sends batches of up to 20
   Agent calls per message, or returns `Workflow name=swarm-run args={...}` as an Open doubt.
 - Saved workflows (`swarm-run`, `fanout`, `mediate`, `expert-panel`, `research-sweep`,
-  `review-verify`, `plan-tournament`, `visual-iterate`) run only on the main thread, because Claude
+  `review-verify`, `plan-tournament`, `visual-iterate`, `manuscript-review`) run only on the main thread, because Claude
   Code removes the Workflow tool from every subagent. They run up to
   `CLAUDE_CODE_WORKFLOW_MAX_CONCURRENT_AGENTS=16` agents at once with deterministic control flow.
   Inside a workflow, `model` may be passed only for agentType `general-purpose` (alias `opus`,

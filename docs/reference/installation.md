@@ -169,12 +169,13 @@ listed by name only, so they cost almost no context until used. Each skill is `.
 | `mathematics` | | `mathematics-toolkit` | `mathematics-expert` |
 | `physics` | | `physics-toolkit` | `physics-expert` |
 | `graphic-design` | `image` | `graphic-design` | `graphic-design-expert` |
+| `writing` | | `fiction-craft` | `writing-project-builder`, `fiction-writer`, `manuscript-reviewer`, `copy-editor`, `prose-stylist`, `chat-aide` (skills `manuscript-project`, `copyediting`, `prose-style-analysis`, `developmental-editing`, `polish`; workflow `/manuscript-review`) |
 | `coding-core` | | `coding-general` | language-agnostic playbooks: git, refactoring, codemods, API contracts, SQL tuning, migrations, regex, resilience, dependency upgrades, docs/ADRs |
 | `python` | `coding-core` | `python-craft` | `python-expert` (Python 3.13 with uv: packaging, typing, asyncio, pytest, performance) |
 | `typescript` | `coding-core` | `typescript-craft` | `typescript-expert` (TypeScript/Node/Bun: strict typing, tsconfig, testing, runtime patterns) |
 | `devops` | `coding-core` | | containers, CI/CD, shell robustness, observability |
 
-Granular skills shipped today (168, plus the `coding-general` hub). Each hub ends with a "Granular skills"
+Granular skills shipped today (169, plus the `coding-general` hub). Each hub ends with a "Granular skills"
 routing table naming them; hubs keep their full original text.
 
 | Hub | Granular skills |
@@ -540,7 +541,7 @@ c101/
 ├── .gitignore              .stack/, .claude-flow/ (third-party plugin state), settings.local.json, *.env, caches, .venv/
 ├── .claude/
 │   ├── settings.json       env, model allowlist, MCP approvals, permissions, hooks
-│   ├── agents/<group>/     subagents: orchestration, planning, quality, research, experts, synthesis, image, meta
+│   ├── agents/<group>/     subagents: orchestration, planning, quality, research, experts, synthesis, image, writing, meta
 │   ├── skills/<name>/      SKILL.md + references/ + scripts/ (hubs, granular, protocols, methods)
 │   └── workflows/*.js      saved workflows (main thread only)
 ├── bin/                    stack, stack-sdk, claude-stack, image-router, desktop-sandbox, neural-memory-mcp, mcp-run, mcp-headers, _pyenv.sh
