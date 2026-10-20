@@ -99,7 +99,7 @@ Keys use X keysym names: `Return`, `Tab`, `Escape`, `BackSpace`, `Delete`, `Page
 
 | Threat | Control | Enforced by |
 |---|---|---|
-| Sandbox reaches the user's machine | separate container, read-only root, `--cap-drop ALL`, `no-new-privileges`, unprivileged user, no Docker socket, single bind mount | `runtime.run_argv` (fixed flags; no tool argument changes them) |
+| Sandbox reaches the user's machine | separate container, read-only root, `--cap-drop ALL`, `no-new-privileges`, unprivileged user, no Docker socket, one writable bind mount (plus read-only generated `/etc/passwd` and `/etc/group` naming the container user) | `runtime.run_argv` (fixed flags; no tool argument changes them) |
 | Data leaves over the network | `--network none` unless the user sets `DESKTOP_SANDBOX_NETWORK=bridge` in stack.env | `config.load` (only `none` or `bridge`, never `host`) |
 | Agent types a secret (or is tricked into it) | `type_text` and `launch` refuse private keys, provider keys and tokens, JWTs, Luhn-valid card numbers and high-entropy strings | `guard.secret_kind` |
 | Keys reach the container | `bin/mcp-run --only DESKTOP_SANDBOX_` exports none of stack.env's keys to the server; the container CLI runs with a minimal environment and the container gets four fixed variables | launcher, `runtime.cli_env`, `run_argv` |
@@ -157,14 +157,20 @@ Brief: "Make a bar chart PDF of `data/q3.csv` with LibreOffice." The image was b
 1. ToolSearch select the core and apps-and-files sets. Call `sandbox_status`: runtime and image are present,
    `image_packages` includes `libreoffice-calc`, and network is `none`.
 2. `sandbox_start`. Then `put_file {source: "data/q3.csv"}` puts it at `/exchange/q3.csv`.
-3. `launch {argv: ["libreoffice", "--calc", "/exchange/q3.csv"]}`. Then `wait {seconds: 4}`: the
-   screenshot shows the Text Import dialog. `key {keys: "Return", then_screenshot: true}` accepts it.
-4. Select the data: `click` cell A1, `key {keys: "ctrl+a"}`. Insert the chart through the menu:
-   `click` Insert, `click` Chart..., `key {keys: "Return", then_screenshot: true}` (Finish).
-5. Export: `click` File > Export as PDF..., type `/exchange/q3-chart.pdf` into the file name field, then press
-   `key Return` twice. Verify on the host: `ls -la .stack/sandbox/<id>/exchange/q3-chart.pdf` shows size > 0, and
-   `file` reports `PDF document`.
-6. `sandbox_stop`. Report the PDF path, the audit path and two saved screenshots.
+3. `launch {argv: ["libreoffice", "--calc", "/exchange/q3.csv"]}`, then `wait {seconds: 10}` (the first start is
+   slow). The screenshot shows the Text Import dialog with the columns previewed: `key {keys: "Return"}` accepts it.
+4. Every sandbox has a fresh LibreOffice profile, so a "Tip of the Day" dialog and a first-run info bar appear:
+   `click` its OK button (ignore the info bar). Select the data: `click` cell A1, then
+   `key {keys: "ctrl+shift+End"}`. The status bar should read "Selected: 5 rows, 2 columns" and show the right Sum.
+5. Insert the chart: `click` Insert, then `click` Chart..., wait, then `click` Finish in the Chart Wizard (Column is
+   preselected). Press `key Escape` twice to leave chart edit mode.
+6. Export: `click` File, then `click` Export as PDF.... In PDF Options, set Range to All (otherwise only the
+   current selection is exported), then `click` Export. In the Export dialog (it opens in `/exchange`),
+   triple-click the File name field, `type_text "/exchange/q3-chart.pdf"`, and press `key Return`.
+7. `sandbox_stop`, then verify on the host: `file .stack/sandbox/<id>/exchange/q3-chart.pdf` reports `PDF document, 1
+   pages`. Render it to check the chart (`sips -s format png <pdf> --out <png>` on macOS, `pdftoppm` on Linux). The
+   exchange also holds LibreOffice's `.~lock.q3.csv#` file, which you can ignore. Report the PDF path, the audit path and
+   the checkpoint screenshots. A real run took 18 actions.
 
 GUI test recipes for tester (deterministic waits, assertions from window titles and zoomed regions,
 codifying a run as a repeatable xdotool or pytest script, flake control): [GUI testing](references/gui-testing.md).

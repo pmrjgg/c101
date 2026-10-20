@@ -2,8 +2,8 @@
 
 Drives a disposable Linux desktop (Xvfb + openbox + xdotool) inside a hardened container: no network by
 default, read-only root filesystem, every capability dropped, no-new-privileges, an unprivileged user,
-memory/CPU/PID limits, a hard lifetime enforced by the container itself, and a single bind mount (the
-per-sandbox exchange directory under ``.stack/sandbox/``). The host desktop, the user's apps, files,
+memory/CPU/PID limits, a hard lifetime enforced by the container itself, and one writable bind mount (the
+per-sandbox exchange directory under ``.stack/sandbox/``) plus read-only generated passwd/group files. The host desktop, the user's apps, files,
 keychain and keys are never reachable from it. Works the same in interactive Claude Code and under the
 Claude Agent SDK, which is why it is the stack's unattended computer-use route.
 

@@ -13,7 +13,7 @@ the `bin/mcp-run --only` filter, and the hook wiring in `.claude/settings.json` 
 | Agent integrity | the model's context | be steered by text rendered inside the sandbox |
 
 Boundaries: (1) agent -> MCP server (tool arguments, validated by `guard.py`); (2) server -> container CLI
-(argv only, minimal environment); (3) container -> host (kernel isolation plus one bind mount);
+(argv only, minimal environment); (3) container -> host (kernel isolation plus one writable bind mount and two read-only generated identity files);
 (4) sandbox screen -> agent (screenshots and window titles: untrusted).
 
 ## STRIDE per boundary

@@ -26,7 +26,9 @@ def test_run_argv_is_hardened(tmp_path: Path) -> None:
     user = _flag(argv, "--user")[0]
     assert not user.startswith("0:")
     mounts = _flag(argv, "--mount")
-    assert mounts == [f"type=bind,source={tmp_path / 'ex'},target=/exchange"]  # the only host path shared
+    assert mounts[0] == f"type=bind,source={tmp_path / 'ex'},target=/exchange"  # the only writable host path
+    assert mounts[1:] == [f"type=bind,source={tmp_path / 'passwd'},target=/etc/passwd,readonly",
+                          f"type=bind,source={tmp_path / 'group'},target=/etc/group,readonly"]
     assert not any(a in argv for a in ("--privileged", "--pid", "--ipc", "-v", "--volume", "--device"))
     assert not any("docker.sock" in a for a in argv)
     envs = _flag(argv, "--env")
@@ -124,3 +126,12 @@ def test_sanitize_tolerates_vanishing_entries(tmp_path: Path, monkeypatch: pytes
 
     monkeypatch.setattr(Path, "lstat", flaky)
     assert runtime.sanitize_exchange(ex) == []
+
+
+def test_identity_files(tmp_path: Path) -> None:
+    passwd, group = runtime.write_identity(tmp_path, 501, 20)
+    lines = passwd.read_text().splitlines()
+    assert "sandbox:x:501:20:sandbox:/home/sandbox:/usr/sbin/nologin" in lines
+    assert all(line.split(":")[6] == "/usr/sbin/nologin" for line in lines)  # no login shells
+    assert "sandbox:x:20:" in group.read_text().splitlines()
+    assert runtime.write_identity(tmp_path, 10001, 0)[1].read_text().count("root:x:0:") == 1

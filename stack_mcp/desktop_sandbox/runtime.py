@@ -46,8 +46,28 @@ def container_user() -> tuple[int, int]:
 _MOUNT_UNSAFE = set(',"=\n\r\'')
 
 
+def write_identity(root: Path, uid: int, gid: int) -> tuple[Path, Path]:
+    """Generated /etc/passwd and /etc/group naming the container user.
+
+    The container runs as the host user's uid so exchange files stay theirs, but the image has no account
+    for that uid, and programs such as LibreOffice abort when getpwuid() fails. These two files are
+    mounted read-only over the image's copies; they grant nothing (no caps, no setuid binaries).
+    """
+    passwd, group = root / "passwd", root / "group"
+    passwd.write_text("root:x:0:0:root:/root:/usr/sbin/nologin\n"
+                      "nobody:x:65534:65534:nobody:/nonexistent:/usr/sbin/nologin\n"
+                      f"sandbox:x:{uid}:{gid}:sandbox:/home/sandbox:/usr/sbin/nologin\n", encoding="utf-8")
+    groups = {0: "root", 65534: "nogroup"}
+    groups.setdefault(gid, "sandbox")
+    group.write_text("".join(f"{n}:x:{g}:\n" for g, n in groups.items()), encoding="utf-8")
+    for p in (passwd, group):
+        p.chmod(0o644)
+    return passwd, group
+
+
 def run_argv(s: Settings, name: str, exchange: Path) -> list[str]:
     """``<cli> run`` for one sandbox. Every flag here is part of the security model (see the skill)."""
+    root = exchange.parent
     if _MOUNT_UNSAFE & set(str(exchange)):
         raise RuntimeFailure(f"the project path {str(exchange)!r} contains one of , \" = ' or a newline, which "
                              "cannot be passed safely to --mount; move the project to a plain path")
@@ -69,6 +89,8 @@ def run_argv(s: Settings, name: str, exchange: Path) -> list[str]:
         "--user", f"{uid}:{gid}",
         "--workdir", "/exchange",
         "--mount", f"type=bind,source={exchange},target=/exchange",
+        "--mount", f"type=bind,source={root / 'passwd'},target=/etc/passwd,readonly",
+        "--mount", f"type=bind,source={root / 'group'},target=/etc/group,readonly",
         "--env", f"SCREEN={s.width}x{s.height}x24",
         "--env", f"MAX_LIFETIME={s.max_lifetime}",
         "--env", "HOME=/home/sandbox",
@@ -220,6 +242,7 @@ class Sandbox:
         (root / "exchange").mkdir(parents=True, mode=0o700)
         (root / "shots").mkdir(mode=0o700)
         box = cls(settings=s, name=f"c101-sandbox-{sid}", root=root)
+        write_identity(root, *container_user())
         run(run_argv(s, box.name, box.exchange), timeout=60)
         try:
             box.wait_ready()
