@@ -210,7 +210,7 @@ Skills: `adversarial-verification`, `analogical-transfer`, `bayesian-aggregation
 `deep-research`, `delegation-protocol`, `delphi-method`, `doubt-escalation`, `effort-and-model-selection`,
 `ensemble-assembly`, `expert-synthesis`, `first-principles`, `judge-panel`, `literature-review`, `mediator-voting`,
 `mesh-blackboard`, `orchestration-patterns`, `output-contract`, `performance-optimization`, `planning-dag`,
-`quick-research`, `red-teaming`, `scraping-crawling`, `security-review`, `source-evaluation`, `stack-authoring`,
+`quick-research`, `red-teaming`, `sandboxed-computer-use`, `scraping-crawling`, `security-review`, `source-evaluation`, `stack-authoring`,
 `stack-tuning`, `structured-debate`, `swarm-execution`, `testing-strategy`, `tree-of-thought`, `triz-morphological`,
 `validation-gates`, `web-search-tools`.
 
@@ -319,6 +319,15 @@ Starts interactive or headless Claude Code with the main-thread agent pinned:
 `CLAUDE_STACK_MAIN_AGENT` for the hooks. `--model`, `--effort` and `--agent` (with or without `=`) are refused with
 exit 2 because the tier list is authoritative; every other argument (for example `-p "question"`) passes through
 ([Pinned launcher](hooks.md#4-pinned-launcher-binclaude-stack)).
+
+### `bin/desktop-sandbox`
+
+Launches the `desktop-sandbox` MCP server (`python -m stack_mcp.desktop_sandbox`, Python 3.13 via `_pyenv.sh`) with
+the repo on `PYTHONPATH`. Agents' inline entries start it through `bin/mcp-run --only DESKTOP_SANDBOX_`, so it
+receives only `DESKTOP_SANDBOX_*` settings and no API keys. `--check` prints the container runtime, the image and
+the limits (exit 1 when the runtime or image is missing). `--build` builds the image once from
+`stack_mcp/desktop_sandbox/image/`; it is the only step that needs network, and agents never run it. See
+[The desktop-sandbox server](mcp.md#the-desktop-sandbox-server).
 
 ### `bin/image-router`
 
@@ -448,7 +457,7 @@ default, `"session_end"` or `"never"`) sets when learned values are written; age
 | `availableModels` | `claude-opus-5-5`, `claude-sonnet-5-5`, `claude-haiku-5-5` | the only models allowed in this project |
 | `enforceAvailableModels` | `true` | Claude Code enforces the list (prefix matching here; exact matching only via managed settings: `bin/stack managed-settings`) |
 | `enabledMcpjsonServers` | `[]` | `.mcp.json` servers approved without a prompt (catalog servers are not `.mcp.json` servers); maintained by `bin/stack mcp enable/disable` |
-| `permissions.allow` | `Bash(bin/stack *)`, `Bash(./bin/stack *)`, `mcp__exa`, `mcp__jina`, `mcp__spider`, `mcp__image`, `mcp__context7`, `mcp__fetch`, `mcp__neural-memory`, and `Workflow(<name>)` for `swarm-run`, `fanout`, `mediate`, `expert-panel`, `research-sweep`, `review-verify`, `plan-tournament` and `visual-iterate` | pre-approved tools (Playwright tools still ask) |
+| `permissions.allow` | `Bash(bin/stack *)`, `Bash(./bin/stack *)`, `mcp__exa`, `mcp__jina`, `mcp__spider`, `mcp__image`, `mcp__context7`, `mcp__desktop-sandbox`, `mcp__fetch`, `mcp__neural-memory`, and `Workflow(<name>)` for `swarm-run`, `fanout`, `mediate`, `expert-panel`, `research-sweep`, `review-verify`, `plan-tournament` and `visual-iterate` | pre-approved tools (Playwright tools still ask) |
 | `permissions.deny` | `Read(~/.claude/stack.env)`, `Bash(cat ~/.claude/stack.env*)` | keep secrets out of every context |
 | `hooks.SessionStart` | `bin/stack hook session-start`, timeout 10 | apply pending learned values; status line: depth, missing keys, applied or recent self-tuning |
 | `hooks.PreToolUse` (matcher `Agent\|Task`) | `bin/stack hook pre-agent`, timeout 10 | depth guard, spawn rules, budgets, context header, tier enforcement |
@@ -472,7 +481,7 @@ Every hook command is `"$CLAUDE_PROJECT_DIR"/bin/stack hook <name>`.
 | `config/image-ops.json` | per image operation: env names, tool, adapter request-mapping notes, default output format; no secrets and no model choices |
 | `config/stack.env.example` | template for `~/.claude/stack.env`: web keys (`EXA_API_KEY`, `JINA_API_KEY`, `SPIDER_API_KEY`, `CONTEXT7_API_KEY`), `IMAGE_<OP>_URL/_KEY/_MODEL` blocks (optional `_API`, `_PARAMS`), optional fallback keys |
 | `config/stack.env.fal.example` | alternative template when every image operation runs on fal: each op points at `https://queue.fal.run` with a verified fal endpoint (GEN `fal-ai/nano-banana-2.1`, REF/EDIT `fal-ai/nano-banana-2.1/edit`, TRANSPARENT `fal-ai/gpt-image-1/text-to-image`, SEGMENT `fal-ai/sam-3/image`, BG_REMOVAL `fal-ai/bria/background/remove`, UPSCALE `fal-ai/topaz/upscale/image`, VECTOR `fal-ai/recraft/v4.1/text-to-vector`, TRACE `fal-ai/recraft/vectorize`), the fal key repeated per op (no shared-key fallback), SVG manipulation left to `claude`. Copy it to `~/.claude/stack.env` (mode 600) and replace `your-fal-key` |
-| `pyproject.toml` | dependencies, scripts (`stack`, `image-router`, `stack-sdk`), `[tool.pytest.ini_options] testpaths = ["tests", "stack_mcp"]` |
+| `pyproject.toml` | dependencies, scripts (`stack`, `image-router`, `desktop-sandbox`, `stack-sdk`), `[tool.pytest.ini_options] testpaths = ["tests", "stack_mcp"]` |
 | `.python-version` | `3.13` |
 
 ### Environment variables
@@ -532,13 +541,15 @@ c101/
 │   ├── agents/<group>/     subagents: orchestration, planning, quality, research, experts, synthesis, image, meta
 │   ├── skills/<name>/      SKILL.md + references/ + scripts/ (hubs, granular, protocols, methods)
 │   └── workflows/*.js      saved workflows (main thread only)
-├── bin/                    stack, stack-sdk, claude-stack, image-router, neural-memory-mcp, mcp-run, mcp-headers, _pyenv.sh
+├── bin/                    stack, stack-sdk, claude-stack, image-router, desktop-sandbox, neural-memory-mcp, mcp-run, mcp-headers, _pyenv.sh
 ├── config/                 models, policy, learning, packs, image-ops, mcp.servers, mcp.optional (JSON); stack.env.example
 ├── stack/                  stdlib-only tooling (runs inside hooks)
 │   ├── cli.py install.py packs.py doctor.py hooks.py budget.py tiers.py paths.py envfile.py frontmatter.py mcpcat.py
 │   └── learn/              ingest.py (transcripts), engine.py (pipeline), model.py (recommendations), bayes.py (posteriors)
 ├── stack_mcp/image_router/ image MCP server: server and tools, per-protocol adapters (providers/), imaging and
 │                           masks, output io and sidecars, SVG layers, PDF export, tests/
+├── stack_mcp/desktop_sandbox/ desktop-sandbox MCP server (sandboxed computer use): server, guard, runtime,
+│                           image/ (Dockerfile, entrypoint), tests/
 ├── stack_sdk/              Agent SDK bridge: __main__ (CLI), options, agents, hooks, mcp
 ├── docs/                   ARCHITECTURE, CONVENTIONS, DEPTH, DIAGRAMS, LEARNING, MCP, SDK; diagrams/ (SVG)
 │   └── reference/          full reference manual, one file per README section
@@ -577,6 +588,7 @@ Every suite that touches state points `CLAUDE_STACK_DATA` at a temporary directo
 | `tests/test_sdk.py` | skipped unless `claude_agent_sdk` imports (run under uv). `SdkAgentTests` and `SdkOptionsTests`; each test and what it asserts is in [SDK tests](sdk.md#sdk-tests) |
 | `tests/test_workflows.py` | skipped without `node`. Each `.claude/workflows/*.js` runs in `tests/wf_harness.mjs` ([Dry-run harness](workflows.md#dry-run-harness)): with no args it must return `{started: false}` without spawning an agent, and each fixture in `tests/workflow_args.json` must complete with at least one agent call and an object result under seeds 1, 2 and 3 |
 | `stack_mcp/image_router/tests/` (pytest) | per-operation env parsing and API detection, tool exposure (`svg_transform` hidden while manipulation is `claude`), not-configured errors, each adapter's request shape (headers, body, data URIs, multipart parts) and response parsing against `httpx.MockTransport`, mask normalisation and the masked composite, `svg_inspect`/`svg_layerize`/`layers_compose` on fixtures (z-order and appearance preserved), `export_pdf` with Optional Content Groups (checked with pikepdf) and a non-layered PDF, `svg_render` dimensions, stdio end-to-end (initialize, tools/list, `image_ops_status`, an unconfigured-operation error), no secrets in sidecars or errors |
+| `stack_mcp/desktop_sandbox/tests/` (pytest) | input guard (secret refusal, keysym grammar, bounds, credential files, symlink escapes), hardened `run` flags and minimal CLI environment, exchange sanitizing, orphan reaping, settings clamping, and the full tool cycle against a fake container CLI (budget, one sandbox per server, audit without typed text, teardown on exit); no Docker needed |
 
 ## Doctor
 

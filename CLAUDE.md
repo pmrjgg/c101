@@ -1,6 +1,6 @@
 # c101 — Claude Code agent stack
 
-This repository *is* a Claude Code configuration: 57 subagents (`.claude/agents/<group>/`), 227 skills
+This repository *is* a Claude Code configuration: 57 subagents (`.claude/agents/<group>/`), 228 skills
 (`.claude/skills/`: hubs, method skills and granular playbooks; see `config/packs.json`), 8 saved workflows (`.claude/workflows/`), hooks and MCP servers, plus Python tooling
 (`stack/`, `stack_mcp/`) on CPython 3.13 managed by uv.
 
@@ -11,7 +11,7 @@ This repository *is* a Claude Code configuration: 57 subagents (`.claude/agents/
 - Python: add deps with `uv add`, never pip; keep `stack/` stdlib-only (it runs inside hooks).
 - `maxTurns`/`effort` in agent frontmatter are tuned by `bin/stack learn apply`; respect bounds in
   `config/learning.json` rather than fighting the learner.
-- MCP servers live in `config/mcp.servers.json` and are inlined into agents by `bin/stack mcp sync` (lazy: each
+- MCP servers live in `config/mcp.servers.json` (our own: `stack_mcp/image_router/`, `stack_mcp/desktop_sandbox/`) and are inlined into agents by `bin/stack mcp sync` (lazy: each
   connects only while its agent runs; `shared` servers such as neural-memory are inline only in their owner, the
   delegator, and named elsewhere); never add stack servers to `.mcp.json`.
 - Never read, print or commit `~/.claude/stack.env`; keys reach MCP servers only via `bin/mcp-run` /

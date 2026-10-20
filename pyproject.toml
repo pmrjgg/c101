@@ -20,6 +20,7 @@ dependencies = [
 [project.scripts]
 stack = "stack.cli:main"
 image-router = "stack_mcp.image_router.server:main"
+desktop-sandbox = "stack_mcp.desktop_sandbox.server:main"
 stack-sdk = "stack_sdk.__main__:main"
 
 [dependency-groups]

@@ -203,7 +203,7 @@ the unrestricted `Bash` entry already covers them. With the current configuratio
 `ToolSearch`, `WebFetch`, `WebSearch`, `Workflow`, the eight `Workflow(<name>)` entries of the settings allow-list
 (`expert-panel`, `fanout`, `mediate`, `plan-tournament`, `research-sweep`, `review-verify`, `swarm-run`,
 `visual-iterate`), `Write`, and
-`mcp__context7`, `mcp__exa`, `mcp__fetch`, `mcp__image`, `mcp__jina`, `mcp__neural-memory`, `mcp__spider` (from `permissions.allow`;
+`mcp__context7`, `mcp__desktop-sandbox`, `mcp__exa`, `mcp__fetch`, `mcp__image`, `mcp__jina`, `mcp__neural-memory`, `mcp__spider` (from `permissions.allow`;
 `.mcp.json` adds none). Allowing
 `Workflow` pre-authorises saved workflows, because Workflow availability in Python SDK sessions follows
 the CLI.
@@ -470,7 +470,7 @@ and the SDK produce the same behaviour:
 | No questions from subagents | AskUserQuestion is unavailable in subagents, and under the SDK without a permission callback | convention; subagents return Open doubts and the main thread asks in plain text |
 | Results before continuing | SDK subagents default to the background | `run_in_background: false` on Agent calls; the runner sets `CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1`, and the hook rewrites the flag when it sees `CLAUDE_STACK_FOREGROUND=1` |
 | Tiers are authoritative | a per-call override would bypass tier and learned effort | `pre-agent` strips `model`/`effort`; `build_options` rejects non-tier models; `bin/claude-stack` refuses `--model`, `--effort` and `--agent` |
-| No interactive-only features without a fallback | built-in computer use and Claude in Chrome do not exist under the SDK or `-p` | agents use Playwright or the optional `peekaboo` server (`bin/stack mcp enable peekaboo`), or report the item blocked; agent teams and slash commands typed into prompts are never relied on |
+| No interactive-only features without a fallback | built-in computer use and Claude in Chrome do not exist under the SDK or `-p` | agents use Playwright, the `desktop-sandbox` server (sandboxed computer use), or the optional `peekaboo` server with the user's quoted approval (`bin/stack mcp enable peekaboo`), or report the item blocked; agent teams and slash commands typed into prompts are never relied on |
 | Self-contained bodies | subagents see only their body and the brief, not the Claude Code system prompt or the parent conversation | convention; `initialPrompt` applies only to main threads |
 | No interactive approvals | `dontAsk` with `--permission-prompts none` denies anything off the allow-list without asking | no step may need an interactive approval; irreversible actions (push, publish, delete, send) are returned as Open doubts for the user |
 
@@ -478,7 +478,7 @@ and the SDK produce the same behaviour:
 
 - Session start and end have no SDK hook events. The runner does the post-run ingest, and the
   `SessionStart` status line (missing keys, recent self-tuning) is not shown in out-of-repo SDK runs.
-- Built-in computer use is interactive-only. `computer-operator` falls back to `peekaboo` or reports the
+- Built-in computer use is interactive-only. `computer-operator` uses the `desktop-sandbox` server for work that needs no personal state; otherwise it uses `peekaboo` (only with the user's quoted approval) or reports the
   task as blocked.
 - Saved-workflow availability in Python SDK sessions follows the CLI. The runner pre-authorises the
   `Workflow` tool and every saved workflow through the allow-list.

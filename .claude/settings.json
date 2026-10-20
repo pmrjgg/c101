@@ -23,6 +23,7 @@
       "mcp__spider",
       "mcp__image",
       "mcp__context7",
+      "mcp__desktop-sandbox",
       "Workflow(swarm-run)",
       "Workflow(fanout)",
       "Workflow(mediate)",
@@ -63,7 +64,7 @@
         ]
       },
       {
-        "matcher": "Bash|Write|Edit|MultiEdit|NotebookEdit|mcp__playwright__browser_type|mcp__playwright__browser_fill_form|mcp__playwright__browser_file_upload|mcp__playwright__browser_press_key|mcp__neural-memory__.*",
+        "matcher": "Bash|Write|Edit|MultiEdit|NotebookEdit|mcp__playwright__browser_type|mcp__playwright__browser_fill_form|mcp__playwright__browser_file_upload|mcp__playwright__browser_press_key|mcp__desktop-sandbox__(type_text|key|launch|put_file|click|drag|scroll|move)|mcp__neural-memory__.*",
         "hooks": [
           {
             "type": "command",
@@ -120,7 +121,7 @@
     ],
     "PostToolUse": [
       {
-        "matcher": "WebFetch|WebSearch|mcp__fetch__.*|mcp__jina__.*|mcp__exa__.*|mcp__spider__.*|mcp__playwright__.*|mcp__firecrawl__.*|mcp__tavily__.*|mcp__brave-search__.*|mcp__markitdown__.*",
+        "matcher": "WebFetch|WebSearch|mcp__fetch__.*|mcp__jina__.*|mcp__exa__.*|mcp__spider__.*|mcp__playwright__.*|mcp__firecrawl__.*|mcp__tavily__.*|mcp__brave-search__.*|mcp__markitdown__.*|mcp__desktop-sandbox__.*",
         "hooks": [
           {
             "type": "command",

@@ -216,7 +216,8 @@ Every agent, skill and workflow must behave correctly in both runtimes (`bin/cla
    forces this). The child's final message must contain the complete deliverable (summary + paths).
 4. **Tiers are authoritative.** No `model`/`effort` on Agent calls (stripped by the hook).
 5. **No interactive-only features without a fallback.** Built-in computer use and Claude in Chrome do
-   not exist under the SDK/-p: use Playwright, the optional `peekaboo` server, or return the item as
+   not exist under the SDK/-p: use Playwright, the `desktop-sandbox` server (sandboxed computer use), the optional
+   `peekaboo` server only with the user's quoted approval, or return the item as
    blocked. Agent teams/teammates are never used. Never rely on slash commands typed into prompts.
 6. **Self-contained bodies.** Subagents start from their own body plus the brief; they do not see the
    Claude Code system prompt or the parent conversation. `initialPrompt` only applies to main threads.

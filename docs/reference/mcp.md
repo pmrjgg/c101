@@ -136,7 +136,7 @@ The eight servers are not in `.mcp.json` (it is `{"mcpServers": {}}`); each is d
 `config/mcp.servers.json` (`{"_doc": …, "servers": {name: config}}`) and copied inline into the agents that use it
 ([Lazy loading](#lazy-loading)). `enabledMcpjsonServers` in `.claude/settings.json` is therefore `[]`.
 Tool names are unchanged (`mcp__<server>__<tool>`), so `permissions.allow` still contains
-`mcp__exa`, `mcp__jina`, `mcp__spider`, `mcp__image`, `mcp__context7`, `mcp__fetch` and `mcp__neural-memory`. Playwright is absent from that list, so its
+`mcp__exa`, `mcp__jina`, `mcp__spider`, `mcp__image`, `mcp__context7`, `mcp__desktop-sandbox`, `mcp__fetch` and `mcp__neural-memory`. Playwright is absent from that list, so its
 browser actions still ask for permission. `MAX_MCP_OUTPUT_TOKENS` is raised to `40000` in the settings `env` block.
 
 | Server | Transport and endpoint | Key | Tools (`mcp__<server>__…`) | Used by |
@@ -148,6 +148,7 @@ browser actions still ask for permission. `MAX_MCP_OUTPUT_TOKENS` is raised to `
 | `spider` | http `https://mcp.spider.cloud/mcp` | `SPIDER_API_KEY` (required) | `spider_crawl`, `spider_scrape`, `spider_search`, `spider_links`, `spider_screenshot`, `spider_transform`, `spider_get_credits`, `spider_ai_*`, `spider_browser_*` | `web-scraper`, `web-crawler`, `deep-researcher` |
 | `context7` | http `https://mcp.context7.com/mcp` | `CONTEXT7_API_KEY` (optional, raises rate limits) | `resolve-library-id`, `query-docs` | language and domain experts, `architect` |
 | `neural-memory` | stdio `sh -c '…; exec "$d/bin/neural-memory-mcp"'` (`neural-memory==4.62.0` via `uvx --python 3.13`, command `nmem-mcp`) | none | minimal tier: `nmem_recall`, `nmem_context`, `nmem_recap` (read), `nmem_remember` (write); see [NeuralMemory](#neuralmemory) | `orchestrator`, `planner`, `architect`, `debugger`, `reviewer` |
+| `desktop-sandbox` | stdio `sh -c '…; exec "$d/bin/mcp-run" --only DESKTOP_SANDBOX_ "$d"/bin/desktop-sandbox'` | none (the `--only` filter exports no keys) | see [The desktop-sandbox server](#the-desktop-sandbox-server) | `computer-operator`, `tester` |
 | `image` | stdio `sh -c '…; exec "$d/bin/mcp-run" "$d"/bin/image-router'` | `IMAGE_<OP>_KEY` per operation | see [The image server](#the-image-server) | `image-generator`, `image-editor`, `vector-artist`, `visual-reviewer`, `graphic-design-expert` |
 
 **Free first.** For a URL already in hand, agents read it with `fetch` (free, no key) and escalate only when it
@@ -156,9 +157,33 @@ key), `spider` for JavaScript-rendered or bot-protected pages and crawls (paid),
 pages are paged with `start_index` rather than handed to a paid reader. The ladder lives in the `web-search-tools`
 skill and in each research agent's operating procedure.
 
-Computer use is not in the catalog. The built-in `computer-use` server, enabled once through `/mcp`, is
+Host computer use is not in the catalog. The built-in `computer-use` server, enabled once through `/mcp`, is
 used by `computer-operator`. `bin/stack doctor` treats `computer-use` and `claude-in-chrome` as known built-ins
-(`BUILTIN_MCP`) when it checks agents' `mcpServers` lists; built-ins stay plain names there.
+(`BUILTIN_MCP`) when it checks agents' `mcpServers` lists; built-ins stay plain names there. Sandboxed computer use
+is in the catalog as `desktop-sandbox`.
+
+### The desktop-sandbox server
+
+`desktop-sandbox` (`stack_mcp/desktop_sandbox/`, Python 3.13 under uv, `mcp` 2.x) is sandboxed computer use. It
+drives a disposable Linux desktop (Xvfb, openbox, xdotool) in a container that the server starts on
+`sandbox_start` and removes on `sandbox_stop`, after the idle timeout, at the hard lifetime, and when the server
+exits. The server exits when its agent finishes, because the server is inline in the frontmatter of
+`computer-operator` and `tester` only. Its 15 tool schemas stay deferred until the agent loads the ones it needs
+with `ToolSearch select:` (skill `sandboxed-computer-use`, section 2).
+
+| Control | Value |
+|---|---|
+| Container flags (fixed; no tool argument changes them) | `--network none` (or `bridge` only if the user sets `DESKTOP_SANDBOX_NETWORK=bridge`), `--read-only`, tmpfs `/tmp` and home, `--cap-drop ALL`, `--security-opt no-new-privileges`, non-root `--user`, `--pids-limit 512`, memory = swap = 2g, 2 CPUs, one bind mount `.stack/sandbox/<id>/exchange` → `/exchange`, no Docker socket, no devices |
+| Image | `stack_mcp/desktop_sandbox/image/` (Debian slim, setuid bits stripped, tini; the container's main process `sleep MAX_LIFETIME` enforces the lifetime). Built only by the user: `bin/desktop-sandbox --build`; extra apps via `--build-arg EXTRA_PACKAGES=...`; pin `BASE` by digest for reviewed builds |
+| Keys | `bin/mcp-run --only DESKTOP_SANDBOX_` exports no other variable; the container CLI runs with a minimal environment; the container gets only `SCREEN`, `MAX_LIFETIME`, `HOME`, `DISPLAY` |
+| Input guard | `type_text` and `launch` refuse private keys, provider keys and tokens, JWTs, Luhn-valid card numbers and high-entropy strings; key combos must be X keysyms; coordinates must lie on screen; `put_file` copies only project files that are not credential-like, up to 64 MB, with `O_EXCL` and `O_NOFOLLOW` |
+| Exchange hygiene | symlinks, devices and FIFOs the sandbox plants in `/exchange` are deleted before every listing, `put_file` and stop; setuid bits are stripped |
+| Budgets | 600 input actions, 10 min idle, 30 min lifetime (`DESKTOP_SANDBOX_MAX_ACTIONS`, `_IDLE_MINUTES`, `_MAX_MINUTES`, all clamped) |
+| Hooks | `post-web` scans every text result; `pre-tool` covers every input tool (`type_text`, `key`, `launch`, `put_file`, `click`, `drag`, `scroll`, `move`), so a tainted agent can only observe and stop |
+| Audit | `.stack/sandbox/<id>/audit.jsonl`: tool, arguments (typed text as length and SHA-256 prefix), ok, duration |
+
+`bin/desktop-sandbox --check` prints the runtime, image and limits. The full threat model is in
+`.claude/skills/sandboxed-computer-use/references/security-model.md`.
 
 ### Lazy loading
 

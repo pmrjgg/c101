@@ -21,8 +21,8 @@ All hooks are `type: "command"` hooks that call one entry point, `"$CLAUDE_PROJE
 | `SessionEnd` | (all) | `session-end` → `session_end()` | 5 | no | nothing (detaches the learner) |
 | `UserPromptSubmit` | (all) | `prompt-submit` → `prompt_submit()` | 20 | no | `additionalContext` budget note |
 | `PreModelSwitch` | (all) | `model-switch` → `model_switch()` | 10 | no | exit code 0 (allow) or 2 + stderr reason (block) |
-| `PreToolUse` | `Bash\|Write\|Edit\|MultiEdit\|NotebookEdit\|mcp__playwright__browser_type\|…fill_form\|…file_upload\|…press_key\|mcp__neural-memory__.*` | `pre-tool` → `pre_tool()` | 10 | no | `permissionDecision` `deny` (web agents, tainted subagents) or `ask` (tainted main thread) |
-| `PostToolUse` | `WebFetch\|WebSearch\|mcp__fetch__.*\|mcp__jina__.*\|mcp__exa__.*\|mcp__spider__.*\|mcp__playwright__.*\|…` | `post-web` → `post_web()` | 10 | no | `additionalContext` warning (score ≥ 3), plus `decision: block` (score ≥ 6) |
+| `PreToolUse` | `Bash\|Write\|Edit\|MultiEdit\|NotebookEdit\|mcp__playwright__browser_type\|…fill_form\|…file_upload\|…press_key\|mcp__desktop-sandbox__(type_text\|key\|launch\|put_file\|click\|drag\|scroll\|move)\|mcp__neural-memory__.*` | `pre-tool` → `pre_tool()` | 10 | no | `permissionDecision` `deny` (web agents, tainted subagents) or `ask` (tainted main thread) |
+| `PostToolUse` | `WebFetch\|WebSearch\|mcp__fetch__.*\|mcp__jina__.*\|mcp__exa__.*\|mcp__spider__.*\|mcp__playwright__.*\|…\|mcp__desktop-sandbox__.*` | `post-web` → `post_web()` | 10 | no | `additionalContext` warning (score ≥ 3), plus `decision: block` (score ≥ 6) |
 
 The call path from Claude Code to a handler:
 

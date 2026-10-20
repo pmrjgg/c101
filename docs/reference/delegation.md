@@ -204,8 +204,8 @@ longer than the work.
 Delegate when any of these holds:
 
 - it needs a skill, tier or MCP server you lack (`mcp__spider__*`, `mcp__image__*`,
-  `mcp__playwright__*`; native apps via computer-operator, which is interactive-only and under the
-  SDK uses the optional `peekaboo` server or reports the item blocked);
+  `mcp__playwright__*`; GUI apps via computer-operator: the user's own macOS apps interactively, and
+  everything else in the `desktop-sandbox` container, which also works under the SDK);
 - there are 2 or more independent items;
 - the reading would add more than about 30k tokens to your context: send it to a fresh-context
   file-summarizer (files, logs) or source-summarizer (fetched pages) with your exact question;

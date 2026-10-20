@@ -481,7 +481,7 @@ def post_web(inp: dict) -> Optional[dict]:
 
 
 def pre_tool(inp: dict) -> Optional[dict]:
-    """PreToolUse on Bash / file writes / web form tools: narrow tools for web agents, taint guard."""
+    """PreToolUse on Bash / file writes / web form and sandbox input tools: narrow tools for web agents, taint guard."""
     pol = _policy()
     wc = pol.get("web_content") or {}
     if not wc.get("enabled", True):
@@ -496,7 +496,7 @@ def pre_tool(inp: dict) -> Optional[dict]:
     why = injection.risky_action(tool, ti, proj, root)
     if not why:
         return None
-    if agent_type in set(wc.get("web_agents") or []) and tool not in injection.FORM_TOOLS:
+    if agent_type in set(wc.get("web_agents") or []) and tool not in injection.FORM_TOOLS + injection.SANDBOX_INPUT_TOOLS:
         return _pre_decision("deny", (
             "%s may not do this: %s. Web-reading agents run with narrow tools: files only under %s/, no network, "
             "secret reads, git push or pipe-to-shell from Bash. If it is really needed, return it to your caller "

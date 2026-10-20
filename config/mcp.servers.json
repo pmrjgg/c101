@@ -42,6 +42,14 @@
         "d=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; [ -x \"$d/bin/mcp-run\" ] || d=\"$HOME/.claude/stack\"; exec \"$d/bin/mcp-run\" \"$d\"/bin/image-router"
       ]
     },
+    "desktop-sandbox": {
+      "type": "stdio",
+      "command": "sh",
+      "args": [
+        "-c",
+        "d=\"${CLAUDE_PROJECT_DIR:-$PWD}\"; [ -x \"$d/bin/mcp-run\" ] || d=\"$HOME/.claude/stack\"; exec \"$d/bin/mcp-run\" --only DESKTOP_SANDBOX_ \"$d\"/bin/desktop-sandbox"
+      ]
+    },
     "fetch": {
       "type": "stdio",
       "command": "sh",

@@ -78,7 +78,8 @@ steps that need an interactive approval.
 ## Limits to know
 
 * The SDK's Python hooks cover 10 events (no SessionStart/SessionEnd); the runner compensates.
-* Built-in computer use is interactive-only; `computer-operator` falls back to `peekaboo` (enable with
-  `bin/stack mcp enable peekaboo`) or reports the task as blocked.
+* Built-in computer use is interactive-only. Under the SDK `computer-operator` (and `tester`) use the
+  `desktop-sandbox` server, a disposable, network-less desktop container. Work that needs the user's own apps
+  is reported as blocked, or uses `peekaboo` only when the brief quotes the user's approval.
 * Workflow availability in Python SDK sessions follows the CLI; the runner pre-authorises it.
 * The SDK pins its own CLI; after `uv lock --upgrade-package claude-agent-sdk`, rerun the tests.

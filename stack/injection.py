@@ -85,6 +85,16 @@ def thresholds(pol: Optional[dict] = None) -> Dict[str, int]:
     return {"medium": int(wc.get("medium", 3)), "high": int(wc.get("high", 6))}
 
 
+_B64 = re.compile(r"^[A-Za-z0-9+/\s]{256,}={0,2}$")
+
+
+def _is_media(block: dict, value: Any) -> bool:
+    """A real image/audio content block (screenshot bytes): skipped, everything else is scanned."""
+    mime = str(block.get("mimeType") or block.get("mime_type") or "")
+    return (block.get("type") in ("image", "audio") and mime.startswith(("image/", "audio/"))
+            and isinstance(value, str) and bool(_B64.match(value[:4096])))
+
+
 def flatten(obj: Any, limit: int = MAX_SCAN_CHARS) -> str:
     """Every string leaf of a tool response (MCP content blocks, dicts, lists), up to ``limit`` chars."""
     out: List[str] = []
@@ -98,8 +108,9 @@ def flatten(obj: Any, limit: int = MAX_SCAN_CHARS) -> str:
             out.append(o[: limit - size])
             size += len(out[-1])
         elif isinstance(o, dict):
-            for v in o.values():
-                walk(v)
+            for k, v in o.items():
+                if not (k == "data" and _is_media(o, v)):
+                    walk(v)
         elif isinstance(o, (list, tuple)):
             for v in o:
                 walk(v)
@@ -203,6 +214,10 @@ def risky_bash(cmd: str) -> Optional[str]:
 WRITE_TOOLS = ("Write", "Edit", "MultiEdit", "NotebookEdit")
 FORM_TOOLS = ("mcp__playwright__browser_type", "mcp__playwright__browser_fill_form",
               "mcp__playwright__browser_file_upload", "mcp__playwright__browser_press_key")
+# Input into the disposable desktop sandbox (stack_mcp/desktop_sandbox): allowed for its agents, denied once
+# an agent is tainted, since flagged content may be steering what gets typed, run or copied in.
+SANDBOX_INPUT_TOOLS = tuple("mcp__desktop-sandbox__" + t for t in (
+    "type_text", "key", "launch", "put_file", "click", "drag", "scroll", "move"))
 
 
 MEMORY_PREFIX = "mcp__neural-memory__"
@@ -229,6 +244,8 @@ def risky_action(tool: str, tool_input: dict, project_dir: str, write_root: str 
         return None
     if tool in FORM_TOOLS:
         return "typing into or uploading to a web page"
+    if tool in SANDBOX_INPUT_TOOLS:
+        return "typing into, running programs in or copying files into the desktop sandbox"
     if tool.startswith(MEMORY_PREFIX) and tool[len(MEMORY_PREFIX):] not in MEMORY_READ_TOOLS:
         return "writing persistent memory (%s)" % tool[len(MEMORY_PREFIX):]
     return None

@@ -28,11 +28,16 @@ in a project's `.claude/agents/` load once the folder is trusted.
 | `context7` | http `mcp.context7.com/mcp` | `CONTEXT7_API_KEY` (optional) | language/domain experts, architect | `resolve-library-id`, `query-docs` |
 | `fetch` | stdio `sh -c … bin/mcp-run uvx --python 3.13 mcp-server-fetch` | none (free) | the eight research agents | `fetch` (url to markdown; `max_length`, `start_index`, `raw`); first choice for any known URL, before the metered readers |
 | `neural-memory` | stdio `sh -c … bin/neural-memory-mcp` (pinned `neural-memory==4.62.0`, data in `~/.claude/stack-data/neural-memory`) | — | delegator (main thread, inline); orchestrator, planner, architect, debugger, reviewer share it by name | minimal tier only: `nmem_recall`, `nmem_context`, `nmem_recap`, `nmem_remember`; the launcher initialises the data dir itself so the package never edits `~/.claude/settings.json`; memory writes by a tainted agent are denied; web-reading agents do not get it |
+| `desktop-sandbox` | stdio `sh -c … bin/mcp-run --only DESKTOP_SANDBOX_ bin/desktop-sandbox` | none (receives no keys; optional `DESKTOP_SANDBOX_*` settings) | computer-operator, tester | `sandbox_status`, `sandbox_start`, `sandbox_stop`, `screenshot`, `zoom`, `window_list`, `click`, `move`, `drag`, `scroll`, `type_text`, `key`, `wait`, `launch`, `put_file`; needs Docker or podman and the image from `bin/desktop-sandbox --build` |
 | `image` | stdio `sh -c … bin/mcp-run bin/image-router` | per-operation `IMAGE_<OP>_URL` / `_KEY` / `_MODEL` | image-generator, image-editor, vector-artist, visual-reviewer, graphic-design-expert | always: `image_ops_status`, `image_info`, `mask_convert`, `svg_optimize`, `svg_inspect`, `svg_render`, `svg_layers`, `svg_layerize`, `layers_compose`, `export_pdf`; when configured: `image_generate`, `image_generate_with_references`, `image_edit`, `image_generate_transparent`, `image_segment`, `image_remove_background`, `image_upscale`, `vector_generate`, `image_vectorize`, `svg_transform` |
 
-Computer use: the built-in `computer-use` server (macOS, interactive sessions, Pro/Max) — enable it once
-with `/mcp` → computer-use → Enable. `computer-operator` references it. For headless runs enable the
-optional `peekaboo` server instead.
+Computer use has two routes. The built-in `computer-use` server (macOS, interactive sessions, Pro/Max) drives the
+user's real apps: enable it once with `/mcp` → computer-use → Enable. `computer-operator` references it by name. The
+stack's own `desktop-sandbox` server (`stack_mcp/desktop_sandbox/`) drives a disposable, network-less Linux desktop
+in a hardened container and works in both runtimes. It is the default for GUI work that needs no personal state
+and the only unattended route (skill `sandboxed-computer-use`; build the image once with
+`bin/desktop-sandbox --build`). The optional `peekaboo` server drives the real desktop headless and is used only
+with the user's quoted approval.
 
 ## Image server (`image`)
 

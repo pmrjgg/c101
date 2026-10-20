@@ -42,7 +42,8 @@ tooling) that turns a single session into a coordinated team:
   validators, testers, quality control, code-quality analysis, optimisation, security and debugging; nothing reaches
   the user without a gate.
 - **Research.** Quick and deep researchers, web search (Exa, Jina), scraping and crawling (Spider), real browsing
-  (Playwright), computer use, papers (arXiv/SSRN), fact checking, and summarizers, including a `file-summarizer`
+  (Playwright), computer use (the user's own macOS apps interactively, or a disposable, network-less desktop
+  container that also runs under the Agent SDK), papers (arXiv/SSRN), fact checking, and summarizers, including a `file-summarizer`
   that keeps full output on disk and returns a compact digest.
 - **Experts and synthesis.** Computer graphics, computer science, quantum computing, Rust, C++, Go, Haskell, Julia,
   Java, Kotlin, Python, TypeScript, mathematics, physics and graphic design, each backed by a hub skill and granular skills, plus
@@ -76,7 +77,8 @@ bin/claude-stack                # Claude Code with the delegator as the main thr
 ```
 
 Inside Claude Code, accept the folder trust dialog once: each agent defines its MCP servers inline, and Claude Code
-connects them only in a trusted folder, only while that agent runs. Run `/mcp` once to enable computer use.
+connects them only in a trusted folder, only while that agent runs. Run `/mcp` once to enable computer use on the
+host desktop; for sandboxed computer use install Docker or podman and run `bin/desktop-sandbox --build` once.
 
 Use the stack in every project, with only the packs you want:
 

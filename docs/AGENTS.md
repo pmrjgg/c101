@@ -44,10 +44,10 @@ from the tiers in `config/models.json`; `maxTurns` and `effort` are tuned by the
 | quality | `quality-control` | claude-opus-5-5 | medium | 70 | - | delegation-protocol, doubt-escalation, output-contract, validation-gates, source-evaluation |
 | quality | `reviewer` | claude-opus-5-5 | high | 120 | neural-memory | delegation-protocol, doubt-escalation, output-contract, code-review-checklist, adversarial-verification |
 | quality | `security-auditor` | claude-opus-5-5 | high | 120 | - | delegation-protocol, doubt-escalation, output-contract, security-review, adversarial-verification |
-| quality | `tester` | claude-sonnet-5-5 | high | 150 | playwright | delegation-protocol, doubt-escalation, output-contract, testing-strategy, browser-automation |
+| quality | `tester` | claude-sonnet-5-5 | high | 150 | playwright, desktop-sandbox | delegation-protocol, doubt-escalation, output-contract, testing-strategy, browser-automation, sandboxed-computer-use |
 | quality | `validator` | claude-sonnet-5-5 | medium | 90 | - | delegation-protocol, doubt-escalation, output-contract, validation-gates, testing-strategy |
 | research | `browser-operator` | claude-sonnet-5-5 | medium | 150 | playwright | delegation-protocol, doubt-escalation, output-contract, browser-automation |
-| research | `computer-operator` | claude-sonnet-5-5 | medium | 150 | computer-use | delegation-protocol, doubt-escalation, output-contract, computer-use |
+| research | `computer-operator` | claude-sonnet-5-5 | medium | 150 | computer-use, desktop-sandbox | delegation-protocol, doubt-escalation, output-contract, computer-use, sandboxed-computer-use |
 | research | `deep-researcher` | claude-opus-5-5 | high | 240 | exa, jina, spider, fetch | delegation-protocol, doubt-escalation, output-contract, deep-research, web-search-tools, source-evaluation |
 | research | `fact-checker` | claude-sonnet-5-5 | medium | 60 | exa, jina, fetch | delegation-protocol, doubt-escalation, output-contract, source-evaluation, web-search-tools |
 | research | `file-summarizer` | claude-haiku-5-5 | low | 40 | - | delegation-protocol, doubt-escalation, output-contract |
