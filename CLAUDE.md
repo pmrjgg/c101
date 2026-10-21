@@ -8,7 +8,9 @@ This repository *is* a Claude Code configuration: 63 subagents (`.claude/agents/
   frontmatter keys are silently ignored by Claude Code, so typos are bugs).
 - After any change to agents/skills/workflows/MCP/hooks run `bin/stack doctor` (must report 0 errors).
 - Tests: `uv run --python 3.13 python -m unittest discover -s tests` and `uv run --python 3.13 pytest stack_mcp -q`.
-- Python: add deps with `uv add`, never pip; keep `stack/` stdlib-only (it runs inside hooks).
+- Python: only the uv-managed CPython 3.13 (`.venv` from `uv sync`, or `uv run --python 3.13 ...`); never the
+  system `python3` (macOS ships 3.9) and never `python`/`python3` from PATH directly. Add deps with `uv add`,
+  never pip; keep `stack/` stdlib-only (it runs inside hooks).
 - `maxTurns`/`effort` in agent frontmatter are tuned by `bin/stack learn apply`; respect bounds in
   `config/learning.json` rather than fighting the learner.
 - MCP servers live in `config/mcp.servers.json` (our own: `stack_mcp/image_router/`, `stack_mcp/desktop_sandbox/`) and are inlined into agents by `bin/stack mcp sync` (lazy: each
