@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Launch the 'desktop-sandbox' MCP server (stdio) under the repo's uv environment (CPython 3.13).
+# Launch the 'desktop-sandbox' MCP server (stdio) under the repo's uv environment (CPython 3.14).
 #   bin/desktop-sandbox            serve (Claude Code starts it through bin/mcp-run --only DESKTOP_SANDBOX_)
 #   bin/desktop-sandbox --check    runtime, image and limits
 #   bin/desktop-sandbox --build    build the sandbox image once (needs network)

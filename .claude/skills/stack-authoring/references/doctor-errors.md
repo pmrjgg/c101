@@ -2,7 +2,7 @@
 
 Source: `stack/doctor.py`. Run `bin/stack doctor 2>&1 | grep -F '<path>'` to see only your files;
 `bin/stack doctor --json` for machine-readable output. Exit code 1 when any ERROR exists.
-Checkers run in order: agents, tiers, skills, workflows, MCP, settings. A crashing checker is
+Checkers run in order: agents, tiers, packs, skills, workflows, MCP, settings, executables, auth. A crashing checker is
 reported as `<checker>: checker crashed: ...` and the others still run.
 
 ## Agents (`.claude/agents/**.md`)
@@ -99,8 +99,10 @@ reported as `<checker>: checker crashed: ...` and the others still run.
 | `.claude/settings.json: unreadable` | Invalid JSON | Fix JSON |
 | warn `ENABLE_TOOL_SEARCH=false loads every MCP tool schema up front` | Tool search disabled in settings `env` | Remove the key (tool search is on by default) |
 | warn `CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH and CLAUDE_STACK_MAX_DEPTH differ` | Depth env vars out of sync | Set both to the same value |
+| `env.UV_PYTHON '...' differs from .python-version '...'` | The interpreter version was changed in one place only | Set `env.UV_PYTHON` in `.claude/settings.json` to the `.python-version` value (then rerun `./install.sh` for the user-scope copy) |
 | `unknown hook handler '...'` | A `bin/stack hook <name>` command for a handler that does not exist | Use one of pre-agent, subagent-stop, session-start, session-end, prompt-submit, model-switch (`stack/hooks.py` HANDLERS) |
 | warn `config/learning.json: bounds for unknown agent '...'` | Bounds for a renamed or removed agent | Remove or rename the entry |
+| `<path>: starts with #! but is not executable (chmod +x it, or re-run ./install.sh)` | A script lost its exec bit (zip download, copy) or was committed without it | `chmod +x <path>`, and `git update-index --chmod=+x <path>` so the mode is committed |
 | warn `environment: ANTHROPIC_API_KEY is set: ...` (or `ANTHROPIC_AUTH_TOKEN`) | An API credential in the shell overrides the claude.ai subscription login | `unset ANTHROPIC_API_KEY` (and remove it from shell profiles) |
 | warn `<settings file>: configures an API key ...` | `apiKeyHelper` or `env.ANTHROPIC_API_KEY` in a settings file | Remove it so Claude Code uses the subscription login |
 | warn `<settings file>: availableModelsMatch is honoured only from managed settings ...` (or `deniedModels`) | A managed-only key in project, local or user settings; Claude Code ignores it there | Remove it; for exact model matching run `sudo bin/stack managed-settings --install` |

@@ -80,10 +80,10 @@
       "args": [
         "uvx",
         "--python",
-        "3.13",
+        "3.14",
         "markitdown-mcp"
       ],
-      "_note": "Microsoft markitdown: convert_to_markdown(uri) for PDFs/Office/HTML, run with uvx on Python 3.13"
+      "_note": "Microsoft markitdown: convert_to_markdown(uri) for PDFs/Office/HTML, run with uvx on Python 3.14"
     }
   }
 }

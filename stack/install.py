@@ -4,6 +4,11 @@ Base install (always, idempotent):
   * ~/.claude/stack            -> symlink to this repo (stable path for user-scope configs)
   * ~/.claude/stack.env        <- created from config/stack.env.example if missing (mode 600)
   * ~/.claude/stack-data/      learning data directory
+  * executable bits            restored on every repo script that starts with '#!' (lost by zip downloads or
+                               copies; hooks and MCP servers run bin/* directly)
+  * default Python             uv's CPython from .python-version (3.14) for every Claude Code session:
+                               UV_PYTHON + UV_PYTHON_PREFERENCE=only-managed in ~/.claude/settings.json env, and
+                               python/python3 in uv's bin directory (~/.local/bin) linked to it
 
 --user        make agents, skills and workflows available in every project (per-file symlinks
               under ~/.claude/agents/stack/, ~/.claude/skills/<name>, ~/.claude/workflows/),
@@ -18,6 +23,8 @@ Base install (always, idempotent):
               model needs managed settings: `sudo bin/stack managed-settings --install`.
 --packs a,b   with --user: link only these install packs (+ core and requirements); see
               `bin/stack packs list`. Default: all packs.
+--no-python-default  remove UV_PYTHON / UV_PYTHON_PREFERENCE from ~/.claude/settings.json (the python/python3
+              links stay; `uv python uninstall` or deleting them removes them).
 --dry-run     print what would change.
 """
 from __future__ import annotations
@@ -78,6 +85,73 @@ def base(ctx: Ctx) -> None:
     d = os.path.join(CLAUDE, "stack-data")
     if not os.path.isdir(d):
         ctx.do("create %s" % d, lambda: os.makedirs(d, exist_ok=True))
+    fix_executables(ctx)
+
+
+def fix_executables(ctx: Ctx) -> None:
+    """chmod +x (where readable) every repo script with a '#!' line that lost its executable bit."""
+    stale = [p for p in paths.script_files() if not os.access(p, os.X_OK)]
+    if not stale:
+        return
+
+    def fix():
+        for p in stale:
+            mode = stat.S_IMODE(os.stat(p).st_mode)
+            os.chmod(p, mode | (mode & 0o444) >> 2)
+    ctx.do("make %d script(s) executable: %s" % (len(stale), ", ".join(os.path.relpath(p, paths.REPO) for p in stale)),
+           fix)
+
+
+PYTHON_ENV_KEYS = ("UV_PYTHON", "UV_PYTHON_PREFERENCE")
+
+
+def python_env(ctx: Ctx, on: bool) -> None:
+    """Force uv's CPython from .python-version for every uv/uvx command Claude Code runs, in every project.
+
+    UV_PYTHON overrides project pins (a project that requires another version needs an explicit --python);
+    UV_PYTHON_PREFERENCE=only-managed keeps uv off the system and Homebrew interpreters.
+    """
+    user_path = os.path.join(CLAUDE, "settings.json")
+    user = _load_settings(user_path)
+    env = user.setdefault("env", {})
+    want = dict(zip(PYTHON_ENV_KEYS, (paths.python_version(), "only-managed")))
+    if on:
+        if all(env.get(k) == v for k, v in want.items()):
+            return
+        env.update(want)
+        why = "default Python: uv CPython %s" % want["UV_PYTHON"]
+    else:
+        if not any(k in env for k in PYTHON_ENV_KEYS):
+            return
+        for k in PYTHON_ENV_KEYS:
+            env.pop(k, None)
+        if not env:
+            user.pop("env")
+        why = "default Python removed"
+    _write_settings(ctx, user_path, user, why)
+
+
+def link_default_python(ctx: Ctx) -> None:
+    """Point python and python3 in uv's bin directory (~/.local/bin) at uv's CPython from .python-version."""
+    uv = shutil.which("uv")
+    ver = paths.python_version()
+    if not uv:
+        print("uv not on PATH; skipped linking python/python3 to CPython %s" % ver)
+        return
+
+    def out(*args: str) -> str:
+        r = subprocess.run([uv, *args], capture_output=True, text=True)
+        return r.stdout.strip() if r.returncode == 0 else ""
+    bindir, exe = out("python", "dir", "--bin"), out("python", "find", "--managed-python", ver)
+    if bindir and exe and all(os.path.realpath(os.path.join(bindir, n)) == os.path.realpath(exe)
+                              for n in ("python", "python3")):
+        return
+
+    def link():
+        r = subprocess.run([uv, "python", "install", "--default", "--preview-features", "python-install-default", ver])
+        if r.returncode != 0:
+            print("  uv python install --default %s failed (exit %d); python/python3 unchanged" % (ver, r.returncode))
+    ctx.do("link python/python3 in %s to uv's CPython %s" % (bindir or "uv's bin directory", ver), link)
 
 
 def link_components(ctx: Ctx, selected: Optional[List[str]] = None) -> None:
@@ -235,6 +309,7 @@ def main(argv: List[str]) -> int:
     p.add_argument("--enforce-models", action="store_true")
     p.add_argument("--no-enforce-models", action="store_true")
     p.add_argument("--packs", help="comma-separated packs for --user (default: all); core is always included")
+    p.add_argument("--no-python-default", action="store_true")
     p.add_argument("--dry-run", action="store_true")
     a = p.parse_args(argv)
     ctx = Ctx(a.dry_run)
@@ -243,6 +318,9 @@ def main(argv: List[str]) -> int:
         link_components(ctx, [x.strip() for x in a.packs.split(",")] if a.packs else None)
         register_mcp(ctx)
         merge_settings(ctx, enforce_models=a.enforce_models)
+    python_env(ctx, not a.no_python_default)
+    if not a.no_python_default:
+        link_default_python(ctx)
     if a.enforce_models or a.no_enforce_models:
         enforce_models_global(ctx, a.enforce_models)
     if a.main_agent or a.no_main_agent:

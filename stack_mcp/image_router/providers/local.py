@@ -22,27 +22,29 @@ from ..io import OutputBlob
 from ..svg import optimize_svg
 from .base import Adapter, AdapterError, AdapterResult, ImageJob, Unsupported
 
-VTRACER_OPTIONS = frozenset(
-    {
-        "colormode",
-        "hierarchical",
-        "mode",
-        "filter_speckle",
-        "color_precision",
-        "layer_difference",
-        "corner_threshold",
-        "length_threshold",
-        "max_iterations",
-        "splice_threshold",
-        "path_precision",
-    }
+# Parameter order of vtracer.convert_raw_image_to_svg after (img_bytes, img_format).
+VTRACER_ARGS = (
+    "colormode",
+    "hierarchical",
+    "mode",
+    "filter_speckle",
+    "color_precision",
+    "layer_difference",
+    "corner_threshold",
+    "length_threshold",
+    "max_iterations",
+    "splice_threshold",
+    "path_precision",
 )
+VTRACER_OPTIONS = frozenset(VTRACER_ARGS)
 
 
 def trace_png(png: bytes, options: dict[str, Any]) -> str:
     import vtracer  # local import: only needed when IMAGE_TRACE_API=local
 
-    return vtracer.convert_raw_image_to_svg(png, img_format="png", **options)
+    # Positional on purpose: vtracer 0.6.15's CPython 3.14 wheel segfaults on any keyword argument.
+    # None is vtracer's own default for every parameter.
+    return vtracer.convert_raw_image_to_svg(png, "png", *(options.get(k) for k in VTRACER_ARGS))
 
 
 class LocalAdapter(Adapter):

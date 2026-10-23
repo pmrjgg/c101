@@ -142,5 +142,64 @@ class GlobalModelEnforcementTests(unittest.TestCase):
         self.assertEqual(off, {"theme": "dark", "hooks": before["hooks"]})
 
 
+class PythonDefaultTests(unittest.TestCase):
+    def test_python_env_forces_uv_python_idempotently_and_undoes_cleanly(self):
+        import tempfile
+        from stack import install
+        d = tempfile.mkdtemp()
+        p = os.path.join(d, "settings.json")
+        with open(p, "w") as fh:
+            json.dump({"theme": "dark", "env": {"UV_PYTHON": "3.13"}}, fh)
+        real, install.CLAUDE = install.CLAUDE, d
+        try:
+            install.python_env(install.Ctx(False), True)
+            again = install.Ctx(False)
+            install.python_env(again, True)  # idempotent: nothing to write
+            self.assertEqual(again.log, [])
+            with open(p) as fh:
+                on = json.load(fh)
+            install.python_env(install.Ctx(False), False)
+            with open(p) as fh:
+                off = json.load(fh)
+        finally:
+            install.CLAUDE = real
+        self.assertEqual(on["env"], {"UV_PYTHON": paths.python_version(), "UV_PYTHON_PREFERENCE": "only-managed"})
+        self.assertEqual(off, {"theme": "dark"})
+
+    def test_project_settings_pin_the_same_python(self):
+        with open(os.path.join(paths.REPO, ".claude", "settings.json")) as fh:
+            env = json.load(fh)["env"]
+        self.assertEqual(env["UV_PYTHON"], paths.python_version())
+        self.assertEqual(env["UV_PYTHON_PREFERENCE"], "only-managed")
+
+
+class ExecutableBitTests(unittest.TestCase):
+    def test_install_restores_lost_exec_bits_that_doctor_reports(self):
+        import tempfile
+        from stack import install
+        d = tempfile.mkdtemp()
+        files = {"bin/tool": b"#!/usr/bin/env bash\n", "notes.txt": b"#hash, not a shebang\n",
+                 ".venv/bin/activate.sh": b"#!/bin/sh\n"}
+        for rel, body in files.items():
+            os.makedirs(os.path.dirname(os.path.join(d, rel)), exist_ok=True)
+            with open(os.path.join(d, rel), "wb") as fh:
+                fh.write(body)
+            os.chmod(os.path.join(d, rel), 0o644)
+        real, paths.REPO = paths.REPO, d
+        try:
+            rep = doctor.Report()
+            doctor.check_executables(rep)
+            install.fix_executables(install.Ctx(False))
+            after = doctor.Report()
+            doctor.check_executables(after)
+        finally:
+            paths.REPO = real
+        self.assertEqual(len(rep.errors), 1)
+        self.assertIn(os.path.join("bin", "tool"), rep.errors[0])
+        self.assertEqual(after.errors, [])
+        mode = {rel: os.stat(os.path.join(d, rel)).st_mode & 0o777 for rel in files}
+        self.assertEqual(mode, {"bin/tool": 0o755, "notes.txt": 0o644, ".venv/bin/activate.sh": 0o644})
+
+
 if __name__ == "__main__":
     unittest.main()

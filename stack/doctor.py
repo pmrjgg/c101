@@ -439,6 +439,9 @@ def check_settings(rep: Report) -> None:
         rep.warn(".claude/settings.json", "ENABLE_TOOL_SEARCH=false loads every MCP tool schema up front")
     if env.get("CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH") != env.get("CLAUDE_STACK_MAX_DEPTH"):
         rep.warn(".claude/settings.json", "CLAUDE_CODE_MAX_SUBAGENT_SPAWN_DEPTH and CLAUDE_STACK_MAX_DEPTH differ")
+    if env.get("UV_PYTHON") != paths.python_version():
+        rep.err(".claude/settings.json", "env.UV_PYTHON %r differs from .python-version %r"
+                % (env.get("UV_PYTHON"), paths.python_version()))
     for event, groups in data.get("hooks", {}).items():
         for g in groups:
             for h in g.get("hooks", []):
@@ -453,6 +456,12 @@ def check_settings(rep: Report) -> None:
     for a in cfg.get("agents", {}):
         if a not in known:
             rep.warn("config/learning.json", "bounds for unknown agent %r" % a)
+
+
+def check_executables(rep: Report) -> None:
+    for p in paths.script_files():
+        if not os.access(p, os.X_OK):
+            rep.err(_rel(p), "starts with #! but is not executable (chmod +x it, or re-run ./install.sh)")
 
 
 def check_auth(rep: Report) -> None:
@@ -482,7 +491,7 @@ def check_auth(rep: Report) -> None:
 def run() -> Report:
     rep = Report()
     for fn in (check_agents, check_tiers, check_packs, check_skills, check_workflows, check_mcp, check_settings,
-               check_auth):
+               check_executables, check_auth):
         try:
             fn(rep)
         except Exception as e:  # report, don't crash

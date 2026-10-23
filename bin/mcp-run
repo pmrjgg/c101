@@ -12,7 +12,7 @@
 set -euo pipefail
 
 STACK_ENV="${CLAUDE_STACK_ENV:-${HOME:-/nonexistent}/.claude/stack.env}"
-# uv/uvx (Python 3.13 servers) and Homebrew may be missing from the PATH Claude Code passes.
+# uv/uvx (Python 3.14 servers) and Homebrew may be missing from the PATH Claude Code passes.
 export PATH="${HOME:-/nonexistent}/.local/bin:/opt/homebrew/bin:/usr/local/bin:${PATH:-/usr/bin:/bin}"
 
 ONLY=()
