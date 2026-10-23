@@ -521,17 +521,38 @@ async def _lifespan(_server: MCPServer) -> AsyncIterator[dict[str, Any]]:
             STATE.box = None
 
 
+_EXITING = False
+
+
+def _exit_on_signal(signum: int, _frame: Any = None) -> None:
+    """Stop the sandbox container, then end the process at once with 128+signum.
+
+    ``raise SystemExit`` is not enough here: the stdio transport reads stdin in a worker thread that stays
+    blocked in read() on a terminal, and interpreter shutdown waits for that thread, so Ctrl-C/SIGTERM/SIGHUP
+    would hang until stdin closes. Cleanup runs first, then ``os._exit`` skips the thread join. Over pipes
+    (Claude Code) stdin EOF still ends serve mode the normal way, through the atexit hook.
+    """
+    global _EXITING
+    if not _EXITING:  # a second signal while docker is stopping the box must not wait for it again
+        _EXITING = True
+        try:
+            stop_quietly(STATE.box)
+            STATE.box = None
+        except Exception as exc:  # noqa: BLE001 - leaving the process is the point; say why and go on
+            print(f"desktop-sandbox: could not stop the sandbox on exit: {exc}", file=sys.stderr)
+        for stream in (sys.stdout, sys.stderr):
+            try:
+                stream.flush()
+            except (OSError, ValueError):
+                pass
+    os._exit(128 + signum)
+
+
 def _install_exit_handlers() -> None:
     atexit.register(lambda: stop_quietly(STATE.box))
-
-    def on_signal(signum: int, _frame: Any) -> None:
-        stop_quietly(STATE.box)
-        STATE.box = None
-        raise SystemExit(128 + signum)
-
-    for sig in (signal.SIGTERM, signal.SIGHUP):
+    for sig in (signal.SIGINT, signal.SIGTERM, signal.SIGHUP):
         try:
-            signal.signal(sig, on_signal)
+            signal.signal(sig, _exit_on_signal)
         except (ValueError, OSError):  # pragma: no cover - not the main thread / unsupported
             pass
 

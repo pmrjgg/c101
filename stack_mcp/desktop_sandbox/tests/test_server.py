@@ -353,3 +353,50 @@ def test_progress_plain_only_for_docker_without_a_terminal(monkeypatch, tmp_path
         "isatty": lambda self: tty, "write": lambda self, s: len(s), "flush": lambda self: None})())
     assert server.build_image(Settings(runtime=runtime, project=tmp_path), "gimp") == 0
     assert ("--progress=plain" in seen[-1]) is plain
+
+
+# --- signals end serve mode promptly -------------------------------------------------------------------
+
+@pytest.fixture
+def exits(monkeypatch: pytest.MonkeyPatch):
+    """Records stop_quietly/os._exit calls instead of stopping containers or ending the test process."""
+    events: list[tuple[str, object]] = []
+    monkeypatch.setattr(server, "stop_quietly", lambda box: events.append(("stop", box)))
+    monkeypatch.setattr(server.os, "_exit", lambda code: events.append(("exit", code)))
+    monkeypatch.setattr(server, "_EXITING", False)
+    monkeypatch.setattr(server.STATE, "box", None)
+    return events
+
+
+@pytest.mark.parametrize("sig", [server.signal.SIGINT, server.signal.SIGTERM, server.signal.SIGHUP],
+                         ids=["sigint", "sigterm", "sighup"])
+def test_signal_stops_the_box_then_exits_immediately(exits, sig) -> None:
+    box = object()
+    server.STATE.box = box  # type: ignore[assignment]
+    server._exit_on_signal(int(sig))
+    assert exits == [("stop", box), ("exit", 128 + int(sig))]  # cleanup strictly before the hard exit
+    assert server.STATE.box is None
+
+
+def test_second_signal_does_not_repeat_cleanup(exits) -> None:
+    server._exit_on_signal(2)
+    server._exit_on_signal(15)
+    assert exits == [("stop", None), ("exit", 130), ("exit", 143)]
+
+
+def test_signal_exits_even_if_cleanup_raises(exits, monkeypatch, capsys) -> None:
+    def boom(box: object) -> None:
+        raise RuntimeError("docker gone")
+    monkeypatch.setattr(server, "stop_quietly", boom)
+    server._exit_on_signal(2)
+    assert exits == [("exit", 130)]  # still leaves, with the reason on stderr
+    assert "docker gone" in capsys.readouterr().err
+
+
+def test_exit_handlers_cover_interrupt_and_termination(monkeypatch) -> None:
+    installed: dict[int, object] = {}
+    monkeypatch.setattr(server.signal, "signal", lambda sig, h: installed.__setitem__(int(sig), h))
+    monkeypatch.setattr(server.atexit, "register", lambda fn: None)
+    server._install_exit_handlers()
+    assert set(installed) == {int(server.signal.SIGINT), int(server.signal.SIGTERM), int(server.signal.SIGHUP)}
+    assert all(h is server._exit_on_signal for h in installed.values())
