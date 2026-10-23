@@ -1,10 +1,14 @@
 #!/usr/bin/env bash
 # Launch the 'desktop-sandbox' MCP server (stdio) under the repo's uv environment (CPython 3.14).
-#   bin/desktop-sandbox            serve (Claude Code starts it through bin/mcp-run --only DESKTOP_SANDBOX_)
-#   bin/desktop-sandbox --check    runtime, image and limits
-#   bin/desktop-sandbox --build    build the sandbox image once (needs network)
+#   bin/desktop-sandbox            serve: an MCP stdio server that waits for a client on stdin (Claude Code
+#                                  starts it through bin/mcp-run --only DESKTOP_SANDBOX_); by hand it just waits
+#   bin/desktop-sandbox --check    runtime, image and installed apps
+#   bin/desktop-sandbox --build    build the sandbox image once (needs network; first build takes minutes)
 #       [--profile operator|tester|recommended] [--packages "extra pkgs"] [--base image@sha256:...]
+#       --profile, --packages and --base each imply --build:
+#         bin/desktop-sandbox --profile recommended --packages "krita inkscape"
 #   bin/desktop-sandbox --list-profiles
+# --check and --list-profiles cannot be combined with build options. Details: bin/desktop-sandbox --help
 # Settings come from DESKTOP_SANDBOX_* in ~/.claude/stack.env; the server never receives API keys.
 set -euo pipefail
 . "$(dirname "${BASH_SOURCE[0]}")/_pyenv.sh"

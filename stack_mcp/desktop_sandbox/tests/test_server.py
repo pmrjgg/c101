@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import subprocess
 from pathlib import Path
 from typing import Any
 
@@ -224,3 +225,131 @@ def test_build_with_profile_labels_image(monkeypatch, tmp_path) -> None:
     label = argv[argv.index("--label") + 1]
     assert label.startswith("dev.c101.desktop-sandbox.packages=libreoffice-calc") and label.endswith(" gimp")
     assert server.build_image(s, "", "", "bogus") == 2
+
+
+# --- command line: implied build, rejected combinations, serve hint -------------------------------------
+
+@pytest.fixture
+def cmdline(monkeypatch: pytest.MonkeyPatch, tmp_path: Path):
+    """main() with nothing real behind it: records build_image calls and whether serving started."""
+    from stack_mcp.desktop_sandbox.config import Settings
+
+    class Rec:
+        builds: list[tuple[str, str, str]] = []
+        served = False
+
+    rec = Rec()
+    rec.builds = []
+    monkeypatch.setattr(server.STATE, "settings", Settings(runtime="/x/docker", project=tmp_path))
+    monkeypatch.setattr(server, "build_image",
+                        lambda s, packages="", base="", profile="": rec.builds.append((packages, base, profile)) or 0)
+    monkeypatch.setattr(server, "_install_exit_handlers", lambda: None)
+
+    class FakeServer:
+        def run(self, transport: str) -> None:
+            rec.served = True
+
+    monkeypatch.setattr(server, "build_server", lambda: FakeServer())
+    yield rec
+    monkeypatch.setattr(server.STATE, "settings", None)
+
+
+@pytest.mark.parametrize(
+    ("argv", "expected"),
+    [
+        (["--profile", "recommended", "--packages", "krita inkscape libreoffice gimp"],
+         ("krita inkscape libreoffice gimp", "", "recommended")),
+        (["--packages", "gimp"], ("gimp", "", "")),
+        (["--base", "debian:bookworm-slim"], ("", "debian:bookworm-slim", "")),
+        (["--build", "--profile", "operator"], ("", "", "operator")),
+        (["--build"], ("", "", "")),
+    ],
+    ids=["users-command", "packages-only", "base-only", "explicit-build", "bare-build"],
+)
+def test_build_options_run_a_build(cmdline, capsys, argv, expected) -> None:
+    assert server.main(argv) == 0
+    assert cmdline.builds == [expected] and not cmdline.served
+    out, err = capsys.readouterr()
+    assert out == ""
+    implied = "--build" not in argv
+    assert ("running --build" in err) is implied
+
+
+@pytest.mark.parametrize(
+    "argv",
+    [["--check", "--build"], ["--check", "--profile", "recommended"], ["--check", "--packages", "gimp"],
+     ["--list-profiles", "--build"], ["--list-profiles", "--base", "x"], ["--list-profiles", "--check"]],
+    ids=["check-build", "check-profile", "check-packages", "list-build", "list-base", "list-check"],
+)
+def test_incompatible_combinations_are_rejected(cmdline, capsys, argv) -> None:
+    with pytest.raises(SystemExit) as exc:
+        server.main(argv)
+    assert exc.value.code == 2
+    assert cmdline.builds == [] and not cmdline.served
+    assert "cannot be combined" in capsys.readouterr().err
+
+
+def test_plain_serve_is_unchanged_without_a_tty(cmdline, capsys, monkeypatch) -> None:
+    monkeypatch.setattr(server.sys, "stdin", type("Pipe", (), {"isatty": lambda self: False})())
+    assert server.main([]) == 0
+    assert cmdline.served and cmdline.builds == []
+    out, err = capsys.readouterr()
+    assert out == "" and "waiting for an MCP client" not in err  # Claude Code's launch: one status line only
+
+
+def test_serve_from_a_terminal_explains_itself_on_stderr_only(cmdline, capsys, monkeypatch) -> None:
+    monkeypatch.setattr(server.sys, "stdin", type("Tty", (), {"isatty": lambda self: True})())
+    assert server.main([]) == 0
+    assert cmdline.served  # still serves
+    out, err = capsys.readouterr()
+    assert out == ""  # stdout is the MCP channel
+    for needle in ("MCP", "--build --profile recommended", "--check", "Ctrl-C"):
+        assert needle in err
+
+
+def test_help_mentions_the_implied_build(capsys) -> None:
+    with pytest.raises(SystemExit) as exc:
+        server._parse(["--help"])
+    assert exc.value.code == 0
+    assert "implies --build" in capsys.readouterr().out
+
+
+# --- build_image output and docker flags ----------------------------------------------------------------
+
+def _fake_run(monkeypatch, context: str = "desktop-linux") -> None:
+    monkeypatch.setattr(server.subprocess, "run",
+                        lambda argv, **kw: subprocess.CompletedProcess(argv, 0, context + "\n", ""))
+
+
+def test_build_reports_packages_runtime_and_context(monkeypatch, tmp_path, capsys) -> None:
+    from stack_mcp.desktop_sandbox.config import Settings
+    monkeypatch.setattr(server.subprocess, "call", lambda argv: 0)
+    _fake_run(monkeypatch)
+    s = Settings(runtime="/x/docker", project=tmp_path)
+    assert server.build_image(s, "krita gimp", "", "operator") == 0
+    out, err = capsys.readouterr()
+    assert out == ""
+    assert "building image" in err and "docker (context 'desktop-linux')" in err
+    assert "packages (" in err and "krita gimp" in err and "build finished" in err
+
+
+def test_failed_build_says_so_and_returns_its_exit_code(monkeypatch, tmp_path, capsys) -> None:
+    from stack_mcp.desktop_sandbox.config import Settings
+    monkeypatch.setattr(server.subprocess, "call", lambda argv: 100)
+    _fake_run(monkeypatch)
+    assert server.build_image(Settings(runtime="/x/docker", project=tmp_path), "gimp") == 100
+    assert "FAILED (exit 100)" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize(("runtime", "tty", "plain"),
+                         [("/x/docker", False, True), ("/x/docker", True, False), ("/x/podman", False, False)],
+                         ids=["docker-piped", "docker-tty", "podman-piped"])
+def test_progress_plain_only_for_docker_without_a_terminal(monkeypatch, tmp_path, runtime, tty, plain) -> None:
+    from stack_mcp.desktop_sandbox.config import Settings
+    seen: list[list[str]] = []
+    monkeypatch.setattr(server.subprocess, "call", lambda argv: seen.append(argv) or 0)
+    _fake_run(monkeypatch)
+    monkeypatch.setattr(server.sys, "stderr", type("Err", (), {
+        "isatty": lambda self: tty, "write": lambda self, s: len(s), "flush": lambda self: None})())
+    assert server.build_image(Settings(runtime=runtime, project=tmp_path), "gimp") == 0
+    assert ("--progress=plain" in seen[-1]) is plain

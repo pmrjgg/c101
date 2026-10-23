@@ -46,8 +46,8 @@ from PIL import Image
 
 from . import __version__, guard
 from .config import Settings, load
-from .runtime import (PACKAGES_LABEL, RuntimeFailure, Sandbox, image_packages, image_present, reap_orphans,
-                      sanitize_all, sanitize_exchange, stop_quietly, usage)
+from .runtime import (PACKAGES_LABEL, RuntimeFailure, Sandbox, cli_env, image_packages, image_present,
+                      reap_orphans, sanitize_all, sanitize_exchange, stop_quietly, usage)
 
 SERVER_NAME = "desktop-sandbox"
 # The exchange directory is the one host path the container can write: cap it (the tmpfs mounts have their own).
@@ -582,30 +582,94 @@ def build_image(s: Settings, packages: str = "", base: str = "", profile: str = 
     if bad:
         print(f"desktop-sandbox: not Debian package names: {', '.join(bad)}", file=sys.stderr)
         return 2
-    argv = [s.runtime, "build", "--pull", "--tag", s.image]
+    argv = [s.runtime, "build", "--pull"]
+    if _is_docker(s.runtime) and not sys.stderr.isatty():
+        # BuildKit's default "auto" already degrades to plain text when stderr is not a terminal; saying so
+        # explicitly keeps the step-by-step log readable (and identical) in files, CI and pipes.
+        argv.append("--progress=plain")
+    argv += ["--tag", s.image]
     argv += ["--label", f"{PACKAGES_LABEL}={' '.join(names)}"]  # read back by --check and sandbox_status
     if names:
         argv += ["--build-arg", "EXTRA_PACKAGES=" + " ".join(names)]
     if base:
         argv += ["--build-arg", f"BASE={base}"]
     argv.append(str(IMAGE_DIR))
+    where = _runtime_context(s.runtime)
+    print(f"desktop-sandbox: building image {s.image} with {Path(s.runtime).name}{where}", file=sys.stderr)
+    print(f"desktop-sandbox: packages ({len(names)}): {' '.join(names) or 'none, base desktop only'}",
+          file=sys.stderr)
+    if base:
+        print(f"desktop-sandbox: base image: {base}", file=sys.stderr)
     print("desktop-sandbox: " + " ".join(argv), file=sys.stderr)
-    return subprocess.call(argv)
+    print("desktop-sandbox: this pulls the base image and the packages; it can take 10-30 minutes on a first "
+          "build. Progress follows.", file=sys.stderr, flush=True)
+    # Deliberately the full environment, not runtime.cli_env(): this is an interactive build the user started,
+    # and it needs DOCKER_BUILDKIT/BUILDKIT_PROGRESS/BUILDX_*, proxy variables and TERM (tty progress), which
+    # the allow-list used for the server's own calls drops. Nothing from the environment reaches the image
+    # (only the --build-arg values above), and the server process itself never receives API keys.
+    rc = subprocess.call(argv)
+    print(f"desktop-sandbox: build {'finished' if rc == 0 else f'FAILED (exit {rc})'}; "
+          "verify with: bin/desktop-sandbox --check", file=sys.stderr)
+    return rc
+
+
+def _is_docker(runtime: str) -> bool:
+    return Path(runtime).name.removesuffix(".exe") == "docker"
+
+
+def _runtime_context(runtime: str) -> str:
+    """`` (context 'desktop-linux')`` for docker, so the user sees which daemon is used; '' if unknown."""
+    if not _is_docker(runtime):
+        return ""
+    try:
+        cp = subprocess.run([runtime, "context", "show"], capture_output=True, text=True, timeout=10,
+                            env=cli_env(), check=False)
+    except (OSError, subprocess.SubprocessError):
+        return ""
+    name = cp.stdout.strip() if cp.returncode == 0 else ""
+    return f" (context {name!r})" if name else ""
 
 
 def _parse(argv: Sequence[str] | None) -> argparse.Namespace:
-    p = argparse.ArgumentParser(prog="desktop-sandbox", description="MCP stdio server 'desktop-sandbox': "
-                                "sandboxed computer use in a disposable, hardened desktop container.")
+    p = argparse.ArgumentParser(
+        prog="desktop-sandbox", description="MCP stdio server 'desktop-sandbox': sandboxed computer use in a "
+        "disposable, hardened desktop container. With no option it SERVES (waits for an MCP client on stdin; "
+        "Claude Code starts it that way). Use --build or --check from a terminal.",
+        epilog="examples:\n  bin/desktop-sandbox --build --profile recommended\n"
+               "  bin/desktop-sandbox --profile recommended --packages \"krita inkscape\"   (implies --build)\n"
+               "  bin/desktop-sandbox --check",
+        formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("--check", action="store_true", help="print runtime, image and limits to stderr and exit")
-    p.add_argument("--build", action="store_true", help="build the sandbox image (needs network) and exit")
-    p.add_argument("--profile", default="", help="with --build: a named package set from image/profiles.json "
-                   "(operator, tester, recommended); --list-profiles shows them")
+    p.add_argument("--build", action="store_true", help="build the sandbox image (needs network) and exit; "
+                   "implied by --profile, --packages and --base")
+    p.add_argument("--profile", default=None, help="a named package set from image/profiles.json (operator, "
+                   "tester, recommended) to build; implies --build; --list-profiles shows them")
     p.add_argument("--list-profiles", action="store_true", help="print the build profiles and exit")
-    p.add_argument("--packages", default="", help="with --build: Debian packages for the apps to drive, e.g. "
-                   "'libreoffice-calc firefox-esr' (space or comma separated)")
-    p.add_argument("--base", default="", help="with --build: base image, ideally pinned by digest "
-                   "(debian:bookworm-slim@sha256:...)")
-    return p.parse_args(argv)
+    p.add_argument("--packages", default=None, help="Debian packages to add to the image, e.g. "
+                   "'libreoffice-calc firefox-esr' (space or comma separated); implies --build")
+    p.add_argument("--base", default=None, help="base image, ideally pinned by digest "
+                   "(debian:bookworm-slim@sha256:...); implies --build")
+    args = p.parse_args(argv)
+    flags = [f"--{n}" for n in ("profile", "packages", "base") if getattr(args, n) is not None]
+    if args.list_profiles and (args.check or args.build or flags):
+        p.error("--list-profiles cannot be combined with --check, --build, " + ", ".join(flags or ["--profile"]))
+    if args.check and (args.build or flags):
+        p.error("--check cannot be combined with " + ", ".join(["--build"] * args.build + flags))
+    args.implied_build = bool(flags) and not args.build
+    args.build = args.build or bool(flags)
+    for n in ("profile", "packages", "base"):
+        if getattr(args, n) is None:
+            setattr(args, n, "")
+    return args
+
+
+SERVE_HINT = """\
+desktop-sandbox: this is an MCP stdio server and it is now waiting for an MCP client on stdin (nothing is
+  wrong, and nothing is being built). Claude Code starts it for you; run it by hand only to build or check:
+    bin/desktop-sandbox --build --profile recommended   build the sandbox image (add --packages "pkg1 pkg2")
+    bin/desktop-sandbox --check                         runtime, image and installed apps
+    bin/desktop-sandbox --help                          all options
+  Press Ctrl-C to quit."""
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -616,6 +680,9 @@ def main(argv: Sequence[str] | None = None) -> int:
             print(f"{name:<12} {prof.get('description', '')}\n             {' '.join(profile_packages(name))}")
         return 0
     if args.build:
+        if args.implied_build:
+            print("desktop-sandbox: --profile/--packages/--base only apply to a build: running --build",
+                  file=sys.stderr)
         return build_image(s, args.packages, args.base, args.profile)
     if args.check:
         present = bool(s.runtime) and image_present(s)
@@ -628,6 +695,8 @@ def main(argv: Sequence[str] | None = None) -> int:
               f"{s.idle_timeout // 60} min idle", file=sys.stderr)
         return 0 if present else 1
     print(f"desktop-sandbox {__version__}: runtime {s.runtime or 'none'}, network {s.network}", file=sys.stderr)
+    if sys.stdin.isatty():  # a person, not an MCP client: say what this process is (stdout stays the MCP channel)
+        print(SERVE_HINT, file=sys.stderr, flush=True)
     _install_exit_handlers()
     build_server().run("stdio")
     return 0
